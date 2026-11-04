@@ -7,6 +7,12 @@ updates:
     open-pull-requests-limit: 3
     labels:
       - dependencies
+    # Major toolchain jumps (AGP, Gradle, Kotlin) are owner-approved migrations,
+    # not routine dependency updates, so Dependabot only proposes minor/patch ones.
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
