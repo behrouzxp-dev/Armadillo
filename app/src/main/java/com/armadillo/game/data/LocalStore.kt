@@ -15,19 +15,6 @@ import com.armadillo.game.game.WordHistoryEntry
 import com.armadillo.game.game.WordOutcome
 import com.armadillo.game.game.migrateSavedCategories
 
-/** Player names are persisted separately from the optional unfinished-game checkpoint. */
-data class PlayerRoster(val playerCount: Int, val names: List<String>)
-
-/** Pure seat-index merge logic; keeping it separate makes roster migration/unit tests deterministic. */
-internal fun mergePlayerRosterNames(existing: List<String>, updated: List<String>, count: Int): List<String> {
-    require(count in GameConstants.allowedPlayerCounts)
-    require(updated.size >= count)
-    val merged = existing.toMutableList()
-    while (merged.size < count) merged += ""
-    for (index in 0 until count) merged[index] = updated[index].trim()
-    return merged
-}
-
 /** Local durable state. Keep the preference-file and existing game keys stable for upgrades. */
 class LocalStore(context: Context) {
     private val preferences: SharedPreferences = context.getSharedPreferences("armadillo_local_v1", Context.MODE_PRIVATE)
