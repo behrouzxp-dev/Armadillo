@@ -1,0 +1,38 @@
+# Armadillo 2.2.0 — durable session handoff
+
+Updated: 2026-10-29 (Asia/Tehran)
+
+## Release state
+
+- Current source is based only on the latest actual Drive release, v2.1.0; older versions are comparison/history only.
+- Project: `/home/user/Dour/`; `applicationId=com.dour.game`; `versionName=2.2.0`; `versionCode=6`.
+- Requested design tokens are exact: page canvas `#F2C50A`; all app/dialog button fills `#07223C`. Text uses accessible white/disabled-gray states; Lalezar and team identity colors remain. Original icon artwork was not changed.
+- The active game page no longer has a “پایان” button. Early end remains separate in the pause overlay/dialog; automatic completion remains.
+- The pause/resume control is reachable in preparation, playing, manual-pause, system-pause and explosion states. Repeated pause/resume preserves player, current word, word history, used words and remaining time. System interruption restores a manual pause as paused until the user explicitly continues.
+- Offline/free/ad-free use, Persian RTL, portrait orientation, no background music, game rules/timing, durable local saves, settings and stopping time/audio in the background remain in scope.
+
+## Verification
+
+- `:app:testDebugUnitTest`: 21 passed; 0 failures/errors/skips.
+- `python3 tools/validate_words.py`: passed; 723 unique archived general words and 1,500 unique topic words.
+- `:app:assembleDebug`, `:app:assembleRelease`: passed. `:app:lintDebug` and release lint checks passed with 0 errors and 29 warnings.
+- APK metadata: package `com.dour.game`, version 2.2.0/code 6, min SDK 23, target SDK 35.
+- Release signature matches the existing v2.1.0/v2.0.0 certificate (`07:2A:8E:FB:08:75:88:FF:64:90:EB:E6:AF:75:C9:A8:9A:98:71:B5:F9:A2:F4:D5:1F:9D:6C:88:94:CC:EF:93`); the prior key was reused. Never include private signing material in source, APK, reports, logs or chat.
+- APK SHA-256: `843b72db80ba440979eb32ace7f4a9deec2ffe839aa0c22eb4eed86c27c5be4f`.
+- APK signature and `zipalign` checks passed; resource table contains the requested color values. No device/emulator install, interaction or visual runtime test was performed; `adb devices -l` returned no connected devices.
+- Toolchain: Temurin/OpenJDK 17.0.21, SDK Platform 35, Build Tools 35.0.0, Gradle 8.11.1, AGP 8.9.2 and Kotlin 2.0.21. One non-fatal SDK XML-version compatibility warning appeared; all builds/tests passed.
+
+## Drive and backups
+
+- Existing Releases parent: `17ZVL4sQyQlxbt4tFo6bBuVe8H7TzXJ3b`.
+- New release folder: `Releases/v2.2.0`, ID `19hRodY-bDLCoiGwKUDKhqFbXl2aW9RrQ`; verified owner-only.
+- Latest source base folder `Releases/v2.1.0`: `1nBaCeTN8XGGp3s00PeuYV6-MKyB8SpJb`; source ZIP ID `1TLOk1-HN0AFSVnmmDd-W2B6Es3G_L6mv`, Drive/local MD5 `34ceb8952f3af8143b325e839e9eddf9`.
+- Pre-edit source backup: `/home/user/backups/Armadillo/Armadillo-Source-v2.1.0-original.zip`, SHA-256 `32892b50d59d0c60541f990e074a025ead4ce3c69f68fa1cd0af7e781c290c61`.
+- Existing owner-only signing folder was used. Keep that key unchanged for future releases; private files were temporarily staged outside the project in protected storage for signing and must not enter archives.
+- Keep prior release folders intact. Store APK, source archive, README, changelog and actual test report under the existing v2.2.0 release folder. Confirm Drive listing, parent, size and retrievability/checksum of all five files before cleaning temporary workspace files.
+
+## Current local deliverables
+
+- Release APK: `app/build/outputs/apk/release/app-release.apk`.
+- Updated source documentation: `README.md`, `Dour-README.md`, `CHANGELOG.md`, `Dour-Test-Report.md`.
+- Build-local `local.properties`, `.gradle/`, `.kotlin/` and `app/build/` are not source-release content. Exclude these, signing material, SDK/toolchain and caches from the source ZIP.
