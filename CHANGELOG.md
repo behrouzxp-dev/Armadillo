@@ -4,6 +4,7 @@ This project follows semantic versioning (SemVer). The versioned entries below a
 
 ## Unreleased
 
+- Scope the Debug workflow's automatic push trigger to workflow-file changes on `main`, because its previous trigger referenced a removed session branch, and update the documentation that described that branch.
 - Rename the Gradle project, Kotlin packages, application ID and local preference file for Armadillo. The owner-approved application ID change creates a separate Android installation; earlier app data is not automatically transferred. Historical records retain their original identifiers.
 - Consolidate the historical version-specific changelogs into this file.
 - Add current requirements, architecture, internal interface and maintenance-plan documentation under `docs/`.

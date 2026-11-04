@@ -45,6 +45,6 @@ Android backup is disabled in the manifest; no in-app backup/export is documente
 
 ## Build and verification
 
-The Gradle wrapper, Android SDK and JDK requirements and commands are in [README.md](../README.md#build-and-test). The [Debug workflow](../.github/workflows/debug-apk.yml) builds, uploads a short-lived artifact, then runs JVM unit tests and lint; artifact upload precedes the test step, so inspect the entire run. Its automatic push trigger is restricted to a specific earlier session branch and workflow-file changes; manual dispatch is available. No device/emulator testing is implied by a successful workflow.
+The Gradle wrapper, Android SDK and JDK requirements and commands are in [README.md](../README.md#build-and-test). The [Debug workflow](../.github/workflows/debug-apk.yml) builds, uploads a short-lived artifact, then runs JVM unit tests and lint; artifact upload precedes the test step, so inspect the entire run. Its automatic push trigger is restricted to workflow-file changes on `main`; manual dispatch is available. No device/emulator testing is implied by a successful workflow.
 
 Historical release documents and [the earlier test report](../Historical-Test-Report.md) are retained for provenance, not as evidence of a current build. The repository contains no configured user-facing app version name; `versionCode` is retained for compatibility. No secret keys belong in source control.
