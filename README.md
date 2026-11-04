@@ -4,7 +4,7 @@
 
 Armadillo is an offline, right-to-left Persian group game. Its `applicationId` is `com.armadillo.game`. The app is free, ad-free and requires no internet permission; its sounds, font and words are bundled locally. It uses portrait orientation and has no background music. The manifest requests vibration permission and disables Android backup.
 
-This repository does not designate a current official release or a user-facing application version. `versionCode` remains 6; choose a `versionName` and an appropriate `versionCode` when preparing a future release. The repository on GitHub is the source of truth. See [AGENTS.md](AGENTS.md) for project rules and [CHANGELOG.md](CHANGELOG.md) for changes. Historical test reports and changelogs describe earlier builds, not an official release of the current repository.
+This repository does not designate a current official release or a user-facing application version. The `com.armadillo.game` application ID has never been published, so `versionCode` starts at 1 and no `versionName` is configured; choose both when preparing a future release. The repository on GitHub is the source of truth. See [AGENTS.md](AGENTS.md) for project rules and [CHANGELOG.md](CHANGELOG.md) for changes. Historical test reports and changelogs describe earlier builds, not an official release of the current repository.
 
 ## Documentation
 
@@ -97,7 +97,7 @@ app/build/outputs/apk/release/app-release.apk
 
 The [Debug APK workflow](.github/workflows/debug-apk.yml) can be started manually from the GitHub Actions page with `workflow_dispatch` and an available branch. It assembles the Debug APK, uploads `armadillo-debug-apk` as a ZIP artifact retained for seven days, then runs `:app:testDebugUnitTest` and `:app:lintDebug`. Download the artifact from the run page while it is available; repository access is required. The upload occurs before tests and lint, so check the final run result as well as the artifact. It does not publish a release or create a tag.
 
-The workflow's automatic push trigger runs only for changes to the workflow file on `main`; it is not a general continuous-integration trigger for other changes or branches. The most recent [run 41915549313](https://github.com/behrouzxp-dev/Armadillo/actions/runs/41915549313) passed the Debug build, APK identity check, artifact upload, unit-test and lint steps for this documentation and workflow change. Its warnings noted deprecated Node.js 20 runtimes and `setup-java` v4; it did not test installation or startup. A past successful run does not establish that a future checkout builds successfully.
+The workflow's automatic push trigger runs only for changes to the workflow file on `main`; it is not a general continuous-integration trigger for other changes or branches. The most recent [run 41916950130](https://github.com/behrouzxp-dev/Armadillo/actions/runs/41916950130) passed the Debug build, APK identity check, artifact upload, unit-test and lint steps after the actions were upgraded to `checkout@v7`, `setup-java@v6` and `upload-artifact@v7`. Its only annotation was the announced `ubuntu-latest` image migration; it did not test installation or startup. A past successful run does not establish that a future checkout builds successfully.
 
 ## Signing and upgrades
 

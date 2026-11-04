@@ -4,6 +4,8 @@ This project follows semantic versioning (SemVer). The versioned entries below a
 
 ## Unreleased
 
+- Reset the Android `versionCode` to 1 because the `com.armadillo.game` application ID has never been published; planned historical builds used the earlier `com.dour.game` identity with `versionCode` 6.
+- Upgrade the Debug workflow to `actions/checkout@v7`, `actions/setup-java@v6` and `actions/upload-artifact@v7`, replacing action versions that GitHub marked as deprecated.
 - Scope the Debug workflow's automatic push trigger to workflow-file changes on `main`, because its previous trigger referenced a removed session branch, and update the documentation that described that branch.
 - Rename the Gradle project, Kotlin packages, application ID and local preference file for Armadillo. The owner-approved application ID change creates a separate Android installation; earlier app data is not automatically transferred. Historical records retain their original identifiers.
 - Consolidate the historical version-specific changelogs into this file.
