@@ -87,7 +87,6 @@ tasks.matching { it.name == "assembleRelease" || it.name == "bundleRelease" }.co
 }
 
 dependencies {
-    testImplementation("junit:junit:4.13.2")
-    // Real org.json implementation so the checkpoint codec can be tested on the JVM.
-    testImplementation("org.json:json:20260814")
+    // Engine, seat plan and checkpoint codec live in a pure Kotlin module with its own JVM tests.
+    implementation(project(":game-core"))
 }
