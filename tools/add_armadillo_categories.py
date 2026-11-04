@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Add offline Persian places/technology vocab to the preserved Dour topic bank."""
+"""Add offline Persian places/technology vocab to the preserved topic bank."""
 import json
 import re
 from pathlib import Path

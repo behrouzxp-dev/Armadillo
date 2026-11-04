@@ -16,11 +16,11 @@ check(!releaseSigningRequested || releaseSigningConfigured) {
 }
 
 android {
-    namespace = "com.dour.game"
+    namespace = "com.armadillo.game"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.dour.game"
+        applicationId = "com.armadillo.game"
         minSdk = 23
         targetSdk = 35
         versionCode = 6

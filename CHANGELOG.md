@@ -4,6 +4,7 @@ This project follows semantic versioning (SemVer). The versioned entries below a
 
 ## Unreleased
 
+- Rename the Gradle project, Kotlin packages, application ID and local preference file for Armadillo. The owner-approved application ID change creates a separate Android installation; earlier app data is not automatically transferred. Historical records retain their original identifiers.
 - Consolidate the historical version-specific changelogs into this file.
 - Add current requirements, architecture, internal interface and maintenance-plan documentation under `docs/`.
 - Remove an unreferenced legacy drawable and the redundant `Dour-README.md` pointer; retain the main README and historical project records.
@@ -18,7 +19,7 @@ This project follows semantic versioning (SemVer). The versioned entries below a
 - Removed the end button from the active game screen; early ending remains available from the pause panel/dialog and rounds still finish automatically.
 - Made pause/resume available during preparation, active play, manual pause, system pause and the explosion screen. Repeated pauses and background restoration retain the player, word, history, remaining time and timer behavior; after restoring a manual pause, the user must explicitly continue.
 - Retained Lalezar, team colors, original icon artwork, offline/free/ad-free behavior, Persian RTL and portrait orientation, game rules and timing, durable local saves, sound settings, and background time/audio pausing.
-- The historical report records 21 passing unit tests, passing vocabulary validation and Debug/signed Release builds, and lint with 0 errors and 29 warnings; release signature, APK metadata and alignment checks passed, and the certificate fingerprint matched the previous key. No device/emulator installation or interaction was performed. These results refer to that historical build, not later checkouts. See [Dour-Test-Report.md](Dour-Test-Report.md) for details.
+- The historical report records 21 passing unit tests, passing vocabulary validation and Debug/signed Release builds, and lint with 0 errors and 29 warnings; release signature, APK metadata and alignment checks passed, and the certificate fingerprint matched the previous key. No device/emulator installation or interaction was performed. These results refer to that historical build, not later checkouts. See [Historical-Test-Report.md](Historical-Test-Report.md) for details.
 
 ## [2.1.0] — 2026-10-29
 
@@ -28,7 +29,7 @@ This project follows semantic versioning (SemVer). The versioned entries below a
 - Sampled yellow and navy from the original 1024×1024 icon (`#F9CB03` and `#07223D`); the icon file and artwork were unchanged. Preserved five team colors and used a navy border for the yellow indicator on the yellow background.
 - Preserved v2 features, home-screen audio settings, `com.dour.game`, offline/free/ad-free behavior, Persian RTL, portrait orientation, the monotonic timer, saved games and background time/audio pausing.
 - Increased `versionCode` to 5 and `versionName` to 2.1.0.
-- The available `Dour-Test-Report.md` describes 2.2.0, not a separate 2.1.0 test run; do not treat its results as 2.1.0 verification.
+- The available `Historical-Test-Report.md` describes 2.2.0, not a separate 2.1.0 test run; do not treat its results as 2.1.0 verification.
 
 ## [2.0.0] — 2026-10-29
 

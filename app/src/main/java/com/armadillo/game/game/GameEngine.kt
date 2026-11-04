@@ -1,4 +1,4 @@
-package com.dour.game.game
+package com.armadillo.game.game
 
 import kotlin.math.max
 import kotlin.math.min

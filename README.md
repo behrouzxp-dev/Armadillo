@@ -2,9 +2,9 @@
 
 **Android / Kotlin · Unreleased**
 
-Armadillo is an offline, right-to-left Persian group game. Its `applicationId` is `com.dour.game`. The app is free, ad-free and requires no internet permission; its sounds, font and words are bundled locally. It uses portrait orientation and has no background music. The manifest requests vibration permission and disables Android backup.
+Armadillo is an offline, right-to-left Persian group game. Its `applicationId` is `com.armadillo.game`. The app is free, ad-free and requires no internet permission; its sounds, font and words are bundled locally. It uses portrait orientation and has no background music. The manifest requests vibration permission and disables Android backup.
 
-This repository does not designate a current official release or a user-facing application version. `versionCode` remains 6 for Android compatibility; choose a `versionName` and an appropriate `versionCode` when preparing a future release. The repository on GitHub is the source of truth. See [AGENTS.md](AGENTS.md) for project rules and [CHANGELOG.md](CHANGELOG.md) for changes. Historical test reports and changelogs describe earlier builds, not an official release of the current repository.
+This repository does not designate a current official release or a user-facing application version. `versionCode` remains 6; choose a `versionName` and an appropriate `versionCode` when preparing a future release. The repository on GitHub is the source of truth. See [AGENTS.md](AGENTS.md) for project rules and [CHANGELOG.md](CHANGELOG.md) for changes. Historical test reports and changelogs describe earlier builds, not an official release of the current repository.
 
 ## Documentation
 
@@ -24,7 +24,7 @@ This repository does not designate a current official release or a user-facing a
 - Seats and turns rotate counterclockwise. Fixed team colors are blue, red, green, purple and yellow, in that order.
 - Results record displayed words with player name, round, display time and outcome.
 - Time and audio stop when the app goes into the background, the screen locks or a system interruption occurs; time outside the app is not counted.
-- Migration of old saves removes the general category from active play while retaining time and scores. Since an old word may come from the general bank, a new word from a playable category is selected on continuation.
+- Within the app's own storage, migration of older saved-game formats removes the general category from active play while retaining time and scores. A legacy word may be replaced by a word from a playable category. This does not transfer data across different application IDs.
 
 ## Gameplay
 
@@ -37,8 +37,8 @@ This repository does not designate a current official release or a user-facing a
 
 ## Project structure
 
-- `app/src/main/java/com/dour/game/` — UI, models, engine, audio and local storage
-- `app/src/main/java/com/dour/game/ui/DesignSystem.kt` — shared palette, typography and UI tokens
+- `app/src/main/java/com/armadillo/game/` — UI, models, engine, audio and local storage
+- `app/src/main/java/com/armadillo/game/ui/DesignSystem.kt` — shared palette, typography and UI tokens
 - `app/src/main/assets/categories.json` — five playable categories and 1,500 topic words
 - `app/src/main/assets/words.json` — retained legacy general bank, inactive in gameplay
 - `app/src/main/assets/fonts/` — Lalezar font and OFL license
@@ -53,7 +53,7 @@ This repository does not designate a current official release or a user-facing a
 
 ## Architecture and persistence
 
-`MainActivity` owns the Android UI and lifecycle and connects the game engine, local word bank, audio and storage. `GameEngine` applies game state transitions against a caller-supplied monotonic clock; `Models.kt` defines phases, players, teams and ranking. `LocalWordBank` reads bundled topic words and starts a new cycle after the selected pool is exhausted. `LocalStore` persists settings, the player roster and unfinished-game checkpoints in the private `dour_local_v1` SharedPreferences file. A restored unfinished game enters a system-paused state; a manual pause remains paused until the player resumes. The legacy general word bank is retained for historical compatibility, not as a playable category.
+`MainActivity` owns the Android UI and lifecycle and connects the game engine, local word bank, audio and storage. `GameEngine` applies game state transitions against a caller-supplied monotonic clock; `Models.kt` defines phases, players, teams and ranking. `LocalWordBank` reads bundled topic words and starts a new cycle after the selected pool is exhausted. `LocalStore` persists settings, the player roster and unfinished-game checkpoints in the private `armadillo_local_v1` SharedPreferences file. A restored unfinished game enters a system-paused state; a manual pause remains paused until the player resumes. The legacy general word bank is retained for historical compatibility, not as a playable category.
 
 ## Build requirements
 
@@ -101,7 +101,8 @@ The workflow's automatic push trigger is restricted to changes to the workflow f
 
 ## Signing and upgrades
 
+- The application ID has changed from `com.dour.game` to `com.armadillo.game` with owner approval. Android treats them as separate applications: the new build cannot upgrade the old installation and cannot automatically access its private saved games, roster or settings. Keep the old installation and its data until the owner decides otherwise; there is no implemented cross-application data migration.
 - Keep the existing release keystore and credentials securely backed up outside the repository. Never replace an established key without explicit authorization.
-- The public certificate fingerprint recorded for earlier signed builds is `07:2A:8E:FB:08:75:88:FF:64:90:EB:E6:AF:75:C9:A8:9A:98:71:B5:F9:A2:F4:D5:1F:9D:6C:88:94:CC:EF:93`; see the historical [test report](Dour-Test-Report.md). This record does not verify a future build or the current availability of the key.
+- The public certificate fingerprint recorded for earlier signed builds is `07:2A:8E:FB:08:75:88:FF:64:90:EB:E6:AF:75:C9:A8:9A:98:71:B5:F9:A2:F4:D5:1F:9D:6C:88:94:CC:EF:93`; see the historical [test report](Historical-Test-Report.md). This record does not verify a future build or the current availability of the key.
 - Android upgrades depend on compatible signing and version codes. In particular, a Debug APK normally cannot replace an installation signed with a different Release key.
 - Historical reports document past builds and limitations, not current build or device-test results. No official release from this repository has been designated by this documentation.

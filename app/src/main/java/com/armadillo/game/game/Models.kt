@@ -1,4 +1,4 @@
-package com.dour.game.game
+package com.armadillo.game.game
 
 import java.util.UUID
 
@@ -8,7 +8,7 @@ enum class GamePhase {
 }
 
 object WordCategories {
-    /** Retained only to safely migrate saved Dour games; it is not a selectable or playable category. */
+    /** Retained only to safely migrate legacy saved games; it is not a selectable or playable category. */
     const val GENERAL = "general"
     const val JOBS = "jobs"
     const val ANIMALS = "animals"

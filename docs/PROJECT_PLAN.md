@@ -5,7 +5,7 @@ This is a maintenance checklist based on the current repository, not an approved
 ## Current baseline
 
 - One offline Android application module with bundled Persian word banks and private local persistence. See [REQUIREMENTS.md](REQUIREMENTS.md) and [ARCHITECTURE.md](ARCHITECTURE.md).
-- The repository is not designated as an official release. No user-facing app version name is currently configured; the Android `versionCode` is retained for compatibility.
+- The repository is not designated as an official release. No user-facing app version name is currently configured; the existing Android `versionCode` remains unchanged. The application ID change creates a separate installation and does not transfer the old app's data.
 - A manual GitHub Actions workflow builds a Debug APK and runs unit tests and lint. Its push trigger is restricted to an earlier session branch and the workflow file, so it is not general CI. See [README.md](../README.md#github-actions-debug-build).
 - Historical reports and previous CI runs describe the specific builds they tested; they do not establish the results of subsequent changes.
 

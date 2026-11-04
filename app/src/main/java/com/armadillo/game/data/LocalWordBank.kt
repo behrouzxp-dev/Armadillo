@@ -1,10 +1,10 @@
-package com.dour.game.data
+package com.armadillo.game.data
 
 import android.content.Context
 import org.json.JSONObject
-import com.dour.game.game.WordCategories
-import com.dour.game.game.WordSource
-import com.dour.game.game.normalizeWord
+import com.armadillo.game.game.WordCategories
+import com.armadillo.game.game.WordSource
+import com.armadillo.game.game.normalizeWord
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.util.Random

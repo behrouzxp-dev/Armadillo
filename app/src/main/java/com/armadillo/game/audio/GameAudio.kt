@@ -1,11 +1,11 @@
-package com.dour.game.audio
+package com.armadillo.game.audio
 
 import android.content.Context
 import android.media.AudioAttributes
 import android.media.AudioManager
 import android.media.SoundPool
-import com.dour.game.R
-import com.dour.game.game.SoundSettings
+import com.armadillo.game.R
+import com.armadillo.game.game.SoundSettings
 
 class GameAudio(context: Context, initialSettings: SoundSettings) {
     private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
