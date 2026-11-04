@@ -26,7 +26,7 @@
     <color name="design_surface_raised">#FFFFFF</color>
     <color name="design_surface_alt">#FFF2C4</color>
     <color name="design_surface_accent">#FFE79B</color>
-    <color name="design_outline">#A88600</color>
+    <color name="design_outline">#6F5500</color>
 
     <color name="design_success">#1B6440</color>
     <color name="design_danger">#A6190F</color>
