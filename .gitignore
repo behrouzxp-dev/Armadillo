@@ -4,9 +4,23 @@
 local.properties
 *.iml
 .idea/
+.kotlin/
+captures/
+*.hprof
+
+# Packaged outputs must never be committed
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# OS / editor noise
 .DS_Store
+Thumbs.db
+*.swp
 
 # Signing material must never be committed
 *.jks
 *.keystore
 keystore.properties
+signing.properties

@@ -23,7 +23,8 @@ class SeatingCircleView(
 ) : View(context) {
     private val density = resources.displayMetrics.density
     private val designColors = DesignSystem.colors(context)
-    private val lalezar = DesignSystem.lalezar(context)
+    private val appFont = DesignSystem.typeface(context)
+    private val scaledDensity = resources.displayMetrics.scaledDensity
     private val ringPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = designColors.outline
         style = Paint.Style.STROKE
@@ -38,17 +39,17 @@ class SeatingCircleView(
     private val namePaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
         color = designColors.textPrimary
         textAlign = Paint.Align.CENTER
-        typeface = lalezar
+        typeface = appFont
     }
     private val detailPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
         textAlign = Paint.Align.CENTER
-        typeface = lalezar
+        typeface = appFont
     }
     private val centerTextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
         color = designColors.textSecondary
         textAlign = Paint.Align.CENTER
-        textSize = DesignSystem.TypeScale.SEAT_CENTER * density
-        typeface = lalezar
+        textSize = DesignSystem.TypeScale.SEAT_CENTER * scaledDensity
+        typeface = appFont
     }
     private var centerX = 0f
     private var centerY = 0f
@@ -56,7 +57,9 @@ class SeatingCircleView(
     private var hitRadius = 0f
 
     init {
-        contentDescription = "چیدمان دایره‌ای صندلی‌ها؛ لمس هر نام برای واردکردن یا ویرایش آن"
+        // Decorative summary only: the players screen also lists every seat as a real button,
+        // which is what screen-reader and switch-access users navigate with.
+        contentDescription = "چیدمان دایره‌ای صندلی‌ها. برای ویرایش نام، از دکمه‌های زیر دایره استفاده کنید."
         isClickable = true
         importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_YES
     }
@@ -94,11 +97,11 @@ class SeatingCircleView(
                 shownName.length > 7 -> DesignSystem.TypeScale.SEAT_NAME_MEDIUM
                 else -> DesignSystem.TypeScale.SEAT_NAME_LARGE
             }
-            namePaint.textSize = nameSize * density
+            namePaint.textSize = nameSize * scaledDensity
             val ellipsized = TextUtils.ellipsize(shownName, namePaint, maxTextWidth, TextUtils.TruncateAt.END).toString()
             canvas.drawText(ellipsized, point.first, point.second - 1f * density, namePaint)
 
-            detailPaint.textSize = DesignSystem.TypeScale.SEAT_DETAIL * density
+            detailPaint.textSize = DesignSystem.TypeScale.SEAT_DETAIL * scaledDensity
             detailPaint.color = designColors.textSecondary
             canvas.drawText("تیم ${team + 1} · ${seat + 1}", point.first, point.second + DesignSystem.Metrics.SEAT_DETAIL_BASELINE_DP * density, detailPaint)
         }

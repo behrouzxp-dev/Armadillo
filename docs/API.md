@@ -27,12 +27,16 @@ Construct `GameEngine(state, words, clockNanos, wallClockMillis)` with a `GameSt
 
 `GameState` contains players, selected categories, difficulty, phase, countdown, word history and team statistics. `GameConstants` defines supported setup options, swap lock and penalty. `SeatPlan` creates players and maps seats to teams. `rankTeams` orders by final time, explosions, correct answers and swaps. See `Models.kt` and [ARCHITECTURE.md](ARCHITECTURE.md#state-and-timing) for context.
 
+## Checkpoint codec
+
+`GameCodec.encode(state): JSONObject` and `GameCodec.decode(json): GameState` own the durable format (`GameCodec.SCHEMA = 3`). `decode` migrates unknown categories to `jobs`, retires a current word that no longer matches the selection (recording it with `WordOutcome.ENDED`), and clamps out-of-range values instead of failing. The object has no Android dependency, so `GameCodecTest` covers round-trip fidelity, legacy saves, unknown categories, clamping and corrupt payloads on the JVM.
+
 ## Local storage and sound
 
-`LocalStore` provides `saveGame`, `loadGame`, `clearGame`, roster operations and sound-setting operations. Persistence is private SharedPreferences; methods returning nullable state can indicate no usable save. A failed game decode clears the unfinished checkpoint but retains the separate roster. `saveGame` with `durable=true` uses a synchronous preference commit; sound-setting saves use asynchronous apply.
+`LocalStore` provides `saveGame`, `loadGame`, `clearGame`, `hasSavedGame`, `consumeDiscardedCheckpointNotice`, roster operations and sound-setting operations. `hasSavedGame` only checks key existence; it never decodes or migrates, so it is safe to call while rendering. Persistence is private SharedPreferences; methods returning nullable state can indicate no usable save. A failed game decode clears the unfinished checkpoint but retains the separate roster. `saveGame` with `durable=true` uses a synchronous preference commit; sound-setting saves use asynchronous apply.
 
 `GameAudio` loads bundled sounds, applies `SoundSettings`, plays, stops and previews effects and releases `SoundPool`. Playback also depends on the device's sound state. These APIs are application internals and require an Android context.
 
 ## Build and tooling interfaces
 
-Use `./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug` and `python3 tools/validate_words.py` where their prerequisites are installed. Release tasks require the four signing environment variables documented in [README.md](../README.md#build-and-test); do not place their values in files, logs or command lines. Word-bank generators modify the bundled JSON and should not be run casually; validate and review any resulting diff.
+Use `./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug`, `./gradlew :app:lintRelease :app:assembleRelease` (unsigned verification of R8 and shrinking), `python3 tools/validate_words.py` and `python3 tools/build_icon.py` where their prerequisites are installed. Release tasks require the four signing environment variables documented in [README.md](../README.md#build-and-test); do not place their values in files, logs or command lines. Word-bank generators modify the bundled JSON and should not be run casually; validate and review any resulting diff.

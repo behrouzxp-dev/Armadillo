@@ -4,7 +4,7 @@
 
 Armadillo is an offline, right-to-left Persian group game. Its `applicationId` is `com.armadillo.game`. The app is free, ad-free and requires no internet permission; its sounds, font and words are bundled locally. It uses portrait orientation and has no background music. The manifest requests vibration permission and disables Android backup.
 
-This repository does not designate a current official release or a user-facing application version. The `com.armadillo.game` application ID has never been published, so `versionCode` starts at 1 and no `versionName` is configured; choose both when preparing a future release. The repository on GitHub is the source of truth. See [AGENTS.md](AGENTS.md) for project rules and [CHANGELOG.md](CHANGELOG.md) for changes. Historical test reports and changelogs describe earlier builds, not an official release of the current repository.
+This repository does not designate a current official release. The `com.armadillo.game` application ID has never been published, so `versionCode` starts at 1 with `versionName` `1.0.0` reserved for the first release; change both together when preparing a future release. The repository on GitHub is the source of truth. See [AGENTS.md](AGENTS.md) for project rules and [CHANGELOG.md](CHANGELOG.md) for changes. Historical test reports and changelogs describe earlier builds, not an official release of the current repository.
 
 ## Documentation
 
@@ -15,9 +15,10 @@ This repository does not designate a current official release or a user-facing a
 
 ## Features
 
-- The central page background token is `#F2C50A`; button backgrounds use `#07223C`, with touch feedback and selection borders.
+- The page canvas is taken from the icon background (`#F9CB03`), so the launcher icon and the app share one colour. Filled buttons use navy `#07223C` with white text; outlined buttons use a cream fill with a navy edge, giving the two actions distinct visual weight. The theme is static: it is always light and never follows the system theme setting.
+- The bundled Mikhak typeface (Regular and Bold masters, SIL Open Font License 1.1) is used for every label, button and canvas text.
 - Pause/resume is available during preparation, active play, manual pause, system pause and the explosion screen. An early-end action is available in the pause panel/dialog.
-- The user's original icon artwork is retained; a scaled version with safe padding is used for the adaptive icon. The local Persian Lalezar font is bundled with its SIL Open Font License 1.1 (`app/src/main/assets/fonts/`).
+- The user's original icon artwork is never edited; the launcher assets are generated from it with adaptive-icon safe-zone margins (artwork at 62% of the canvas) and include a monochrome layer for Android 13+ themed icons. `python3 tools/build_icon.py` regenerates them.
 - Playable categories are jobs, animals, foods, places and technology, each with 100 words at each easy, medium and hard level: 1,500 unique words. The previous 723-word general bank remains in `words.json` but is not used in category selection or the word cycle.
 - Player names and order are stored separately and prefilled for subsequent games.
 - Round duration options are 120, 210 or 300 seconds; round counts are 3, 5 or 7. Category selection uses a three-column grid, and sound settings are available on the home screen.
@@ -38,16 +39,18 @@ This repository does not designate a current official release or a user-facing a
 ## Project structure
 
 - `app/src/main/java/com/armadillo/game/` — UI, models, engine, audio and local storage
-- `app/src/main/java/com/armadillo/game/ui/DesignSystem.kt` — shared palette, typography and UI tokens
+- `app/src/main/java/com/armadillo/game/ui/DesignSystem.kt` — shared palette, Mikhak typography and UI tokens
+- `app/src/main/java/com/armadillo/game/data/GameCodec.kt` — pure JSON codec for the saved-game checkpoint
 - `app/src/main/assets/categories.json` — five playable categories and 1,500 topic words
 - `app/src/main/assets/words.json` — retained legacy general bank, inactive in gameplay
-- `app/src/main/assets/fonts/` — Lalezar font and OFL license
-- `app/src/main/res/drawable-nodpi/armadillo_icon_art.jpg` — original icon artwork copy
+- `app/src/main/assets/fonts/` — Mikhak font files and their OFL license
+- `app/src/main/res/drawable-nodpi/` — original icon artwork, generated adaptive foreground, monochrome layer and a small hero bitmap
 - `app/src/test/` — Kotlin/JVM unit tests
 - `docs/` — requirements, architecture, internal interfaces and maintenance plan
 - `tools/build_categories.py` — builds earlier categories while preserving newer categories
 - `tools/add_armadillo_categories.py` — place and technology vocabulary
 - `tools/validate_words.py` — validates the archived general bank and 1,500-word topic bank
+- `tools/build_icon.py` — regenerates the launcher assets from the original artwork
 - `tools/SESSION_HANDOFF.md` — historical session notes and verification results
 - `.github/workflows/debug-apk.yml` — manual Debug build, artifact upload, unit tests and lint
 
@@ -58,9 +61,9 @@ This repository does not designate a current official release or a user-facing a
 ## Build requirements
 
 - JDK 17 or newer (the recorded release build used Temurin JDK 17.0.21)
-- Android SDK Platform 35 and Build Tools 35
+- Android SDK Platform 36 and Build Tools 36
 - Gradle Wrapper 8.11.1
-- Android 6.0 / API 23 minimum; `minSdk=23`, `targetSdk=35`
+- Android 6.0 / API 23 minimum; `minSdk=23`, `targetSdk=36` (Google Play requires API 36 for new uploads since 31 August 2026)
 
 `local.properties` contains the builder's SDK path and is not part of the source archive.
 
@@ -71,8 +74,9 @@ Linux/macOS:
 ```bash
 ./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug
 python3 tools/validate_words.py
-# Release signing inputs must be loaded into the current shell from private storage first.
+# An unsigned release build verifies R8, resource shrinking and release lint.
 ./gradlew :app:lintRelease :app:assembleRelease
+# Release signing inputs must be loaded into the current shell from private storage first.
 ```
 
 The Debug APK is written to `app/build/outputs/apk/debug/app-debug.apk` and is signed with the local Android debug key. A Debug APK generally cannot update a Release APK signed with a different key. Uninstalling an existing app can delete its local data; back it up before taking that step.
@@ -93,11 +97,26 @@ The signed release APK is produced at:
 app/build/outputs/apk/release/app-release.apk
 ```
 
-## GitHub Actions Debug build
+## GitHub Actions builds
 
-The [Debug APK workflow](.github/workflows/debug-apk.yml) can be started manually from the GitHub Actions page with `workflow_dispatch` and an available branch. It assembles the Debug APK, uploads `armadillo-debug-apk` as a ZIP artifact retained for seven days, then runs `:app:testDebugUnitTest` and `:app:lintDebug`. Download the artifact from the run page while it is available; repository access is required. The upload occurs before tests and lint, so check the final run result as well as the artifact. It does not publish a release or create a tag.
+The [Android build workflow](.github/workflows/debug-apk.yml) runs for every pull request into `main`, for workflow-file changes on `main`, and on manual `workflow_dispatch`.
 
-The workflow's automatic push trigger runs only for changes to the workflow file on `main`; it is not a general continuous-integration trigger for other changes or branches. The most recent [run 41916950130](https://github.com/behrouzxp-dev/Armadillo/actions/runs/41916950130) passed the Debug build, APK identity check, artifact upload, unit-test and lint steps after the actions were upgraded to `checkout@v7`, `setup-java@v6` and `upload-artifact@v7`. Its only annotation was the announced `ubuntu-latest` image migration; it did not test installation or startup. A past successful run does not establish that a future checkout builds successfully.
+- **debug job** — validates the bundled word banks with `python3 tools/validate_words.py`, assembles the Debug APK, verifies the package name and launcher activity, uploads `armadillo-debug-apk` as a ZIP artifact retained for seven days, then runs `:app:testDebugUnitTest` and `:app:lintDebug`.
+- **release job** — assembles an unsigned Release APK (`R8` minification and resource shrinking) and runs `:app:lintRelease`. Signed releases remain a manual, owner-approved step requiring the four `RELEASE_*` variables.
+
+The upload occurs before tests and lint, so read the whole run result rather than the artifact alone. The workflow never publishes a release or creates a tag. The most recent [run 41923932662](https://github.com/behrouzxp-dev/Armadillo/actions/runs/41923932662) passed both jobs; its only annotation was the announced `ubuntu-latest` image migration. Neither job installs or starts the app, so a green run is not a device test.
+
+## Theme and accessibility
+
+- One static light theme: there is no `values-night` variant and `android:forceDarkAllowed` is `false`, so changing the system theme cannot change the app's colours.
+- Buttons are platform `Button`s, so TalkBack announces them as buttons. Each seat on the players screen is also exposed as an individual button, because a canvas drawing cannot provide per-seat accessibility nodes.
+- Team identity is never colour-only: team numbers accompany every team chip, label and result row.
+- Body text on the canvas (`#38434F` on `#F9CB03`) and white text on navy buttons exceed the WCAG AA contrast ratio; the yellow team marker keeps a navy edge because gold on yellow cannot reach 3:1.
+- The seating canvas now follows the system font scale, and pages preserve their scroll position when a selection re-renders them.
+
+## License
+
+The repository is released under the [MIT License](LICENSE). Bundled assets keep their own licences; the Mikhak typeface is SIL OFL 1.1.
 
 ## Signing and upgrades
 

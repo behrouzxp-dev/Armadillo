@@ -16,12 +16,16 @@ import android.os.Looper
 import android.os.SystemClock
 import android.os.VibrationEffect
 import android.os.Vibrator
+import android.os.VibratorManager
+import android.text.InputFilter
 import android.text.InputType
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowInsets
+import android.view.WindowInsetsController
 import android.view.animation.AccelerateDecelerateInterpolator
+import android.widget.Button
 import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.FrameLayout
@@ -49,10 +53,10 @@ import com.armadillo.game.game.rankTeams
 import com.armadillo.game.ui.DesignColors
 import com.armadillo.game.ui.DesignSystem
 import com.armadillo.game.ui.SeatingCircleView
-import java.text.DecimalFormat
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import android.window.OnBackInvokedDispatcher
 
 private enum class AppScreen {
     HOME, PLAYER_COUNT, PLAYERS, CATEGORIES, OPTIONS, SOUND_SETTINGS, RULES, ABOUT, GAME, SYSTEM_PAUSED, RESULTS
@@ -71,7 +75,8 @@ private data class SetupDraft(
 
 class MainActivity : Activity() {
     private lateinit var store: LocalStore
-    private lateinit var wordBank: LocalWordBank
+    /** Loaded off the main thread; every entry point tolerates a not-yet-ready bank. */
+    private var wordBank: LocalWordBank? = null
     private lateinit var audio: GameAudio
     private lateinit var designColors: DesignColors
     private lateinit var palette: PaletteTokens
@@ -80,18 +85,25 @@ class MainActivity : Activity() {
     private var engine: GameEngine? = null
     private var draft: SetupDraft? = null
     private var selectedPlayerCount: Int? = null
-    private val lalezarTypeface by lazy { DesignSystem.lalezar(this) }
-    private val lalezarBoldTypeface by lazy { DesignSystem.lalezar(this, bold = true) }
+    private val appFont by lazy { DesignSystem.typeface(this) }
+    private val appFontBold by lazy { DesignSystem.typeface(this, bold = true) }
     private var screen = AppScreen.HOME
     private var settingsReturnScreen = AppScreen.HOME
     private var rootFrame: FrameLayout? = null
     private var dialogOpen = false
     private var needsRenderOnResume = false
+    private var backgroundSuspensionDone = false
     private var startAnimator: ObjectAnimator? = null
     private var explosionAnimator: AnimatorSet? = null
     private var explosionTapHandled = false
     private var lastCheckpointMs = 0L
     private var nextBeepAtNanos = 0L
+
+    private var liveScroll: ScrollView? = null
+    private var pendingScrollY = 0
+    private var lastTeamSeconds: List<Long> = emptyList()
+    private var lastPlayerIndex = -1
+    private var lastWordShown: String? = null
 
     private var teamTimeViews: List<TextView> = emptyList()
     private var roundLabelView: TextView? = null
@@ -106,6 +118,7 @@ class MainActivity : Activity() {
     private var startButton: TextView? = null
 
     private val mainHandler = Handler(Looper.getMainLooper())
+    private val wordTimestampFormat = SimpleDateFormat("HH:mm:ss", Locale.US)
     private val timerRunnable = object : Runnable {
         override fun run() {
             val activeEngine = engine ?: return
@@ -123,7 +136,8 @@ class MainActivity : Activity() {
                 lastCheckpointMs = nowMs
             }
             if (activeEngine.state.phase == GamePhase.PLAYING) {
-                mainHandler.postDelayed(this, 100L)
+                // Three updates a second are enough for a countdown shown in whole seconds.
+                mainHandler.postDelayed(this, LIVE_UPDATE_INTERVAL_MS)
             }
         }
     }
@@ -133,29 +147,84 @@ class MainActivity : Activity() {
         designColors = DesignSystem.colors(this)
         palette = PaletteTokens(designColors)
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-        window.statusBarColor = palette.CANVAS
-        window.navigationBarColor = palette.CANVAS
+        configureSystemBars()
+        registerBackHandler()
+
+        store = LocalStore(this)
+        soundSettings = store.loadSoundSettings()
+        audio = GameAudio(this, soundSettings)
+        loadWordBankAsync()
+        gameState = store.loadGame()
+        gameState?.let { game ->
+            engine = wordBank?.let { bank ->
+                GameEngine(game, bank, clockNanos = { SystemClock.elapsedRealtimeNanos() })
+            }
+        }
+        if (savedInstanceState != null) restoreAfterRecreation(savedInstanceState) else renderRestoredState()
+    }
+
+    /**
+     * Edge-to-edge is enforced from Android 15 and mandatory when targeting API 36,
+     * so the window no longer draws the system bar backgrounds itself. Insets are
+     * applied once in [showPage].
+     */
+    private fun configureSystemBars() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             window.isStatusBarContrastEnforced = false
             window.isNavigationBarContrastEnforced = false
         }
-        window.decorView.systemUiVisibility = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR or View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            window.setDecorFitsSystemWindows(false)
+            window.insetsController?.setSystemBarsAppearance(
+                WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS or WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS,
+                WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS or WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS
+            )
         } else {
-            View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
+            @Suppress("DEPRECATION")
+            window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR or
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR else 0
         }
-
-        store = LocalStore(this)
-        wordBank = LocalWordBank(this)
-        soundSettings = store.loadSoundSettings()
-        audio = GameAudio(this, soundSettings)
-        gameState = store.loadGame()
-        gameState?.let { game -> engine = GameEngine(game, wordBank, clockNanos = { SystemClock.elapsedRealtimeNanos() }) }
-        renderRestoredState()
     }
+
+    /**
+     * Targeting API 36 turns predictive back on by default, and the platform no
+     * longer calls onBackPressed(). Registering an OnBackInvokedCallback keeps the
+     * in-app back navigation working on Android 13 and newer.
+     */
+    private fun registerBackHandler() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            onBackInvokedDispatcher.registerOnBackInvokedCallback(
+                OnBackInvokedDispatcher.PRIORITY_DEFAULT
+            ) { handleBack() }
+        }
+    }
+
+    private fun loadWordBankAsync() {
+        Thread {
+            val result = runCatching { LocalWordBank(applicationContext) }
+            mainHandler.post {
+                if (isFinishing || isDestroyed) return@post
+                result.onSuccess { bank -> wordBank = bank }
+                    .onFailure { showUnavailableWordsDialog() }
+            }
+        }.apply { name = "word-bank-loader" }.start()
+    }
+
+    private fun showUnavailableWordsDialog() {
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("بانک واژهها بارگذاری نشد")
+            .setMessage("فایل واژههای همراه برنامه خوانده نشد. برنامه را دوباره نصب کنید؛ دادههای ذخیرهشده پاک نمیشوند.")
+            .setPositiveButton("باشه", null)
+            .create()
+        showDesignDialog(dialog, titleText = "بانک واژهها بارگذاری نشد")
+    }
+
+    private fun restoredEngine(state: GameState): GameEngine? =
+        wordBank?.let { bank -> GameEngine(state, bank, clockNanos = { SystemClock.elapsedRealtimeNanos() }) }
 
     override fun onResume() {
         super.onResume()
+        backgroundSuspensionDone = false
         if (needsRenderOnResume) {
             needsRenderOnResume = false
             renderCurrentGameState()
@@ -163,49 +232,49 @@ class MainActivity : Activity() {
     }
 
     override fun onPause() {
-        if (::store.isInitialized && engine != null) {
-            val state = engine!!.state
-            if (state.phase != GamePhase.RESULTS) {
-                engine!!.pauseForSystem()
-                audio.stopAll()
-                stopActiveLoops()
-                store.saveGame(state, durable = true)
-                needsRenderOnResume = true
-            }
-        }
+        suspendForBackground()
         super.onPause()
     }
 
     override fun onStop() {
-        if (::store.isInitialized && engine != null && engine!!.state.phase != GamePhase.RESULTS) {
-            engine!!.pauseForSystem()
-            audio.stopAll()
-            stopActiveLoops()
-            store.saveGame(engine!!.state, durable = true)
-            needsRenderOnResume = true
-        }
+        suspendForBackground()
         super.onStop()
+    }
+
+    /** One implementation for pause, stop and focus loss; previously three copies drifted apart. */
+    private fun suspendForBackground() {
+        if (!::store.isInitialized) return
+        val active = engine ?: return
+        if (active.state.phase == GamePhase.RESULTS) return
+        // onPause, onStop and focus loss can all fire for one backgrounding event; save once.
+        if (backgroundSuspensionDone) return
+        active.pauseForSystem()
+        audio.stopAll()
+        stopActiveLoops()
+        store.saveGame(active.state, durable = true)
+        needsRenderOnResume = true
+        backgroundSuspensionDone = true
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
-        if (!hasFocus && !dialogOpen && ::store.isInitialized && engine != null) {
-            val phase = engine!!.state.phase
-            if (phase == GamePhase.PLAYING || phase == GamePhase.MANUAL_PAUSED || phase == GamePhase.PREPARATION || phase == GamePhase.EXPLODING) {
-                engine!!.pauseForSystem()
-                audio.stopAll()
-                stopActiveLoops()
-                store.saveGame(engine!!.state, durable = true)
-                needsRenderOnResume = true
+        if (!hasFocus && !dialogOpen) {
+            suspendForBackground()
+        } else if (hasFocus) {
+            backgroundSuspensionDone = false
+            if (needsRenderOnResume && engine != null) {
+                needsRenderOnResume = false
+                renderCurrentGameState()
             }
-        } else if (hasFocus && needsRenderOnResume && engine != null) {
-            needsRenderOnResume = false
-            renderCurrentGameState()
         }
     }
 
     @Suppress("DEPRECATION")
     override fun onBackPressed() {
+        handleBack()
+    }
+
+    private fun handleBack() {
         when (screen) {
             AppScreen.HOME -> showHomeExitDialog()
             AppScreen.PLAYER_COUNT -> renderHome()
@@ -238,6 +307,11 @@ class MainActivity : Activity() {
             GamePhase.EXPLODING -> renderExplosionPage(playSound = false)
             GamePhase.RESULTS -> renderResults()
         }
+    }
+
+    /** Keeps the reading position when the same page re-renders after a tap. */
+    private fun rememberScroll() {
+        liveScroll?.let { pendingScrollY = it.scrollY }
     }
 
     private fun showPage(view: View) {
@@ -296,6 +370,12 @@ class MainActivity : Activity() {
         }
         scroll.addView(body, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
         page.addView(scroll, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
+        liveScroll = scroll
+        if (pendingScrollY > 0) {
+            val target = pendingScrollY
+            pendingScrollY = 0
+            scroll.post { scroll.scrollTo(0, target) }
+        }
         if (footerText != null && footerAction != null) {
             val enabled = footerEnabled()
             val confirm = uiButton(footerText, height = 58) {
@@ -328,7 +408,7 @@ class MainActivity : Activity() {
             setPadding(dp(DesignSystem.Spacing.MD), dp(DesignSystem.Spacing.SM), dp(DesignSystem.Spacing.MD), dp(DesignSystem.Spacing.INSET_14))
         }
         val logo = ImageView(this).apply {
-            setImageResource(R.drawable.armadillo_icon_art)
+            setImageResource(R.drawable.armadillo_icon_hero)
             scaleType = ImageView.ScaleType.FIT_CENTER
             contentDescription = "نشان آرمادیلو"
         }
@@ -340,7 +420,8 @@ class MainActivity : Activity() {
             selectedPlayerCount = store.loadPlayerRoster()?.playerCount ?: 4
             renderPlayerCount()
         }), matchParams(bottom = 10))
-        val canContinue = gameState != null && gameState?.phase != GamePhase.RESULTS && store.hasUnfinishedGame()
+        val canContinue = gameState != null && gameState?.phase != GamePhase.RESULTS && store.hasSavedGame()
+        if (store.consumeDiscardedCheckpointNotice()) mainHandler.post { showDiscardedCheckpointDialog() }
         if (canContinue) {
             column.addView(uiButton("ادامه بازی قبلی", height = 58, onClick = { continueSavedGame() }), matchParams(bottom = 10))
         }
@@ -350,6 +431,7 @@ class MainActivity : Activity() {
         column.addView(space(8))
         column.addView(label("آفلاین · رایگان · بدون تبلیغ", 13f, palette.MUTED).apply { gravity = Gravity.CENTER }, matchParams())
         scroll.addView(column, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+        liveScroll = scroll
         showPage(scroll)
     }
 
@@ -362,7 +444,11 @@ class MainActivity : Activity() {
             return
         }
         gameState = restored
-        engine = GameEngine(restored, wordBank, clockNanos = { SystemClock.elapsedRealtimeNanos() })
+        engine = restoredEngine(restored)
+        if (engine == null) {
+            showWordsNotReadyDialog()
+            return
+        }
         renderCurrentGameState()
     }
 
@@ -396,6 +482,7 @@ class MainActivity : Activity() {
             card.contentDescription = "$count بازیکن، ${if (selected) "انتخاب‌شده" else "انتخاب‌نشده"}"
             card.setOnClickListener {
                 audio.playEffect()
+                rememberScroll()
                 selectedPlayerCount = count
                 renderPlayerCount()
             }
@@ -424,8 +511,21 @@ class MainActivity : Activity() {
         )
         body.addView(label("صندلی پایین دایره شروع‌کنندهٔ دست اول است. هم‌تیمی‌ها روبه‌روی یکدیگر می‌نشینند.", 14f, palette.MUTED), matchParams(bottom = 6))
         val seats = SeatingCircleView(this, current.playerCount, current.names) { seat -> editPlayerName(seat) }
-        body.addView(seats, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(365)))
-        body.addView(label("برای واردکردن یا ویرایش نام، صندلی را لمس کنید. نام خالی خودکار تکمیل می‌شود.", 13f, palette.MUTED), matchParams(top = 2, bottom = 12))
+        body.addView(seats, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(340)))
+        body.addView(
+            label("برای ویرایش نام، دکمهٔ صندلی موردنظر را بزنید یا صندلی را روی دایره لمس کنید. نام خالی خودکار تکمیل می‌شود.", 13f, palette.MUTED),
+            matchParams(top = 2, bottom = 8)
+        )
+        // The canvas circle cannot expose one accessibility node per seat, so every seat is
+        // also a real focusable button for screen-reader and switch-access users.
+        for (seat in 0 until current.playerCount) {
+            val seatName = current.names.getOrNull(seat)?.trim().orEmpty().ifEmpty { "نام بازیکن" }
+            val teamNumber = seat % (current.playerCount / 2) + 1
+            body.addView(
+                uiButton("صندلی ${seat + 1} · $seatName · تیم $teamNumber", outlined = true, height = 48) { editPlayerName(seat) },
+                matchParams(bottom = 6)
+            )
+        }
         showPage(page)
     }
 
@@ -435,10 +535,11 @@ class MainActivity : Activity() {
             setText(current.names.getOrNull(seat).orEmpty())
             hint = "نام بازیکن ${seat + 1}"
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
+            filters = arrayOf(InputFilter.LengthFilter(MAX_PLAYER_NAME_LENGTH))
             setSingleLine(true)
             textDirection = View.TEXT_DIRECTION_RTL
             layoutDirection = View.LAYOUT_DIRECTION_RTL
-            typeface = lalezarTypeface
+            typeface = appFont
             setTextColor(palette.INK)
             setHintTextColor(palette.MUTED)
             backgroundTintList = ColorStateList.valueOf(palette.BLUE)
@@ -497,6 +598,7 @@ class MainActivity : Activity() {
                 card.contentDescription = "$title، ${if (selected) "انتخاب‌شده" else "انتخاب‌نشده"}"
                 card.setOnClickListener {
                     audio.playEffect()
+                    rememberScroll()
                     if (id in current.categories) current.categories.remove(id) else current.categories.add(id)
                     renderCategories()
                 }
@@ -542,7 +644,7 @@ class MainActivity : Activity() {
             val card = choiceCard(current.difficulty == level)
             card.addView(label(pair.first, 15f, palette.INK, true), matchParams(bottom = 4))
             card.addView(label(pair.second, 12f, palette.MUTED), matchParams())
-            card.setOnClickListener { audio.playEffect(); current.difficulty = level; renderOptions() }
+            card.setOnClickListener { audio.playEffect(); rememberScroll(); current.difficulty = level; renderOptions() }
             body.addView(card, matchParams(bottom = 7))
         }
 
@@ -559,6 +661,7 @@ class MainActivity : Activity() {
                 outlined = !selected,
                 height = 48
             ) {
+                rememberScroll()
                 current.durationSeconds = seconds
                 renderOptions()
             }
@@ -581,6 +684,7 @@ class MainActivity : Activity() {
                 outlined = !selected,
                 height = 48
             ) {
+                rememberScroll()
                 current.rounds = rounds
                 renderOptions()
             }
@@ -622,10 +726,15 @@ class MainActivity : Activity() {
             roundRemainingNanos = setup.durationSeconds * GameEngine.NANOS_PER_SECOND,
             teamStats = MutableList(setup.playerCount / 2) { TeamStats() }
         )
+        val newEngine = restoredEngine(state)
+        if (newEngine == null) {
+            showWordsNotReadyDialog()
+            return
+        }
         // One atomic preference write replaces the previous incomplete game only after setup is complete.
         store.saveGame(state, durable = true)
         gameState = state
-        engine = GameEngine(state, wordBank, clockNanos = { SystemClock.elapsedRealtimeNanos() })
+        engine = newEngine
         audio.playEffect()
         renderGamePage()
     }
@@ -648,6 +757,9 @@ class MainActivity : Activity() {
         correctButton = null
         pauseButton = null
         startButton = null
+        lastTeamSeconds = emptyList()
+        lastPlayerIndex = -1
+        lastWordShown = null
 
         val frame = FrameLayout(this).apply { setBackgroundColor(palette.CANVAS); layoutDirection = View.LAYOUT_DIRECTION_RTL }
         val content = LinearLayout(this).apply {
@@ -677,7 +789,7 @@ class MainActivity : Activity() {
             }
             val swatch = View(this).apply { background = teamSwatch(team) }
             item.addView(swatch, LinearLayout.LayoutParams(dp(DesignSystem.Spacing.XXS), dp(DesignSystem.Spacing.XL)).apply { marginEnd = dp(DesignSystem.Spacing.INSET_3) })
-            val time = label("0s", if (state.teamCount >= 5) 9f else if (state.teamCount == 4) 10f else 11f, palette.INK, true)
+            val time = label(teamChipText(team, 0L), if (state.teamCount >= 5) 9f else if (state.teamCount == 4) 10f else 11f, palette.INK, true)
                 .apply { gravity = Gravity.CENTER; maxLines = 1 }
             item.addView(time, LinearLayout.LayoutParams(0, dp(28), 1f))
             teamRow.addView(item, LinearLayout.LayoutParams(0, dp(40), 1f).apply { marginEnd = dp(1); marginStart = dp(1) })
@@ -936,7 +1048,7 @@ class MainActivity : Activity() {
         }
         val penaltySwatch = View(this).apply { background = teamSwatch(team, 6f) }
         penaltyRow.addView(penaltySwatch, LinearLayout.LayoutParams(dp(DesignSystem.Spacing.INSET_14), dp(DesignSystem.Spacing.INSET_22)).apply { marginStart = dp(DesignSystem.Spacing.INSET_6) })
-        penaltyRow.addView(label("تیم ${team + 1} جریمهٔ ۱۰ ثانیه‌ای گرفت", 19f, teamLabelColor(team), true).apply { gravity = Gravity.CENTER })
+        penaltyRow.addView(label("تیم ${team + 1} جریمهٔ ۱۰ ثانیه‌ای گرفت", 19f, teamLabelColor(), true).apply { gravity = Gravity.CENTER })
         column.addView(penaltyRow, matchParams(top = 6, bottom = 6))
         column.addView(label("دست ${state.currentRound} پایان یافت", 14f, palette.MUTED).apply { gravity = Gravity.CENTER }, matchParams(bottom = 18))
         column.addView(label("برای ادامه، صفحه را لمس کنید", 15f, palette.BLUE, true).apply { gravity = Gravity.CENTER }, matchParams())
@@ -1035,22 +1147,34 @@ class MainActivity : Activity() {
     private fun updateLiveGameUi() {
         val active = engine ?: return
         val state = active.state
-        for (team in teamTimeViews.indices) {
-            val stats = state.teamStats[team]
-            teamTimeViews[team].text = "${stats.finalTimeNanos / GameEngine.NANOS_PER_SECOND}s"
+        val teamSeconds = state.teamStats.map { it.finalTimeNanos / GameEngine.NANOS_PER_SECOND }
+        if (teamSeconds != lastTeamSeconds) {
+            for (team in teamTimeViews.indices) {
+                teamTimeViews[team].text = teamChipText(team, teamSeconds.getOrElse(team) { 0L })
+            }
+            lastTeamSeconds = teamSeconds
         }
         roundLabelView?.text = "دست ${state.currentRound} از ${state.totalRounds}"
-        currentPlayerView?.text = state.currentPlayer.name
-        val currentColor = colorOf(state.currentPlayer.teamIndex)
-        currentCardView?.background = rounded(tint(currentColor, 0.86f), DesignSystem.Radius.CONTROL, teamEdgeColor(state.currentPlayer.teamIndex), 1.7f)
-        currentPlayerView?.setTextColor(palette.INK)
-        nextPlayerView?.text = state.nextPlayer.name
-        val nextColor = colorOf(state.nextPlayer.teamIndex)
-        nextCardView?.background = rounded(tint(nextColor, 0.93f), DesignSystem.Radius.CONTROL, teamEdgeColor(state.nextPlayer.teamIndex), 1f)
-        nextPlayerView?.setTextColor(palette.MUTED)
-        state.currentWord?.let { word ->
-            wordView?.text = word
-            wordView?.let { fitWordSize(it, word) }
+        if (lastPlayerIndex != state.currentPlayerIndex) {
+            currentPlayerView?.text = state.currentPlayer.name
+            val currentColor = colorOf(state.currentPlayer.teamIndex)
+            currentCardView?.background = rounded(tint(currentColor, 0.86f), DesignSystem.Radius.CONTROL, teamEdgeColor(state.currentPlayer.teamIndex), 1.7f)
+            currentPlayerView?.setTextColor(palette.INK)
+            nextPlayerView?.text = state.nextPlayer.name
+            val nextColor = colorOf(state.nextPlayer.teamIndex)
+            nextCardView?.background = rounded(tint(nextColor, 0.93f), DesignSystem.Radius.CONTROL, teamEdgeColor(state.nextPlayer.teamIndex), 1f)
+            nextPlayerView?.setTextColor(palette.MUTED)
+            lastPlayerIndex = state.currentPlayerIndex
+        }
+        val word = state.currentWord
+        if (word != lastWordShown) {
+            if (word != null) {
+                wordView?.text = word
+                wordView?.let { fitWordSize(it, word) }
+            } else {
+                wordView?.text = ""
+            }
+            lastWordShown = word
         }
         val canSwap = active.canSwap()
         swapButton?.isEnabled = canSwap
@@ -1091,15 +1215,11 @@ class MainActivity : Activity() {
                 renderSystemPaused()
             }
             GamePhase.SYSTEM_PAUSED -> {
+                // Resuming never returns RESULTS: the phase is restored before the game can end.
                 active.resumeFromSystemPause()
-                if (active.state.phase == GamePhase.RESULTS) {
-                    store.clearGame()
-                    renderResults()
-                } else {
-                    store.saveGame(active.state, durable = true)
-                    renderCurrentGameState()
-                    if (active.state.phase == GamePhase.PLAYING) startGameLoop()
-                }
+                store.saveGame(active.state, durable = true)
+                renderCurrentGameState()
+                if (active.state.phase == GamePhase.PLAYING) startGameLoop()
             }
             GamePhase.RESULTS -> Unit
         }
@@ -1201,13 +1321,13 @@ class MainActivity : Activity() {
             }
             dialog.findViewById<TextView>(android.R.id.message)?.apply {
                 setTextColor(palette.MUTED)
-                typeface = lalezarTypeface
+                typeface = appFont
                 textSize = DesignSystem.TypeScale.BODY_SMALL
                 textDirection = View.TEXT_DIRECTION_RTL
             }
             listOf(AlertDialog.BUTTON_POSITIVE, AlertDialog.BUTTON_NEGATIVE, AlertDialog.BUTTON_NEUTRAL).forEach { which ->
                 dialog.getButton(which)?.apply {
-                    typeface = lalezarBoldTypeface
+                    typeface = appFontBold
                     setTextColor(buttonTextColorStateList())
                     background = rippleBackground(
                         palette.BUTTON,
@@ -1235,13 +1355,19 @@ class MainActivity : Activity() {
         val ranking = rankTeams(state.teamStats)
         val winners = ranking.filter { it.rank == 1 }
         val (page, body) = createPage("نتایج بازی", { returnToHome() })
+        if (state.wordHistory.isEmpty() && state.teamStats.all { it.realTimeNanos == 0L && it.penaltyNanos == 0L }) {
+            body.addView(
+                label("این بازی پیش از پایان دست اول بسته شد؛ آماری برای رتبه‌بندی ثبت نشده است.", 13f, palette.RED, true),
+                matchParams(bottom = 10)
+            )
+        }
         val winnerCard = sectionCard(fillColor = palette.PALE_ACCENT, stroke = palette.BLUE)
         winnerCard.addView(label(if (winners.size == 1) "تیم برنده" else "تساوی در رتبهٔ اول", 17f, palette.INK, true), matchParams(bottom = 8))
         winners.forEach { winner ->
             val teamRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; layoutDirection = View.LAYOUT_DIRECTION_RTL; gravity = Gravity.CENTER_VERTICAL }
             val swatch = View(this).apply { background = teamSwatch(winner.teamIndex, 5f) }
             teamRow.addView(swatch, LinearLayout.LayoutParams(dp(DesignSystem.Spacing.INSET_10), dp(32)).apply { marginEnd = dp(DesignSystem.Spacing.XXS) })
-            val winnerLabel = label("تیم ${winner.teamIndex + 1}", 18f, teamLabelColor(winner.teamIndex), true)
+            val winnerLabel = label("تیم ${winner.teamIndex + 1}", 18f, teamLabelColor(), true)
             teamRow.addView(winnerLabel, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
             teamRow.addView(label(formatFinalTime(winner.stats.finalTimeNanos), 16f, palette.INK, true))
             winnerCard.addView(teamRow, matchParams(bottom = 3))
@@ -1257,7 +1383,7 @@ class MainActivity : Activity() {
             top.addView(label("رتبهٔ ${row.rank}", 13f, palette.MUTED, true), LinearLayout.LayoutParams(dp(62), ViewGroup.LayoutParams.WRAP_CONTENT))
             val colorBar = View(this).apply { background = teamSwatch(row.teamIndex, 4f) }
             top.addView(colorBar, LinearLayout.LayoutParams(dp(DesignSystem.Spacing.XS), dp(30)).apply { marginEnd = dp(5); marginStart = dp(5) })
-            top.addView(label("تیم ${row.teamIndex + 1}", 16f, teamLabelColor(row.teamIndex), true), LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+            top.addView(label("تیم ${row.teamIndex + 1}", 16f, teamLabelColor(), true), LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
             top.addView(label(formatFinalTime(row.stats.finalTimeNanos), 15f, palette.INK, true))
             card.addView(top, matchParams(bottom = 6))
             val teamNames = state.players.filter { it.teamIndex == row.teamIndex }.sortedBy { it.seat }.joinToString(" و ") { it.name }
@@ -1398,7 +1524,7 @@ class MainActivity : Activity() {
         val check = CheckBox(this).apply {
             text = "فعال باشد"
             textSize = DesignSystem.TypeScale.label(13f)
-            typeface = lalezarTypeface
+            typeface = appFont
             setTextColor(palette.MUTED)
             isChecked = enabled
             layoutDirection = View.LAYOUT_DIRECTION_RTL
@@ -1443,6 +1569,10 @@ class MainActivity : Activity() {
             setOnCheckedChangeListener { _, value -> onChange(value); audio.applySettings(soundSettings) }
         }
         box.addView(check, LinearLayout.LayoutParams(dp(48), dp(48)))
+        box.isClickable = true
+        box.isFocusable = true
+        box.contentDescription = title
+        box.setOnClickListener { check.isChecked = !check.isChecked }
         return box
     }
 
@@ -1465,7 +1595,12 @@ class MainActivity : Activity() {
     private fun vibrateOnExplosion() {
         if (!soundSettings.vibrateOnExplosion) return
         try {
-            val vibrator = getSystemService(VIBRATOR_SERVICE) as Vibrator
+            val vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                (getSystemService(VIBRATOR_MANAGER_SERVICE) as VibratorManager).defaultVibrator
+            } else {
+                @Suppress("DEPRECATION")
+                getSystemService(VIBRATOR_SERVICE) as Vibrator
+            }
             if (!vibrator.hasVibrator()) return
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) vibrator.vibrate(VibrationEffect.createOneShot(180L, VibrationEffect.DEFAULT_AMPLITUDE))
             else @Suppress("DEPRECATION") vibrator.vibrate(180L)
@@ -1478,7 +1613,7 @@ class MainActivity : Activity() {
         this.text = text
         setTextColor(color)
         textSize = DesignSystem.TypeScale.label(sizeSp)
-        typeface = if (bold) lalezarBoldTypeface else lalezarTypeface
+        typeface = if (bold) appFontBold else appFont
         gravity = Gravity.CENTER_VERTICAL or Gravity.START
         textDirection = View.TEXT_DIRECTION_RTL
         layoutDirection = View.LAYOUT_DIRECTION_RTL
@@ -1492,11 +1627,14 @@ class MainActivity : Activity() {
         height: Int = 54,
         playEffect: Boolean = true,
         onClick: () -> Unit
-    ): TextView = TextView(this).apply {
+    ): Button = Button(this).apply {
         this.text = text
+        isAllCaps = false
+        stateListAnimator = null
+        minimumWidth = 0
         textSize = DesignSystem.TypeScale.button(height)
-        typeface = lalezarBoldTypeface
-        setTextColor(buttonTextColorStateList())
+        typeface = appFontBold
+        setTextColor(buttonTextColorStateList(outlined))
         gravity = Gravity.CENTER
         textAlignment = View.TEXT_ALIGNMENT_CENTER
         textDirection = View.TEXT_DIRECTION_RTL
@@ -1505,9 +1643,9 @@ class MainActivity : Activity() {
         isClickable = true
         isFocusable = true
         background = rippleBackground(
-            palette.BUTTON,
+            if (outlined) palette.BUTTON_OUTLINED_FILL else palette.BUTTON,
             if (outlined) palette.BUTTON_OUTLINE else null,
-            if (outlined) DesignSystem.Interaction.DEFAULT_STROKE_DP.toFloat() else 0f,
+            if (outlined) DesignSystem.Interaction.OUTLINED_STROKE_DP.toFloat() else 0f,
             DesignSystem.Radius.BUTTON,
             palette.BUTTON_RIPPLE
         )
@@ -1518,9 +1656,10 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun buttonTextColorStateList() = ColorStateList(
+    /** Filled buttons use white text; outlined buttons keep readable navy text. */
+    private fun buttonTextColorStateList(outlined: Boolean = false) = ColorStateList(
         arrayOf(intArrayOf(-android.R.attr.state_enabled), intArrayOf()),
-        intArrayOf(palette.BUTTON_DISABLED_TEXT, palette.BUTTON_TEXT)
+        intArrayOf(palette.BUTTON_DISABLED_TEXT, if (outlined) palette.INK else palette.BUTTON_TEXT)
     )
 
     private fun sectionCard(fillColor: Int = palette.SURFACE, stroke: Int = palette.LINE): LinearLayout = LinearLayout(this).apply {
@@ -1575,7 +1714,7 @@ class MainActivity : Activity() {
     // Keep every team color byte-for-byte; the fifth team's gold marker gets a navy edge on the yellow canvas.
     private fun teamEdgeColor(team: Int): Int = if (team == DesignSystem.Metrics.TEAM_YELLOW_INDEX) palette.INK else colorOf(team)
 
-    private fun teamLabelColor(@Suppress("UNUSED_PARAMETER") team: Int): Int = palette.INK
+    private fun teamLabelColor(): Int = palette.INK
 
     private fun teamSwatch(team: Int, radiusDp: Float = DesignSystem.Radius.CHIP): GradientDrawable {
         val isYellowTeam = team == DesignSystem.Metrics.TEAM_YELLOW_INDEX
@@ -1599,14 +1738,13 @@ class MainActivity : Activity() {
         view.textSize = DesignSystem.TypeScale.word(word.length)
     }
 
-    private fun formatFinalTime(nanos: Long): String {
-        val seconds = nanos.coerceAtLeast(0L) / 1_000_000_000.0
-        return DecimalFormat("0.00").format(seconds) + " ثانیه"
-    }
+    private fun formatFinalTime(nanos: Long): String =
+        String.format(Locale.US, "%.2f", nanos.coerceAtLeast(0L) / 1_000_000_000.0) + " ثانیه"
 
     private fun formatWordTimestamp(epochMillis: Long): String =
-        if (epochMillis <= 0L) "زمان نامشخص"
-        else SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date(epochMillis))
+        if (epochMillis <= 0L) "زمان نامشخص" else wordTimestampFormat.format(Date(epochMillis))
+
+    private fun teamChipText(team: Int, seconds: Long): String = "ت${team + 1} ${seconds}s"
 
     private fun wordOutcomeLabel(outcome: WordOutcome): String = when (outcome) {
         WordOutcome.PENDING -> "در جریان"
@@ -1628,6 +1766,90 @@ class MainActivity : Activity() {
         super.onDestroy()
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putString(KEY_SCREEN, screen.name)
+        val current = draft ?: return
+        outState.putInt(KEY_PLAYER_COUNT, current.playerCount)
+        outState.putStringArrayList(KEY_NAMES, ArrayList(current.names))
+        outState.putInt(KEY_DIFFICULTY, current.difficulty)
+        outState.putStringArrayList(KEY_CATEGORIES, ArrayList(current.categories))
+        outState.putInt(KEY_DURATION, current.durationSeconds)
+        outState.putInt(KEY_ROUNDS, current.rounds)
+        outState.putBoolean(KEY_REPLAY, current.isReplay)
+        outState.putBoolean(KEY_RETURN_TO_PREPARATION, current.returnToPreparation)
+    }
+
+    /** Setup progress survives process death instead of sending the player back to the home screen. */
+    private fun restoreAfterRecreation(saved: Bundle) {
+        val count = saved.getInt(KEY_PLAYER_COUNT, 0)
+        if (count in GameConstants.allowedPlayerCounts) {
+            val names = saved.getStringArrayList(KEY_NAMES)?.toMutableList() ?: mutableListOf()
+            while (names.size < count) names += ""
+            val categories = saved.getStringArrayList(KEY_CATEGORIES)
+                ?.filter { it in WordCategories.all }
+                ?.toCollection(linkedSetOf())
+                ?.takeIf { it.isNotEmpty() }
+                ?: linkedSetOf(WordCategories.JOBS)
+            draft = SetupDraft(
+                playerCount = count,
+                names = names,
+                difficulty = saved.getInt(KEY_DIFFICULTY, 1).coerceIn(1, 3),
+                categories = categories,
+                durationSeconds = nearestAllowedDuration(saved.getInt(KEY_DURATION, 120)),
+                rounds = nearestAllowedRounds(saved.getInt(KEY_ROUNDS, 5)),
+                isReplay = saved.getBoolean(KEY_REPLAY, false),
+                returnToPreparation = saved.getBoolean(KEY_RETURN_TO_PREPARATION, false)
+            )
+        }
+        if (engine != null) {
+            renderCurrentGameState()
+            return
+        }
+        when (saved.getString(KEY_SCREEN)) {
+            AppScreen.PLAYER_COUNT.name -> renderPlayerCount()
+            AppScreen.PLAYERS.name -> renderPlayers()
+            AppScreen.CATEGORIES.name -> renderCategories()
+            AppScreen.OPTIONS.name -> renderOptions()
+            else -> renderHome()
+        }
+    }
+
+    /** A discarded checkpoint is reported instead of silently disappearing. */
+    private fun showDiscardedCheckpointDialog() {
+        if (isFinishing || isDestroyed) return
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("بازی نیمه‌کاره بازیابی نشد")
+            .setMessage("وضعیت ذخیره‌شدهٔ بازی پیشین خوانا نبود و از حافظه پاک شد. فهرست بازیکنان و تنظیمات صدا حفظ شده‌اند.")
+            .setPositiveButton("باشه", null)
+            .create()
+        showDesignDialog(dialog, titleText = "بازی نیمه‌کاره بازیابی نشد")
+    }
+
+    private fun showWordsNotReadyDialog() {
+        if (isFinishing || isDestroyed) return
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("واژه‌ها هنوز آماده نیستند")
+            .setMessage("بانک واژه‌ها در حال بارگذاری است. چند لحظه بعد دوباره تلاش کنید.")
+            .setPositiveButton("باشه", null)
+            .create()
+        showDesignDialog(dialog, titleText = "واژه‌ها هنوز آماده نیستند")
+    }
+
+    private companion object {
+        const val LIVE_UPDATE_INTERVAL_MS = 250L
+        const val MAX_PLAYER_NAME_LENGTH = 24
+        const val KEY_SCREEN = "screen"
+        const val KEY_PLAYER_COUNT = "draft_player_count"
+        const val KEY_NAMES = "draft_names"
+        const val KEY_DIFFICULTY = "draft_difficulty"
+        const val KEY_CATEGORIES = "draft_categories"
+        const val KEY_DURATION = "draft_duration"
+        const val KEY_ROUNDS = "draft_rounds"
+        const val KEY_REPLAY = "draft_replay"
+        const val KEY_RETURN_TO_PREPARATION = "draft_return_to_preparation"
+    }
+
     private data class PaletteTokens(private val colors: DesignColors) {
         val WHITE = colors.surfaceRaised
         val SURFACE = colors.surface
@@ -1640,6 +1862,7 @@ class MainActivity : Activity() {
         val PALE_ACCENT = colors.surfaceAccent
         val BLUE = colors.primary
         val BUTTON = colors.buttonBackground
+        val BUTTON_OUTLINED_FILL = colors.buttonOutlinedFill
         val BUTTON_TEXT = colors.buttonText
         val BUTTON_DISABLED_TEXT = colors.buttonDisabledText
         val BUTTON_OUTLINE = colors.buttonOutline
