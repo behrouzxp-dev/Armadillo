@@ -1,6 +1,6 @@
 plugins {
+    // Kotlin support is built into AGP 9; there is no kotlin-android plugin any more.
     id("com.android.application")
-    id("org.jetbrains.kotlin.android")
 }
 
 val releaseKeystorePath = providers.environmentVariable("RELEASE_KEYSTORE_PATH").orNull
@@ -60,9 +60,6 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = "17"
-    }
     testOptions {
         // Fail loudly instead of silently returning defaults when a test touches a platform API.
         unitTests.isReturnDefaultValues = false
@@ -84,6 +81,12 @@ tasks.register("verifyReleaseSigning") {
 // still be produced for CI verification of R8, resource shrinking and lint.
 tasks.matching { it.name == "assembleRelease" || it.name == "bundleRelease" }.configureEach {
     if (releaseSigningRequested) dependsOn("verifyReleaseSigning")
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
 }
 
 dependencies {

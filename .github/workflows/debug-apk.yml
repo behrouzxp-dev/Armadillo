@@ -45,7 +45,8 @@ jobs:
           exit "$status"
       - name: Verify APK identity and launcher
         run: |
-          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging app/build/outputs/apk/debug/app-debug.apk > "$RUNNER_TEMP/apk-badging.txt"
+          AAPT="$(ls -d "$ANDROID_HOME"/build-tools/*/aapt | sort -V | tail -1)"
+          "$AAPT" dump badging app/build/outputs/apk/debug/app-debug.apk > "$RUNNER_TEMP/apk-badging.txt"
           grep -F "package: name='com.armadillo.game'" "$RUNNER_TEMP/apk-badging.txt"
           grep -F "launchable-activity: name='com.armadillo.game.MainActivity'" "$RUNNER_TEMP/apk-badging.txt"
       - name: Upload debug APK
