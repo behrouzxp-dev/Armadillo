@@ -1,6 +1,7 @@
 package com.armadillo.game.audio
 
 import android.content.Context
+import android.os.SystemClock
 import android.media.AudioAttributes
 import android.media.AudioManager
 import android.media.SoundPool
@@ -24,7 +25,8 @@ class GameAudio(context: Context, initialSettings: SoundSettings) {
     private val effectId: Int
     private var settings = initialSettings.copy()
     private var beepStream = 0
-    private val activeStreams = mutableSetOf<Int>()
+    /** Stream id to the elapsed-realtime millis at which it was started. */
+    private val activeStreams = mutableMapOf<Int, Long>()
 
     init {
         soundPool.setOnLoadCompleteListener { _, sampleId, status ->
@@ -49,8 +51,9 @@ class GameAudio(context: Context, initialSettings: SoundSettings) {
 
     fun playBeep() {
         if (!allowed(settings.beepEnabled, settings.beepVolume) || beepId !in loadedIds) return
+        pruneFinishedStreams()
         beepStream = soundPool.play(beepId, scale(settings.beepVolume), scale(settings.beepVolume), 1, 0, 1f)
-        if (beepStream != 0) activeStreams += beepStream
+        if (beepStream != 0) activeStreams[beepStream] = SystemClock.elapsedRealtime()
     }
 
     fun stopBeep() {
@@ -61,21 +64,32 @@ class GameAudio(context: Context, initialSettings: SoundSettings) {
     }
 
     fun stopAll() {
-        activeStreams.toList().forEach { if (it != 0) soundPool.stop(it) }
+        activeStreams.keys.toList().forEach { if (it != 0) soundPool.stop(it) }
         activeStreams.clear()
         beepStream = 0
     }
 
+    /**
+     * Streams that end naturally never report back, so without this the set would keep
+     * growing for the whole game. Anything older than the longest effect is dropped.
+     */
+    private fun pruneFinishedStreams() {
+        val cutoff = SystemClock.elapsedRealtime() - FINISHED_STREAM_TIMEOUT_MS
+        activeStreams.entries.removeAll { (_, startedAt) -> startedAt < cutoff }
+    }
+
     fun playExplosion() {
         if (!allowed(settings.explosionEnabled, settings.explosionVolume) || explosionId !in loadedIds) return
+        pruneFinishedStreams()
         soundPool.play(explosionId, scale(settings.explosionVolume), scale(settings.explosionVolume), 2, 0, 1f)
-            .takeIf { it != 0 }?.let(activeStreams::add)
+            .takeIf { it != 0 }?.let { activeStreams[it] = SystemClock.elapsedRealtime() }
     }
 
     fun playEffect() {
         if (!allowed(settings.effectsEnabled, settings.effectsVolume) || effectId !in loadedIds) return
+        pruneFinishedStreams()
         soundPool.play(effectId, scale(settings.effectsVolume), scale(settings.effectsVolume), 1, 0, 1f)
-            .takeIf { it != 0 }?.let(activeStreams::add)
+            .takeIf { it != 0 }?.let { activeStreams[it] = SystemClock.elapsedRealtime() }
     }
 
     fun previewBeep() = playBeep()
@@ -102,4 +116,8 @@ class GameAudio(context: Context, initialSettings: SoundSettings) {
     }
 
     private fun scale(volume: Int): Float = volume.coerceIn(0, 100) / 100f
+
+    private companion object {
+        const val FINISHED_STREAM_TIMEOUT_MS = 5_000L
+    }
 }
