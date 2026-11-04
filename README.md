@@ -38,14 +38,17 @@ This repository does not designate a current official release. The `com.armadill
 
 ## Project structure
 
-- `app/src/main/java/com/armadillo/game/` — UI, models, engine, audio and local storage
+- `app/src/main/java/com/armadillo/game/` — activity, UI helpers, audio and local storage
 - `app/src/main/java/com/armadillo/game/ui/DesignSystem.kt` — shared palette, Mikhak typography and UI tokens
-- `app/src/main/java/com/armadillo/game/data/GameCodec.kt` — pure JSON codec for the saved-game checkpoint
+- `app/src/main/res/values/strings.xml` — every user-visible Persian string (the default locale)
+- `app/src/main/res/xml/locales_config.xml` — the `fa` locale declared for Android 13+ per-app language settings
+- `game-core/src/main/kotlin/com/armadillo/game/game/` — engine, models and seat plan
+- `game-core/src/main/kotlin/com/armadillo/game/data/` — pure JSON checkpoint codec and roster merging
 - `app/src/main/assets/categories.json` — five playable categories and 1,500 topic words
 - `app/src/main/assets/words.json` — retained legacy general bank, inactive in gameplay
 - `app/src/main/assets/fonts/` — Mikhak font files and their OFL license
 - `app/src/main/res/drawable-nodpi/` — original icon artwork, generated adaptive foreground, monochrome layer and a small hero bitmap
-- `app/src/test/` — Kotlin/JVM unit tests
+- `game-core/src/test/` — Kotlin/JVM unit tests for the engine, codec and roster
 - `docs/` — requirements, architecture, internal interfaces and maintenance plan
 - `tools/build_categories.py` — builds earlier categories while preserving newer categories
 - `tools/add_armadillo_categories.py` — place and technology vocabulary
@@ -56,13 +59,14 @@ This repository does not designate a current official release. The `com.armadill
 
 ## Architecture and persistence
 
-`MainActivity` owns the Android UI and lifecycle and connects the game engine, local word bank, audio and storage. `GameEngine` applies game state transitions against a caller-supplied monotonic clock; `Models.kt` defines phases, players, teams and ranking. `LocalWordBank` reads bundled topic words and starts a new cycle after the selected pool is exhausted. `LocalStore` persists settings, the player roster and unfinished-game checkpoints in the private `armadillo_local_v1` SharedPreferences file. A restored unfinished game enters a system-paused state; a manual pause remains paused until the player resumes. The legacy general word bank is retained for historical compatibility, not as a playable category.
+The repository has two Gradle modules. `:game-core` is a plain Kotlin/JVM library with no Android dependency: it holds the deterministic engine, the models, the seat plan, the checkpoint codec and the roster merge, and its tests run on the JVM without the Android plugin. `:app` is the Android application and depends on `:game-core`. `MainActivity` owns the Android UI and lifecycle and connects the game engine, local word bank, audio and storage. `GameEngine` applies game state transitions against a caller-supplied monotonic clock; `Models.kt` defines phases, players, teams and ranking. `LocalWordBank` reads bundled topic words and starts a new cycle after the selected pool is exhausted. `LocalStore` persists settings, the player roster and unfinished-game checkpoints in the private `armadillo_local_v1` SharedPreferences file. A restored unfinished game enters a system-paused state; a manual pause remains paused until the player resumes. The legacy general word bank is retained for historical compatibility, not as a playable category.
 
 ## Build requirements
 
 - JDK 17 or newer (the recorded release build used Temurin JDK 17.0.21)
 - Android SDK Platform 36 and Build Tools 36
-- Gradle Wrapper 8.11.1
+- Gradle Wrapper 9.8.2, checked against `distributionSha256Sum`
+- Android Gradle Plugin 9.5.0 with its built-in Kotlin compiler (Kotlin 2.4.21 for the JVM module); the obsolete `org.jetbrains.kotlin.android` plugin is no longer applied
 - Android 6.0 / API 23 minimum; `minSdk=23`, `targetSdk=36` (Google Play requires API 36 for new uploads since 31 August 2026)
 
 `local.properties` contains the builder's SDK path and is not part of the source archive.
@@ -72,7 +76,7 @@ This repository does not designate a current official release. The `com.armadill
 Linux/macOS:
 
 ```bash
-./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug
+./gradlew :game-core:test :app:assembleDebug :app:testDebugUnitTest :app:lintDebug
 python3 tools/validate_words.py
 # An unsigned release build verifies R8, resource shrinking and release lint.
 ./gradlew :app:lintRelease :app:assembleRelease
@@ -86,7 +90,7 @@ Release builds require `RELEASE_KEYSTORE_PATH`, `RELEASE_KEY_ALIAS`, `RELEASE_ST
 Windows:
 
 ```bat
-gradlew.bat testDebugUnitTest
+gradlew.bat :game-core:test :app:testDebugUnitTest
 gradlew.bat assembleDebug
 gradlew.bat lintDebug
 ```
@@ -101,10 +105,10 @@ app/build/outputs/apk/release/app-release.apk
 
 The [Android build workflow](.github/workflows/debug-apk.yml) runs for every pull request into `main`, for workflow-file changes on `main`, and on manual `workflow_dispatch`.
 
-- **debug job** — validates the bundled word banks with `python3 tools/validate_words.py`, assembles the Debug APK, verifies the package name and launcher activity, uploads `armadillo-debug-apk` as a ZIP artifact retained for seven days, then runs `:app:testDebugUnitTest` and `:app:lintDebug`.
+- **debug job** — validates the bundled word banks with `python3 tools/validate_words.py`, assembles the Debug APK, verifies the package name and launcher activity, uploads `armadillo-debug-apk` as a ZIP artifact retained for seven days, then runs `:game-core:test`, `:app:testDebugUnitTest` and `:app:lintDebug` and reports the JVM test totals.
 - **release job** — assembles an unsigned Release APK (`R8` minification and resource shrinking) and runs `:app:lintRelease`. Signed releases remain a manual, owner-approved step requiring the four `RELEASE_*` variables.
 
-The upload occurs before tests and lint, so read the whole run result rather than the artifact alone. The workflow never publishes a release or creates a tag. The most recent [run 41923932662](https://github.com/behrouzxp-dev/Armadillo/actions/runs/41923932662) passed both jobs; its only annotation was the announced `ubuntu-latest` image migration. Neither job installs or starts the app, so a green run is not a device test.
+The upload occurs before tests and lint, so read the whole run result rather than the artifact alone. The workflow never publishes a release or creates a tag. The most recent [run 41932952205](https://github.com/behrouzxp-dev/Armadillo/actions/runs/41932952205) passed both jobs on the AGP 9.5 toolchain; its only annotation was the announced `ubuntu-latest` image migration. Neither job installs or starts the app, so a green run is not a device test.
 
 ## Theme and accessibility
 

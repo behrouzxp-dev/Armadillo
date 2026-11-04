@@ -68,6 +68,19 @@ jobs:
           fi
           tail -30 gradle-check.log
           exit "$status"
+      - name: Report JVM test totals
+        if: success()
+        run: |
+          python3 - <<'PY'
+          import glob, xml.etree.ElementTree as ET
+          tests = failures = skipped = 0
+          for report in glob.glob("*/build/test-results/**/TEST-*.xml", recursive=True):
+              root = ET.parse(report).getroot()
+              tests += int(root.get("tests", 0))
+              failures += int(root.get("failures", 0)) + int(root.get("errors", 0))
+              skipped += int(root.get("skipped", 0))
+          print(f"::notice::JVM tests: {tests} run, {failures} failed, {skipped} skipped")
+          PY
       - name: Upload unit test and lint log
         if: failure()
         uses: actions/upload-artifact@v7

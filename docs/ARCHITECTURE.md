@@ -4,11 +4,11 @@ This document describes the current Android implementation. It is not a proposed
 
 ## System boundary
 
-The repository contains one Gradle Android application module, `app`, implemented in Kotlin. There is no backend or network service in this project. The manifest has no internet permission; data and media are local. The package and application ID are `com.armadillo.game`. Android platform APIs provide the UI, lifecycle, preferences, audio and vibration.
+The repository contains two Gradle modules. `app` is the Android application module, implemented in Kotlin. `game-core` is a plain Kotlin/JVM library with no Android dependency; it holds the deterministic engine, models, seat plan, checkpoint codec and roster merge, so its unit tests run without the Android plugin. There is no backend or network service in this project. The manifest has no internet permission; data and media are local. The package and application ID are `com.armadillo.game`. Android platform APIs provide the UI, lifecycle, preferences, audio and vibration.
 
 ```text
-MainActivity (screens, lifecycle, handler and UI events)
-  ├── GameEngine + GameState/SeatPlan (rules and transitions)
+:app — MainActivity (screens, lifecycle, handler and UI events)
+  ├── :game-core ── GameEngine + GameState/SeatPlan (rules and transitions)
   ├── LocalWordBank : WordSource ── categories.json
   ├── LocalStore ── private SharedPreferences: armadillo_local_v1
   ├── GameAudio ── SoundPool + bundled audio
@@ -20,15 +20,17 @@ MainActivity (screens, lifecycle, handler and UI events)
 | Location | Responsibility |
 | --- | --- |
 | `app/src/main/java/com/armadillo/game/MainActivity.kt` | Builds screens, validates setup, handles interaction, observes lifecycle/focus and schedules timer updates. |
-| `game/Models.kt` | State, phase, player, category and ranking models; game constants and seat mapping. |
-| `game/GameEngine.kt` | Transition logic, active-time accounting, words and results. Callers supply a monotonic clock and a `WordSource`. |
+| `game-core/…/game/Models.kt` | State, phase, player, category and ranking models; game constants and seat mapping. |
+| `game-core/…/game/GameEngine.kt` | Transition logic, active-time accounting, words and results. Callers supply a monotonic clock and a `WordSource`. |
 | `data/LocalWordBank.kt` | Loads and validates bundled topic words, deduplicates a selected pool and draws unused words. |
 | `data/LocalStore.kt` | Persists sound settings, roster and game checkpoint in `armadillo_local_v1`; delegates encoding to `GameCodec` and reports discarded checkpoints. |
-| `data/GameCodec.kt` | Pure JSON codec for the checkpoint: schema, migration and value clamping. No Android dependency, covered by JVM tests. |
+| `game-core/…/data/GameCodec.kt` | Pure JSON codec for the checkpoint: schema, migration and value clamping. No Android dependency, covered by JVM tests. |
+| `game-core/…/data/PlayerRoster.kt` | Pure roster merge helper used by `LocalStore`. |
+| `app/src/main/res/values/strings.xml` | Every user-visible Persian string; `app/src/main/res/xml/locales_config.xml` declares `fa` for the Android 13+ per-app language settings. |
 | `audio/GameAudio.kt` | Loads local sounds with `SoundPool`, handles playback/settings and checks system sound state. |
 | `ui/DesignSystem.kt`, `ui/SeatingCircleView.kt` | Shared colors, typography, spacing and seat rendering/interaction. |
 | `app/src/main/assets/` and `res/` | Topic and archived word banks, licensed font, artwork, icons, sounds and styles. |
-| `app/src/test/`, `tools/` | JVM unit tests and word-bank generation/validation tools. |
+| `game-core/src/test/`, `tools/` | JVM unit tests for the engine, codec and roster, plus word-bank and icon tooling. |
 
 ## State and timing
 
@@ -46,10 +48,10 @@ Android backup is disabled in the manifest; no in-app backup/export is documente
 
 ## Build and verification
 
-The Gradle wrapper, Android SDK and JDK requirements and commands are in [README.md](../README.md#build-and-test). The [Android build workflow](../.github/workflows/debug-apk.yml) runs on pull requests and validates the word banks, builds and verifies the Debug APK, uploads a short-lived artifact and runs JVM unit tests plus lint; a second job builds an unsigned Release APK with R8 and resource shrinking and runs release lint. No device/emulator testing is implied by a successful workflow.
+The Gradle wrapper, Android SDK and JDK requirements and commands are in [README.md](../README.md#build-and-test). The [Android build workflow](../.github/workflows/debug-apk.yml) runs on pull requests and validates the word banks, builds and verifies the Debug APK, uploads a short-lived artifact and runs JVM unit tests plus lint; a second job builds an unsigned Release APK with R8 and resource shrinking and runs release lint. Both modules are built by the same `./gradlew` invocation: `:game-core:test` runs the engine, codec and roster tests on the JVM, and the app tasks build, lint and verify the APK. AGP 9 lints the release variant inside the build JVM, so `gradle.properties` reserves 2 GB of heap and 1 GB of metaspace; the earlier 512 MB/384 MB caps made release lint fail with `OutOfMemoryError: Metaspace`. The wrapper is pinned to Gradle 9.8.2 and verified against `distributionSha256Sum`. No device/emulator testing is implied by a successful workflow.
 
 ## Platform behaviour
 
-The app targets API 36, where two platform changes are mandatory. Back navigation is handled through `OnBackInvokedCallback` (`onBackPressed()` is no longer called on Android 13+ when predictive back is enabled) and the window is edge-to-edge, with system-bar insets applied once in `showPage`. `android:forceDarkAllowed` is `false` and there is no night resource set, so the light theme is static. Team identity is always paired with a team number because the fixed team colours cannot reach 3:1 contrast on the yellow canvas.
+The app targets API 36, where two platform changes are mandatory. Back navigation is handled through `OnBackInvokedCallback` on API 33+, with the deprecated `onBackPressed()` kept for API 23–32 and annotated `@SuppressLint("GestureBackNavigation")` because the AndroidX dispatcher migration would not change that split (`onBackPressed()` is no longer called on Android 13+ when predictive back is enabled) and the window is edge-to-edge, with system-bar insets applied once in `showPage`. `android:forceDarkAllowed` is `false` and there is no night resource set, so the light theme is static. Team identity is always paired with a team number because the fixed team colours cannot reach 3:1 contrast on the yellow canvas.
 
 Historical release documents and [the earlier test report](../Historical-Test-Report.md) are retained for provenance, not as evidence of a current build. The repository contains no configured user-facing app version name; `versionCode` is 1 because the `com.armadillo.game` application ID has never been published. No secret keys belong in source control.
