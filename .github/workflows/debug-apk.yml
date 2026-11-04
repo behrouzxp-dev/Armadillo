@@ -1,4 +1,4 @@
-name: Debug APK
+name: Android build
 
 on:
   workflow_dispatch:
@@ -7,9 +7,16 @@ on:
       - main
     paths:
       - .github/workflows/debug-apk.yml
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: read
+
+concurrency:
+  group: android-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   debug:
@@ -23,6 +30,8 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+      - name: Validate bundled word banks
+        run: python3 tools/validate_words.py
       - name: Assemble debug APK
         run: ./gradlew --no-daemon :app:assembleDebug
       - name: Verify APK identity and launcher
@@ -39,3 +48,19 @@ jobs:
           retention-days: 7
       - name: Run unit tests and lint
         run: ./gradlew --no-daemon :app:testDebugUnitTest :app:lintDebug
+
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+      - name: Set up Java 17
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+      # Verifies R8 minification, resource shrinking and release lint without signing
+      # material. Signed releases stay a manual, owner-approved step.
+      - name: Assemble unsigned release and run release lint
+        run: ./gradlew --no-daemon :app:assembleRelease :app:lintRelease
