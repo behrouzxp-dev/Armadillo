@@ -1,0 +1,27 @@
+<resources>
+    <!-- Launcher icon background stays independent from the app-page design token. -->
+    <color name="armadillo_icon_background">#FACB01</color>
+
+    <!-- Central UI palette. The source icon artwork is intentionally unchanged. -->
+    <color name="design_brand_yellow">#F2C50A</color>
+    <color name="design_brand_navy">#07223C</color>
+    <color name="design_canvas">@color/design_brand_yellow</color>
+    <color name="design_primary">@color/design_brand_navy</color>
+    <color name="design_button_background">@color/design_brand_navy</color>
+    <color name="design_button_text">#FFFFFF</color>
+    <color name="design_button_disabled_text">#BEC8D6</color>
+    <color name="design_button_outline">@color/design_brand_yellow</color>
+    <color name="design_button_ripple">#29F2C50A</color>
+    <color name="design_text_primary">@color/design_brand_navy</color>
+    <color name="design_text_secondary">#39475A</color>
+    <color name="design_surface">#FFFBEB</color>
+    <color name="design_surface_raised">#FFFFFF</color>
+    <color name="design_surface_alt">#FFF7D8</color>
+    <color name="design_surface_accent">#FFF1BE</color>
+    <color name="design_outline">#C7B972</color>
+    <color name="design_success">#1F6B45</color>
+    <color name="design_danger">#A61B16</color>
+    <color name="design_danger_surface">#FFF1EF</color>
+    <color name="design_scrim">#A607223C</color>
+    <color name="design_ripple">#2907223C</color>
+</resources>

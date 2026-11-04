@@ -1,0 +1,12 @@
+# Android / Gradle
+.gradle/
+**/build/
+local.properties
+*.iml
+.idea/
+.DS_Store
+
+# Signing material must never be committed
+*.jks
+*.keystore
+keystore.properties
