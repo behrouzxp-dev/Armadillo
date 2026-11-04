@@ -7,6 +7,7 @@ import android.text.TextPaint
 import android.text.TextUtils
 import android.view.MotionEvent
 import android.view.View
+import com.armadillo.game.R
 import com.armadillo.game.game.GameConstants
 import kotlin.math.PI
 import kotlin.math.cos
