@@ -33,7 +33,16 @@ jobs:
       - name: Validate bundled word banks
         run: python3 tools/validate_words.py
       - name: Assemble debug APK
-        run: ./gradlew --no-daemon :app:assembleDebug
+        run: |
+          set +e
+          ./gradlew --no-daemon :app:assembleDebug > gradle-assemble.log 2>&1
+          status=$?
+          if [ "$status" -ne 0 ]; then
+            grep -E "^e: |error:|FAILED|Execution failed|What went wrong" -A2 gradle-assemble.log \
+              | head -60 | while IFS= read -r line; do echo "::error::$line"; done
+          fi
+          tail -30 gradle-assemble.log
+          exit "$status"
       - name: Verify APK identity and launcher
         run: |
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging app/build/outputs/apk/debug/app-debug.apk > "$RUNNER_TEMP/apk-badging.txt"
@@ -73,4 +82,13 @@ jobs:
       # Verifies R8 minification, resource shrinking and release lint without signing
       # material. Signed releases stay a manual, owner-approved step.
       - name: Assemble unsigned release and run release lint
-        run: ./gradlew --no-daemon :app:assembleRelease :app:lintRelease
+        run: |
+          set +e
+          ./gradlew --no-daemon :app:assembleRelease :app:lintRelease > gradle-release.log 2>&1
+          status=$?
+          if [ "$status" -ne 0 ]; then
+            grep -E "^e: |error:|FAILED|Execution failed|What went wrong|Lint found" -A2 gradle-release.log \
+              | head -60 | while IFS= read -r line; do echo "::error::$line"; done
+          fi
+          tail -30 gradle-release.log
+          exit "$status"
