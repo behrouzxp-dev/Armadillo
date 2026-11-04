@@ -92,6 +92,7 @@ class MainActivity : Activity() {
     private var rootFrame: FrameLayout? = null
     private var dialogOpen = false
     private var needsRenderOnResume = false
+    private var backgroundSuspensionDone = false
     private var startAnimator: ObjectAnimator? = null
     private var explosionAnimator: AnimatorSet? = null
     private var explosionTapHandled = false
@@ -223,6 +224,7 @@ class MainActivity : Activity() {
 
     override fun onResume() {
         super.onResume()
+        backgroundSuspensionDone = false
         if (needsRenderOnResume) {
             needsRenderOnResume = false
             renderCurrentGameState()
@@ -244,20 +246,26 @@ class MainActivity : Activity() {
         if (!::store.isInitialized) return
         val active = engine ?: return
         if (active.state.phase == GamePhase.RESULTS) return
+        // onPause, onStop and focus loss can all fire for one backgrounding event; save once.
+        if (backgroundSuspensionDone) return
         active.pauseForSystem()
         audio.stopAll()
         stopActiveLoops()
         store.saveGame(active.state, durable = true)
         needsRenderOnResume = true
+        backgroundSuspensionDone = true
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
         if (!hasFocus && !dialogOpen) {
             suspendForBackground()
-        } else if (hasFocus && needsRenderOnResume && engine != null) {
-            needsRenderOnResume = false
-            renderCurrentGameState()
+        } else if (hasFocus) {
+            backgroundSuspensionDone = false
+            if (needsRenderOnResume && engine != null) {
+                needsRenderOnResume = false
+                renderCurrentGameState()
+            }
         }
     }
 
@@ -400,7 +408,7 @@ class MainActivity : Activity() {
             setPadding(dp(DesignSystem.Spacing.MD), dp(DesignSystem.Spacing.SM), dp(DesignSystem.Spacing.MD), dp(DesignSystem.Spacing.INSET_14))
         }
         val logo = ImageView(this).apply {
-            setImageResource(R.drawable.armadillo_icon_art)
+            setImageResource(R.drawable.armadillo_icon_hero)
             scaleType = ImageView.ScaleType.FIT_CENTER
             contentDescription = "نشان آرمادیلو"
         }

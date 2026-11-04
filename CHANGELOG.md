@@ -4,6 +4,17 @@ This project follows semantic versioning (SemVer). The versioned entries below a
 
 ## Unreleased
 
+- Replace the Lalezar typeface with the bundled Mikhak font (Regular and Bold masters, SIL OFL 1.1).
+- Take the page canvas from the icon background (`#F9CB03`) and rebuild the palette around it; filled buttons stay navy while outlined buttons get a cream fill with a navy edge, so the two hierarchies are visually distinct again.
+- Force one static light theme: no night resources and `forceDarkAllowed=false`, so the system theme setting cannot change the app.
+- Regenerate the launcher assets with adaptive-icon safe-zone margins (artwork at 62% of the canvas), a monochrome layer for Android 13+ and a small hero bitmap.
+- Raise `compileSdk`/`targetSdk` to 36, set `versionName` to 1.0.0, enable R8 minification and resource shrinking, and add the MIT licence.
+- Migrate back navigation to `OnBackInvokedCallback` and adopt edge-to-edge insets, as API 36 requires.
+- Extract `GameCodec` as a pure, unit-tested checkpoint codec; stop rewriting preferences from the home screen, report discarded checkpoints, cache the roster and prune finished audio streams.
+- Load the word bank off the main thread, refresh live screens three times a second, skip unchanged views and preserve scroll position on in-place re-renders.
+- Make seats individually reachable for screen readers, use platform buttons, add team numbers beside colour chips, follow the system font scale on the seating canvas and let the whole settings row toggle.
+- Keep setup progress across process death and cap player-name length at 24 characters.
+- Run unit tests, lint and the word-bank validator on pull requests, and add an unsigned Release build job; publish unit-test and lint failures as check annotations.
 - Reset the Android `versionCode` to 1 because the `com.armadillo.game` application ID has never been published; planned historical builds used the earlier `com.dour.game` identity with `versionCode` 6.
 - Upgrade the Debug workflow to `actions/checkout@v7`, `actions/setup-java@v6` and `actions/upload-artifact@v7`, replacing action versions that GitHub marked as deprecated.
 - Scope the Debug workflow's automatic push trigger to workflow-file changes on `main`, because its previous trigger referenced a removed session branch, and update the documentation that described that branch.

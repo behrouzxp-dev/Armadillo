@@ -19,6 +19,7 @@ RES = ROOT / "app" / "src" / "main" / "res"
 SOURCE = RES / "drawable-nodpi" / "armadillo_icon_art.jpg"
 FOREGROUND = RES / "drawable-nodpi" / "armadillo_icon_foreground.png"
 MONOCHROME = RES / "drawable-nodpi" / "armadillo_icon_monochrome.png"
+HERO = RES / "drawable-nodpi" / "armadillo_icon_hero.png"
 
 CANVAS = 1024
 # Adaptive icons are 108dp with a 72dp visible mask, so the artwork must sit
@@ -97,6 +98,8 @@ def main() -> None:
     padded = scaled_art(source, ART_FRACTION)
     padded.save(FOREGROUND, optimize=True)
     monochrome_art(padded).save(MONOCHROME, optimize=True)
+    # The home screen shows the artwork at 124dp; a small bitmap avoids a 4 MB decode.
+    padded.resize((320, 320), Image.LANCZOS).save(HERO, optimize=True)
     for folder, size in MIPMAP_SIZES.items():
         target = RES / folder
         target.mkdir(parents=True, exist_ok=True)
