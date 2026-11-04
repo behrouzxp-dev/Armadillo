@@ -15,6 +15,7 @@ data class DesignColors(
     val surfaceAccent: Int,
     val primary: Int,
     val buttonBackground: Int,
+    val buttonOutlinedFill: Int,
     val buttonText: Int,
     val buttonDisabledText: Int,
     val buttonOutline: Int,
@@ -41,6 +42,7 @@ object DesignSystem {
         surfaceAccent = context.getColor(R.color.design_surface_accent),
         primary = context.getColor(R.color.design_primary),
         buttonBackground = context.getColor(R.color.design_button_background),
+        buttonOutlinedFill = context.getColor(R.color.design_button_outlined_fill),
         buttonText = context.getColor(R.color.design_button_text),
         buttonDisabledText = context.getColor(R.color.design_button_disabled_text),
         buttonOutline = context.getColor(R.color.design_button_outline),
@@ -55,10 +57,20 @@ object DesignSystem {
         ripple = context.getColor(R.color.design_ripple)
     )
 
-    fun lalezar(context: Context, bold: Boolean = false): Typeface {
-        val regular = Typeface.createFromAsset(context.assets, "fonts/Lalezar-Regular.ttf")
-        return Typeface.create(regular, if (bold) Typeface.BOLD else Typeface.NORMAL)
-    }
+    /**
+     * The bundled Mikhak typeface (SIL OFL 1.1) in two real weights. Mikhak ships
+     * static masters, so bold text uses the actual Bold file instead of a
+     * synthesized weight. Both files are cached per process by [fontCache].
+     */
+    fun typeface(context: Context, bold: Boolean = false): Typeface =
+        fontCache.getOrPut(bold) {
+            Typeface.createFromAsset(
+                context.applicationContext.assets,
+                if (bold) "fonts/Mikhak-Bold.ttf" else "fonts/Mikhak-Regular.ttf"
+            )
+        }
+
+    private val fontCache = HashMap<Boolean, Typeface>()
 
     object Spacing {
         const val XXXS = 2
@@ -182,6 +194,7 @@ object DesignSystem {
         const val RIPPLE_ALPHA = 0.16f
         const val DISABLED_ALPHA = Metrics.DISABLED_ALPHA
         const val SELECTED_STROKE_DP = 2
+        const val OUTLINED_STROKE_DP = 1.5f
         const val DEFAULT_STROKE_DP = 1
         const val TEAM_YELLOW_STROKE_DP = 1.5f
         const val RING_STROKE_DP = 2f
