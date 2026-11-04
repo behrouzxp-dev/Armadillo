@@ -1,4 +1,4 @@
-[AGENTS.md](http://AGENTS.md)
+# AGENTS.md
 
 Permanent Project Development Instructions
 
@@ -38,13 +38,13 @@ All source-controlled technical documentation must be written in English.
 
 This includes:
 
-- [README.md](http://README.md)
-- [AGENTS.md](http://AGENTS.md)
-- [ARCHITECTURE.md](http://ARCHITECTURE.md)
-- [REQUIREMENTS.md](http://REQUIREMENTS.md)
-- [CHANGELOG.md](http://CHANGELOG.md)
-- [RELEASES.md](http://RELEASES.md)
-- [API.md](http://API.md)
+- `README.md`
+- `AGENTS.md`
+- `ARCHITECTURE.md`
+- `REQUIREMENTS.md`
+- `CHANGELOG.md`
+- `RELEASES.md`
+- `API.md`
 - Technical reports
 - Code comments
 - Commit messages
@@ -202,7 +202,7 @@ Examples:
 Rules:
 
 - Keep version information consistent across relevant project files.
-- Maintain [CHANGELOG.md](http://CHANGELOG.md).
+- Maintain `CHANGELOG.md`.
 - Use Git tags for releases.
 - Never reuse an existing release tag for a different version.
 - Never delete historical releases without explicit approval.

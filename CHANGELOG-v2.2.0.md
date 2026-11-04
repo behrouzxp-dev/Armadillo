@@ -1,5 +1,7 @@
 # Armadillo 2.2.0 — Change log
 
+This is a historical release record. For current project instructions and version history, see [AGENTS.md](AGENTS.md) and [CHANGELOG.md](CHANGELOG.md). The verification results below refer to the original 2026-10-29 build, not later checkouts.
+
 - **Base:** latest verified Drive release source `v2.1.0`; `applicationId=com.dour.game` retained; `versionCode=6`, `versionName=2.2.0`.
 - **Colors:** centralized page-canvas token is exactly `#F2C50A`; centralized fill for every app and dialog button is exactly `#07223C`. Button labels/icons use readable white and disabled-gray states; ripple and selection outlines remain coherent.
 - **Active game page:** removed the “پایان” button from the live game screen. The early-end action remains separately available from the pause overlay/dialog, and automatic round completion is unchanged.

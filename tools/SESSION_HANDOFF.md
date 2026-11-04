@@ -1,13 +1,13 @@
 # Armadillo 2.2.0 — durable session handoff
 
-Updated: 2026-10-29 (Asia/Tehran)
+Original handoff date: 2026-10-29 (Asia/Tehran)
 
-This is a historical record of the 2.2.0 release, not a current deployment checklist. Paths, storage locations and verification results below describe that earlier environment and may no longer be available. Current project work must follow `AGENTS.md`: GitHub is the authoritative source for project files and releases, and signing keys must be securely preserved outside the repository.
+This is a historical record of the 2.2.0 release, not a current deployment checklist. Paths, storage locations and verification results below describe that earlier environment and may no longer be available. Current project work must follow [AGENTS.md](../AGENTS.md): GitHub is the authoritative source for project files and releases, and signing keys must be securely preserved outside the repository. For current build instructions, including the Debug workflow, see [README.md](../README.md).
 
-## Release state
+## Release state at handoff
 
-- Current source is based only on the latest actual Drive release, v2.1.0; older versions are comparison/history only.
-- Project: `/home/user/Dour/`; `applicationId=com.dour.game`; `versionName=2.2.0`; `versionCode=6`.
+- The release source was based on the then-latest verified Drive release, v2.1.0; older versions were comparison/history only.
+- Project at the time: `/home/user/Dour/`; `applicationId=com.dour.game`; `versionName=2.2.0`; `versionCode=6`.
 - Requested design tokens are exact: page canvas `#F2C50A`; all app/dialog button fills `#07223C`. Text uses accessible white/disabled-gray states; Lalezar and team identity colors remain. Original icon artwork was not changed.
 - The active game page no longer has a “پایان” button. Early end remains separate in the pause overlay/dialog; automatic completion remains.
 - The pause/resume control is reachable in preparation, playing, manual-pause, system-pause and explosion states. Repeated pause/resume preserves player, current word, word history, used words and remaining time. System interruption restores a manual pause as paused until the user explicitly continues.
@@ -33,8 +33,8 @@ This is a historical record of the 2.2.0 release, not a current deployment check
 - Existing owner-only signing folder was used. Keep that key unchanged for future releases; private files were temporarily staged outside the project in protected storage for signing and must not enter archives.
 - The original handoff instructed that prior release folders be preserved and the v2.2.0 deliverables verified in Drive. This is historical context only; use GitHub for future source and release management as required by `AGENTS.md`. Preserve existing backups and signing material.
 
-## Current local deliverables
+## Local deliverables at handoff
 
-- Release APK: `app/build/outputs/apk/release/app-release.apk`.
-- Updated source documentation: `README.md`, `Dour-README.md`, `CHANGELOG.md`, `Dour-Test-Report.md`.
-- Build-local `local.properties`, `.gradle/`, `.kotlin/` and `app/build/` are not source-release content. Exclude these, signing material, SDK/toolchain and caches from the source ZIP.
+- The Release APK was produced at `app/build/outputs/apk/release/app-release.apk` in the historical build environment; its presence in a later checkout is not implied.
+- Source documentation at handoff: `README.md`, `Dour-README.md`, `CHANGELOG.md`, `Dour-Test-Report.md`.
+- Build-local `local.properties`, `.gradle/`, `.kotlin/` and `app/build/` are not source-release content. Exclude these, signing material, SDK/toolchain and caches from source archives.

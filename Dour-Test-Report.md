@@ -1,5 +1,7 @@
 # Build and verification report — Armadillo 2.2.0
 
+This is the historical report for the 2026-10-29 release build, preserved as originally recorded. Its results do not verify later changes or other versions. For current build instructions and the separate later Debug CI run, see [README.md](README.md#build-and-test).
+
 **Date:** 2026-10-29 (Asia/Tehran)  
 **Project:** `/home/user/Dour/`  
 **Base:** verified latest Drive source archive from `Releases/v2.1.0` (not an older release)  
