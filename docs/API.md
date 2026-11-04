@@ -4,7 +4,7 @@ Armadillo is an offline Android application. It exposes **no HTTP, REST or other
 
 ## Game engine
 
-Location: `app/src/main/java/com/dour/game/game/GameEngine.kt`.
+Location: `app/src/main/java/com/armadillo/game/game/GameEngine.kt`.
 
 Construct `GameEngine(state, words, clockNanos, wallClockMillis)` with a `GameState`, a `WordSource`, a monotonic nanosecond clock and an optional wall clock for history timestamps. Callers manage persistence and UI; the engine does not save state or play audio.
 

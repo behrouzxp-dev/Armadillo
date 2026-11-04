@@ -1,19 +1,19 @@
-package com.dour.game.data
+package com.armadillo.game.data
 
 import android.content.Context
 import android.content.SharedPreferences
 import org.json.JSONArray
 import org.json.JSONObject
-import com.dour.game.game.GameConstants
-import com.dour.game.game.GamePhase
-import com.dour.game.game.GameState
-import com.dour.game.game.Player
-import com.dour.game.game.SoundSettings
-import com.dour.game.game.TeamStats
-import com.dour.game.game.WordCategories
-import com.dour.game.game.WordHistoryEntry
-import com.dour.game.game.WordOutcome
-import com.dour.game.game.migrateSavedCategories
+import com.armadillo.game.game.GameConstants
+import com.armadillo.game.game.GamePhase
+import com.armadillo.game.game.GameState
+import com.armadillo.game.game.Player
+import com.armadillo.game.game.SoundSettings
+import com.armadillo.game.game.TeamStats
+import com.armadillo.game.game.WordCategories
+import com.armadillo.game.game.WordHistoryEntry
+import com.armadillo.game.game.WordOutcome
+import com.armadillo.game.game.migrateSavedCategories
 
 /** Player names are persisted separately from the optional unfinished-game checkpoint. */
 data class PlayerRoster(val playerCount: Int, val names: List<String>)
@@ -30,7 +30,7 @@ internal fun mergePlayerRosterNames(existing: List<String>, updated: List<String
 
 /** Local durable state. Keep the preference-file and existing game keys stable for upgrades. */
 class LocalStore(context: Context) {
-    private val preferences: SharedPreferences = context.getSharedPreferences("dour_local_v1", Context.MODE_PRIVATE)
+    private val preferences: SharedPreferences = context.getSharedPreferences("armadillo_local_v1", Context.MODE_PRIVATE)
 
     fun hasUnfinishedGame(): Boolean = loadGame() != null
 

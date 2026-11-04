@@ -1,8 +1,8 @@
-package com.dour.game.ui
+package com.armadillo.game.ui
 
 import android.content.Context
 import android.graphics.Typeface
-import com.dour.game.R
+import com.armadillo.game.R
 
 /** Shared visual tokens for every Armadillo screen and custom view. */
 data class DesignColors(

@@ -1,4 +1,4 @@
-package com.dour.game.data
+package com.armadillo.game.data
 
 import org.junit.Assert.assertEquals
 import org.junit.Test
