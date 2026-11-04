@@ -47,7 +47,17 @@ jobs:
           if-no-files-found: error
           retention-days: 7
       - name: Run unit tests and lint
-        run: ./gradlew --no-daemon :app:testDebugUnitTest :app:lintDebug
+        run: |
+          set +e
+          ./gradlew --no-daemon :app:testDebugUnitTest :app:lintDebug > gradle-check.log 2>&1
+          status=$?
+          if [ "$status" -ne 0 ]; then
+            # Surface the reason as check-run annotations; the raw log needs repository access.
+            grep -E "FAILED|not mocked|Stub!|^e: |error:|Execution failed|failing tests|Lint found" gradle-check.log \
+              | head -40 | while IFS= read -r line; do echo "::error::$line"; done
+          fi
+          tail -30 gradle-check.log
+          exit "$status"
 
   release:
     runs-on: ubuntu-latest
