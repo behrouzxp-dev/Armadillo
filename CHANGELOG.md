@@ -1,6 +1,12 @@
 # Armadillo changelog
 
-This project follows semantic versioning (SemVer). Delivered versions were historically kept in separate release folders.
+This project follows semantic versioning (SemVer). The versioned entries below are historical records of earlier builds, not the current repository's official releases. The first official release from this repository will be designated separately.
+
+## Unreleased
+
+- Remove the configured user-facing version name while retaining the existing Android version code and application ID. The About screen shows a version only when one is configured for a future build.
+- Document the repository's Debug APK workflow, artifact retention, trigger limitations, signing and upgrade caveats.
+- Clarify historical test-report scope and correct documentation links without changing the application version or behavior.
 
 ## [2.2.0] — 2026-10-29
 
@@ -19,7 +25,7 @@ This project follows semantic versioning (SemVer). Delivered versions were histo
 - Sampled yellow and navy from the original 1024×1024 icon (`#F9CB03` and `#07223D`); the icon file and artwork were unchanged. Preserved five team colors and used a navy border for the yellow indicator on the yellow background.
 - Preserved v2 features, home-screen audio settings, `com.dour.game`, offline/free/ad-free behavior, Persian RTL, portrait orientation, the monotonic timer, saved games and background time/audio pausing.
 - Increased `versionCode` to 5 and `versionName` to 2.1.0.
-- Test, build, signing and device-test limitations are recorded in `Dour-Test-Report.md`.
+- The available `Dour-Test-Report.md` describes 2.2.0, not a separate 2.1.0 test run; do not treat its results as 2.1.0 verification.
 
 ## [2.0.0] — 2026-10-29
 

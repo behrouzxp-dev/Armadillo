@@ -1,33 +1,19 @@
 # Armadillo — group word-guessing game
 
-**Version 2.2.0 · versionCode 6 · Android / Kotlin**
+**Android / Kotlin · Unreleased**
 
-Armadillo is an offline, right-to-left Persian group game. Its `applicationId` remains `com.dour.game` to preserve the application identity. The app is free, ad-free and requires no internet permission; its sounds, font and words are bundled locally. It uses portrait orientation and has no background music.
+Armadillo is an offline, right-to-left Persian group game. Its `applicationId` is `com.dour.game`. The app is free, ad-free and requires no internet permission; its sounds, font and words are bundled locally. It uses portrait orientation and has no background music. The manifest requests vibration permission and disables Android backup.
 
-## Version 2.2.0
+This repository does not designate a current official release or a user-facing application version. `versionCode` remains 6 for Android compatibility; choose a `versionName` and an appropriate `versionCode` when preparing a future release. The repository on GitHub is the source of truth. See [AGENTS.md](AGENTS.md) for project rules and [CHANGELOG.md](CHANGELOG.md) for changes. Historical test reports and changelogs describe earlier builds, not an official release of the current repository.
 
-- This version was based on the verified v2.1.0 source. `applicationId=com.dour.game` was retained, with `versionCode=6` and `versionName=2.2.0`.
-- The central page background token is exactly `#F2C50A`; the background token for all buttons, including dialog buttons, is exactly `#07223C`. Active button text is white and disabled text is high-contrast gray; touch feedback and selection borders are retained.
-- The end button was removed from the active game screen. Early ending remains a separate action in the pause panel/dialog, and automatic round completion is unchanged.
-- Pause/resume is available during preparation, active play, manual pause, system pause and the explosion screen. Repeated pauses, interruptions and background restoration retain the player, word, history, remaining time and timer behavior.
-- Lalezar, the five team identity colors, original icon artwork and other v2.1.0 features remain unchanged. The original icon artwork was not edited.
-- The original release report records unit tests, Debug/Release APK builds, lint, vocabulary validation, signing and APK alignment checks. See `Dour-Test-Report.md`; no device or emulator test was performed.
+## Features
 
-## Version 2.0.0
-
-- This was a new release of the same feature set as 1.2.0, without changes to game functionality.
-- `applicationId=com.dour.game` was retained; `versionCode=4` and `versionName=2.0.0`.
-- The 2.0.0 APK was a **Release** signed with the established Armadillo key.
-- Gradle reads signing inputs from environment variables rather than storing passwords or keys in source. Key files remain outside source archives.
-
-## Features added in 1.2.0
-
-- The application and icon were renamed Armadillo. The user's original artwork was retained without artistic changes; only a scaled version with safe padding was created for the adaptive icon.
-- The local Persian Lalezar font is bundled with its SIL Open Font License 1.1 (`app/src/main/assets/fonts/`).
+- The central page background token is `#F2C50A`; button backgrounds use `#07223C`, with touch feedback and selection borders.
+- Pause/resume is available during preparation, active play, manual pause, system pause and the explosion screen. An early-end action is available in the pause panel/dialog.
+- The user's original icon artwork is retained; a scaled version with safe padding is used for the adaptive icon. The local Persian Lalezar font is bundled with its SIL Open Font License 1.1 (`app/src/main/assets/fonts/`).
 - Playable categories are jobs, animals, foods, places and technology, each with 100 words at each easy, medium and hard level: 1,500 unique words. The previous 723-word general bank remains in `words.json` but is not used in category selection or the word cycle.
 - Player names and order are stored separately and prefilled for subsequent games.
-- Round duration options are 120, 210 or 300 seconds; round counts are 3, 5 or 7.
-- Category selection uses a three-column grid, and sound settings were moved to the home screen. The pause button was removed in 1.2.0, restored in 2.1.0 and made available across live game states in 2.2.0, without changing v2 engine rules.
+- Round duration options are 120, 210 or 300 seconds; round counts are 3, 5 or 7. Category selection uses a three-column grid, and sound settings are available on the home screen.
 - Seats and turns rotate counterclockwise. Fixed team colors are blue, red, green, purple and yellow, in that order.
 - Results record displayed words with player name, round, display time and outcome.
 - Time and audio stop when the app goes into the background, the screen locks or a system interruption occurs; time outside the app is not counted.
@@ -55,6 +41,11 @@ Armadillo is an offline, right-to-left Persian group game. Its `applicationId` r
 - `tools/add_armadillo_categories.py` — place and technology vocabulary
 - `tools/validate_words.py` — validates the archived general bank and 1,500-word topic bank
 - `tools/SESSION_HANDOFF.md` — historical session notes and verification results
+- `.github/workflows/debug-apk.yml` — manual Debug build, artifact upload, unit tests and lint
+
+## Architecture and persistence
+
+`MainActivity` owns the Android UI and lifecycle and connects the game engine, local word bank, audio and storage. `GameEngine` applies game state transitions against a caller-supplied monotonic clock; `Models.kt` defines phases, players, teams and ranking. `LocalWordBank` reads bundled topic words and starts a new cycle after the selected pool is exhausted. `LocalStore` persists settings, the player roster and unfinished-game checkpoints in the private `dour_local_v1` SharedPreferences file. A restored unfinished game enters a system-paused state; a manual pause remains paused until the player resumes. The legacy general word bank is retained for historical compatibility, not as a playable category.
 
 ## Build requirements
 
@@ -70,12 +61,13 @@ Armadillo is an offline, right-to-left Persian group game. Its `applicationId` r
 Linux/macOS:
 
 ```bash
-./gradlew :app:testDebugUnitTest
-./gradlew :app:lintRelease
+./gradlew :app:assembleDebug :app:testDebugUnitTest :app:lintDebug
 python3 tools/validate_words.py
 # Release signing inputs must be loaded into the current shell from private storage first.
-./gradlew :app:assembleRelease
+./gradlew :app:lintRelease :app:assembleRelease
 ```
+
+The Debug APK is written to `app/build/outputs/apk/debug/app-debug.apk` and is signed with the local Android debug key. A Debug APK generally cannot update a Release APK signed with a different key. Uninstalling an existing app can delete its local data; back it up before taking that step.
 
 Release builds require `RELEASE_KEYSTORE_PATH`, `RELEASE_KEY_ALIAS`, `RELEASE_STORE_PASSWORD` and `RELEASE_KEY_PASSWORD`. Do not put actual passwords in source, `gradle.properties` or the command line. Keep the original keystore and its recovery information in secure private storage, outside the repository.
 
@@ -93,15 +85,15 @@ The signed release APK is produced at:
 app/build/outputs/apk/release/app-release.apk
 ```
 
+## GitHub Actions Debug build
+
+The [Debug APK workflow](.github/workflows/debug-apk.yml) can be started manually from the GitHub Actions page with `workflow_dispatch` and an available branch. It assembles the Debug APK, uploads `armadillo-debug-apk` as a ZIP artifact retained for seven days, then runs `:app:testDebugUnitTest` and `:app:lintDebug`. Download the artifact from the run page while it is available; repository access is required. The upload occurs before tests and lint, so check the final run result as well as the artifact. It does not publish a release or create a tag.
+
+The workflow's automatic push trigger is restricted to changes to the workflow file on `arena/9adb9043-armadillo`; it is not a general continuous-integration trigger for other branches. The historical [run 41904815606](https://github.com/behrouzxp-dev/Armadillo/actions/runs/41904815606) passed the Debug build, artifact upload, unit-test and lint steps. Its warnings noted deprecated action runtimes and `setup-java` v4; it did not test installation or startup. A past successful run does not establish that a future checkout builds successfully.
+
 ## Signing and upgrades
 
-- The recorded 2.2.0 APK was a **signed Release**. Its key alias was `armadillo-release`, and its certificate SHA-256 fingerprint was `07:2A:8E:FB:08:75:88:FF:64:90:EB:E6:AF:75:C9:A8:9A:98:71:B5:F9:A2:F4:D5:1F:9D:6C:88:94:CC:EF:93`; the same certificate was used for releases 2.0.0 and 2.1.0.
-- The encrypted keystore and password recovery information were historically kept in an owner-only private signing folder. The same keystore was reused and must not be included in source or public archives.
-- A Release APK signed with the same certificate can upgrade earlier Release installations; a prior Debug installation cannot be upgraded in place with the Release APK.
-- Only the 2.2.0 checks listed in `Dour-Test-Report.md` were performed for that release; no device or emulator installation or execution was performed in that environment.
-
-## History
-
-- Versions 1.0.0 and 1.1.0 were retained in their own release folders and were not rewritten.
-- The recorded 1.2.0 build/test status is in `Dour-Test-Report.md`.
-- Known limitation: 2.2.0 was not installed or run on a physical device or emulator in the recorded release environment; see `Dour-Test-Report.md` for its verification status.
+- Keep the existing release keystore and credentials securely backed up outside the repository. Never replace an established key without explicit authorization.
+- The public certificate fingerprint recorded for earlier signed builds is `07:2A:8E:FB:08:75:88:FF:64:90:EB:E6:AF:75:C9:A8:9A:98:71:B5:F9:A2:F4:D5:1F:9D:6C:88:94:CC:EF:93`; see the historical [test report](Dour-Test-Report.md). This record does not verify a future build or the current availability of the key.
+- Android upgrades depend on compatible signing and version codes. In particular, a Debug APK normally cannot replace an installation signed with a different Release key.
+- Historical reports document past builds and limitations, not current build or device-test results. No official release from this repository has been designated by this documentation.
