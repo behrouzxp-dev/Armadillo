@@ -1,10 +1,9 @@
 # Armadillo 2.1.0 — Change log
 
-- این به‌روزرسانی فقط از سورس تأییدشدهٔ v2.0.0 ادامه پیدا می‌کند؛ v1.1.0 فقط مرجع جایگاه و رفتار کنترل توقف موقت است.
-- بازگرداندن دکمهٔ «توقف موقت» پس از زمان‌سنج‌های تیم، همراه با توقف تایمر/صدا، ذخیرهٔ پایدار و پنل ادامه/پایان/تنظیمات صدا؛ ادامه از همان بازیکن، واژه و زمان باقی‌مانده انجام می‌شود. قابلیت پایان زودهنگام v2 حفظ شده است.
-- یکپارچه‌سازی صفحه‌ها و نمای صندلی‌ها با توکن‌های مرکزی رنگ، فاصله، شعاع، قلم Lalezar، اندازهٔ متن و تعامل.
-- رنگ زرد و سرمه‌ای از تصویر اصلی ۱۰۲۴×۱۰۲۴ آیکون نمونه‌برداری شده‌اند (`#F9CB03` و `#07223D`). فایل و جزئیات هنری آیکون تغییر نکرده‌اند؛ رنگ‌های پنج تیم حفظ شده‌اند و نشان تیم زرد با حاشیهٔ سرمه‌ای روی زمینهٔ زرد خواناست.
-- حفظ قابلیت‌های v2، تنظیمات صدا در صفحهٔ اصلی، شناسهٔ `com.dour.game`، رفتار آفلاین/رایگان/بدون تبلیغ، فارسی RTL، حالت Portrait، زمان‌سنج monotonic، ذخیرهٔ بازی و توقف زمان/صدا در پس‌زمینه.
-- `versionCode` به 5 و `versionName` به 2.1.0 افزایش یافت.
-- نتیجهٔ آزمون، ساخت، امضا و محدودیت آزمون دستگاه در `Dour-Test-Report.md` ثبت می‌شود.
-
+- This update continues only from verified v2.0.0 source; v1.1.0 is used only as a reference for the pause control's placement and behavior.
+- Restored the pause button after the team timers, including timer/audio pause, durable saving and a panel for resume, ending and audio settings. Resuming continues with the same player, word and remaining time. The v2 early-end feature is retained.
+- Unified screens and the seating view with central tokens for color, spacing, radius, Lalezar font, text size and interaction.
+- Yellow and navy were sampled from the original 1024×1024 icon image (`#F9CB03` and `#07223D`). The icon file and artistic details were not changed. All five team colors remain, and the yellow team indicator uses a navy border for readability on yellow.
+- Retained v2 functionality, home-screen audio settings, `com.dour.game`, offline/free/ad-free behavior, Persian RTL, portrait orientation, the monotonic timer, saved games and background time/audio pausing.
+- Increased `versionCode` to 5 and `versionName` to 2.1.0.
+- Test, build, signing and device-test limitations are recorded in `Dour-Test-Report.md`.

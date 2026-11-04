@@ -1,71 +1,71 @@
-# آرمادیلو (Armadillo) — بازی گروهی حدس واژه
+# Armadillo — group word-guessing game
 
-**نسخهٔ 2.2.0 · versionCode 6 · Android / Kotlin**
+**Version 2.2.0 · versionCode 6 · Android / Kotlin**
 
-آرمادیلو بازی گروهی فارسی، راست‌چین و آفلاین است. `applicationId` برای حفظ شناسهٔ برنامه روی `com.dour.game` باقی مانده است. برنامه رایگان، بدون تبلیغ و بدون مجوز اینترنت است؛ صداها، فونت و واژه‌ها داخل برنامه قرار دارند. جهت صفحه Portrait است و موسیقی پس‌زمینه ندارد.
+Armadillo is an offline, right-to-left Persian group game. Its `applicationId` remains `com.dour.game` to preserve the application identity. The app is free, ad-free and requires no internet permission; its sounds, font and words are bundled locally. It uses portrait orientation and has no background music.
 
-## انتشار 2.2.0
+## Version 2.2.0
 
-- این نسخه فقط بر پایهٔ آخرین انتشار واقعی Drive یعنی سورس v2.1.0 ساخته شده است؛ `applicationId=com.dour.game` حفظ و نسخه به `versionCode=6` / `versionName=2.2.0` افزایش یافته است.
-- زمینهٔ اصلی صفحه‌ها از توکن مرکزی با مقدار دقیق `#F2C50A` و پس‌زمینهٔ همهٔ دکمه‌ها (از جمله دکمه‌های دیالوگ) از توکن مرکزی با مقدار دقیق `#07223C` استفاده می‌کند. متن دکمهٔ فعال سفید و متن حالت غیرفعال خاکستریِ پرکنتراست است؛ بازخورد لمسی و حاشیهٔ انتخاب نیز حفظ شده‌اند.
-- دکمهٔ «پایان» از صفحهٔ فعال بازی حذف شده است. منطق پایان زودهنگام همچنان به‌صورت عمل جداگانه در پنل توقف/دیالوگ می‌ماند و پایان خودکار دست‌ها بدون تغییر حفظ شده است.
-- کنترل توقف/ادامه در آماده‌سازی، بازی فعال، توقف دستی، توقف سیستمی و صفحهٔ انفجار قابل‌استفاده است. توقف‌های تکراری، وقفهٔ برنامه و بازگشت از پس‌زمینه همان بازیکن، واژه، تاریخچه، زمان باقی‌مانده و رفتار زمان‌سنج را حفظ می‌کنند.
-- Lalezar، رنگ‌های هویتی پنج تیم، تصویر اصلی آیکون و سایر قابلیت‌های v2.1.0 بدون تغییر نگه داشته شده‌اند. فایل اصلی/هنری آیکون ویرایش نشده است.
-- آزمون‌های واحد، ساخت APKهای Debug/Release، lint، اعتبارسنجی واژه‌ها، امضا و هم‌ترازی APK اجرا شده‌اند؛ جزئیات در `Dour-Test-Report.md` آمده است. آزمون روی دستگاه/شبیه‌ساز انجام نشده است.
+- This version was based on the verified v2.1.0 source. `applicationId=com.dour.game` was retained, with `versionCode=6` and `versionName=2.2.0`.
+- The central page background token is exactly `#F2C50A`; the background token for all buttons, including dialog buttons, is exactly `#07223C`. Active button text is white and disabled text is high-contrast gray; touch feedback and selection borders are retained.
+- The end button was removed from the active game screen. Early ending remains a separate action in the pause panel/dialog, and automatic round completion is unchanged.
+- Pause/resume is available during preparation, active play, manual pause, system pause and the explosion screen. Repeated pauses, interruptions and background restoration retain the player, word, history, remaining time and timer behavior.
+- Lalezar, the five team identity colors, original icon artwork and other v2.1.0 features remain unchanged. The original icon artwork was not edited.
+- The original release report records unit tests, Debug/Release APK builds, lint, vocabulary validation, signing and APK alignment checks. See `Dour-Test-Report.md`; no device or emulator test was performed.
 
-## انتشار 2.0.0
+## Version 2.0.0
 
-- این نسخه یک Release تازه از همان مجموعهٔ قابلیت‌های نسخهٔ 1.2.0 است؛ تغییر قابلیت‌های بازی در این انتشار انجام نشده است.
-- `applicationId=com.dour.game` حفظ شده؛ `versionCode=4` و `versionName=2.0.0`.
-- APK نسخهٔ 2.0.0 از نوع **Release** است و با کلید پایدار Armadillo امضا شده است.
-- پیکربندی Gradle گذرواژه یا کلید را در سورس ذخیره نمی‌کند و آن‌ها را از متغیرهای محیطی می‌خواند؛ فایل‌های کلید خارج از آرشیو سورس می‌مانند.
+- This was a new release of the same feature set as 1.2.0, without changes to game functionality.
+- `applicationId=com.dour.game` was retained; `versionCode=4` and `versionName=2.0.0`.
+- The 2.0.0 APK was a **Release** signed with the established Armadillo key.
+- Gradle reads signing inputs from environment variables rather than storing passwords or keys in source. Key files remain outside source archives.
 
-## قابلیت‌های افزوده‌شده در 1.2.0
+## Features added in 1.2.0
 
-- نام و نشان برنامه به «آرمادیلو» تغییر کرد. تصویر پیوست کاربر بدون ویرایش هنری نگهداری شده؛ برای adaptive icon فقط نسخهٔ مقیاس‌خورده با حاشیهٔ ایمن ساخته شده است.
-- فونت فارسی محلی Lalezar با مجوز SIL Open Font License 1.1 بسته‌بندی شد (`app/src/main/assets/fonts/`).
-- دسته‌های قابل‌بازی: مشاغل، حیوانات، خوراکی‌ها، مکان‌ها و تکنولوژی؛ هرکدام ۱۰۰ واژه در هر سطح آسان/متوسط/سخت، در مجموع ۱٬۵۰۰ واژهٔ یکتا. بانک عمومی ۷۲۳ واژه‌ای قبلی در `words.json` حفظ شده اما در انتخاب دسته و چرخهٔ واژه استفاده نمی‌شود.
-- نام و ترتیب بازیکنان به‌طور جداگانه ذخیره می‌شود و برای بازی دوباره پیش‌پر می‌شود.
-- زمان هر دست: ۱۲۰، ۲۱۰ یا ۳۰۰ ثانیه؛ تعداد دست‌ها: ۳، ۵ یا ۷.
-- انتخاب دسته‌ها در شبکهٔ سه‌ستونه و انتقال تنظیمات صدا به صفحهٔ اصلی؛ دکمهٔ توقف موقت در 1.2.0 حذف و در 2.1.0 بازگردانده شد؛ در 2.2.0 دسترسی توقف/ادامه به حالت‌های زندهٔ بازی گسترش یافت، بدون تغییر قواعد موتور v2.
-- گردش صندلی و نوبت‌ها پادساعت‌گرد است. رنگ ثابت تیم‌ها به‌ترتیب آبی، قرمز، سبز، بنفش و زرد است.
-- واژه‌های نمایش‌داده‌شده با نام بازیکن، دست، زمان نمایش و نتیجه در فهرست نتایج ثبت می‌شوند.
-- توقف زمان و صدا هنگام رفتن برنامه به پس‌زمینه، قفل صفحه و وقفهٔ سیستمی حفظ شده است؛ زمان خارج از برنامه محاسبه نمی‌شود.
-- مهاجرت ذخیره‌های قدیمی، دستهٔ عمومی را از بازی فعال خارج می‌کند و وضعیت زمان/امتیاز را نگه می‌دارد. چون کلمهٔ قدیمی ممکن است از بانک عمومی باشد، در ادامه یک کلمهٔ تازه از دستهٔ قابل‌بازی انتخاب می‌شود.
+- The application and icon were renamed Armadillo. The user's original artwork was retained without artistic changes; only a scaled version with safe padding was created for the adaptive icon.
+- The local Persian Lalezar font is bundled with its SIL Open Font License 1.1 (`app/src/main/assets/fonts/`).
+- Playable categories are jobs, animals, foods, places and technology, each with 100 words at each easy, medium and hard level: 1,500 unique words. The previous 723-word general bank remains in `words.json` but is not used in category selection or the word cycle.
+- Player names and order are stored separately and prefilled for subsequent games.
+- Round duration options are 120, 210 or 300 seconds; round counts are 3, 5 or 7.
+- Category selection uses a three-column grid, and sound settings were moved to the home screen. The pause button was removed in 1.2.0, restored in 2.1.0 and made available across live game states in 2.2.0, without changing v2 engine rules.
+- Seats and turns rotate counterclockwise. Fixed team colors are blue, red, green, purple and yellow, in that order.
+- Results record displayed words with player name, round, display time and outcome.
+- Time and audio stop when the app goes into the background, the screen locks or a system interruption occurs; time outside the app is not counted.
+- Migration of old saves removes the general category from active play while retaining time and scores. Since an old word may come from the general bank, a new word from a playable category is selected on continuation.
 
-## جریان بازی
+## Gameplay
 
-1. تعداد ۴، ۶، ۸ یا ۱۰ بازیکن را انتخاب کنید؛ هر تیم دونفره است. صندلی پایین آغازگر است و نوبت‌ها پادساعت‌گرد می‌چرخند.
-2. نام‌ها را وارد کنید و یک یا چند دسته را انتخاب کنید. انتخاب‌ها تا پایان همان بازی ثابت می‌مانند.
-3. سطح دشواری، زمان هر دست و تعداد دست‌ها را تنظیم کنید.
-4. در طول دست می‌توانید «توقف موقت» را بزنید؛ بازی، واژه و زمان باقی‌مانده ذخیره و متوقف می‌شوند. «ادامه بازی» از همان نقطه از سر می‌گیرد. پس از حدس درست، «حدس زد» را بزنید تا گوشی و نوبت به بازیکن بعدی منتقل شود. تعویض واژه در ۷ ثانیهٔ نخست غیرفعال است؛ واژهٔ تعویض‌شده همچنان مصرف‌شده محسوب می‌شود.
-5. با پایان زمان، تیمی که گوشی دستش است ۱۰ ثانیه جریمه می‌گیرد. صفحهٔ انفجار تا لمس بازیکن باقی می‌ماند.
-6. زمان تیم‌ها و فهرست زمانی واژه‌ها در صفحهٔ نتایج نمایش داده می‌شود.
+1. Select 4, 6, 8 or 10 players; teams have two players each. The bottom seat starts, and turns rotate counterclockwise.
+2. Enter names and select one or more categories. Selections remain fixed for that game.
+3. Set difficulty, round duration and number of rounds.
+4. During a round, pause to save and stop the game, current word and remaining time; resume from the same point. After a correct guess, use the guessed action to pass the phone and turn to the next player. Word replacement is disabled during the first seven seconds; a replaced word still counts as used.
+5. When time expires, the team holding the phone receives a 10-second penalty. The explosion screen remains until a player taps it.
+6. The results screen displays team times and the chronological word list.
 
-## ساختار پروژه
+## Project structure
 
-- `app/src/main/java/com/dour/game/` — رابط، مدل، موتور، صدا، ذخیرهٔ محلی
-- `app/src/main/java/com/dour/game/ui/DesignSystem.kt` — پالت، تایپوگرافی و توکن‌های رابط مشترک
-- `app/src/main/assets/categories.json` — پنج دستهٔ بازی، ۱٬۵۰۰ واژهٔ موضوعی
-- `app/src/main/assets/words.json` — بانک عمومی قدیمی، حفظ‌شده اما غیرفعال در بازی
-- `app/src/main/assets/fonts/` — فونت Lalezar و مجوز OFL
-- `app/src/main/res/drawable-nodpi/armadillo_icon_art.jpg` — کپی اصلی تصویر آیکون
-- `app/src/test/` — آزمون‌های واحد Kotlin/JVM
-- `tools/build_categories.py` — تولید دسته‌های قبلی همراه حفظ دسته‌های جدید
-- `tools/add_armadillo_categories.py` — واژه‌های مکان‌ها و تکنولوژی
-- `tools/validate_words.py` — کنترل بانک عمومی آرشیوی و بانک ۱٬۵۰۰ واژه‌ای
-- `tools/SESSION_HANDOFF.md` — یادداشت پایدار وضعیت پروژه و گام‌های بعدی
+- `app/src/main/java/com/dour/game/` — UI, models, engine, audio and local storage
+- `app/src/main/java/com/dour/game/ui/DesignSystem.kt` — shared palette, typography and UI tokens
+- `app/src/main/assets/categories.json` — five playable categories and 1,500 topic words
+- `app/src/main/assets/words.json` — retained legacy general bank, inactive in gameplay
+- `app/src/main/assets/fonts/` — Lalezar font and OFL license
+- `app/src/main/res/drawable-nodpi/armadillo_icon_art.jpg` — original icon artwork copy
+- `app/src/test/` — Kotlin/JVM unit tests
+- `tools/build_categories.py` — builds earlier categories while preserving newer categories
+- `tools/add_armadillo_categories.py` — place and technology vocabulary
+- `tools/validate_words.py` — validates the archived general bank and 1,500-word topic bank
+- `tools/SESSION_HANDOFF.md` — historical session notes and verification results
 
-## پیش‌نیاز ساخت
+## Build requirements
 
-- JDK 17 یا جدیدتر (ساخت حاضر با Temurin JDK 17.0.21 انجام شد)
-- Android SDK Platform 35 و Build Tools 35
+- JDK 17 or newer (the recorded release build used Temurin JDK 17.0.21)
+- Android SDK Platform 35 and Build Tools 35
 - Gradle Wrapper 8.11.1
-- حداقل Android 6.0 / API 23؛ `minSdk=23`, `targetSdk=35`
+- Android 6.0 / API 23 minimum; `minSdk=23`, `targetSdk=35`
 
-`local.properties` مسیر SDK رایانهٔ سازنده را دارد و در ZIP سورس قرار نمی‌گیرد.
+`local.properties` contains the builder's SDK path and is not part of the source archive.
 
-## ساخت و آزمون
+## Build and test
 
 Linux/macOS:
 
@@ -77,7 +77,7 @@ python3 tools/validate_words.py
 ./gradlew :app:assembleRelease
 ```
 
-برای ساخت Release، چهار متغیر محیطی `RELEASE_KEYSTORE_PATH`، `RELEASE_KEY_ALIAS`، `RELEASE_STORE_PASSWORD` و `RELEASE_KEY_PASSWORD` لازم‌اند. مقدار واقعی رمز را در سورس، `gradle.properties` یا command line نگذارید؛ کلید و رمز بازیابی در پوشهٔ خصوصی `Signing-Key/` در Drive نگهداری می‌شوند.
+Release builds require `RELEASE_KEYSTORE_PATH`, `RELEASE_KEY_ALIAS`, `RELEASE_STORE_PASSWORD` and `RELEASE_KEY_PASSWORD`. Do not put actual passwords in source, `gradle.properties` or the command line. Keep the original keystore and its recovery information in secure private storage, outside the repository.
 
 Windows:
 
@@ -87,21 +87,21 @@ gradlew.bat assembleDebug
 gradlew.bat lintDebug
 ```
 
-APK انتشار امضاشده در این مسیر ساخته می‌شود:
+The signed release APK is produced at:
 
 ```text
 app/build/outputs/apk/release/app-release.apk
 ```
 
-## وضعیت امضا و نصب ارتقایی
+## Signing and upgrades
 
-- APK نسخهٔ 2.2.0 یک **Release امضاشده** است؛ alias کلید `armadillo-release` و اثرانگشت SHA-256 گواهی `07:2A:8E:FB:08:75:88:FF:64:90:EB:E6:AF:75:C9:A8:9A:98:71:B5:F9:A2:F4:D5:1F:9D:6C:88:94:CC:EF:93` است؛ همین گواهی در Release نسخه‌های 2.0.0 و 2.1.0 نیز استفاده شد.
-- فایل keystore رمزدار و فایل بازیابی گذرواژه طبق درخواست مالک در پوشهٔ خصوصی `Signing-Key/` در Drive نگهداری می‌شوند؛ این پوشه فقط برای مالک قابل‌دسترسی است و عمومی نشده. همان keystore برای این ساخت دوباره استفاده شد و نباید در سورس/آرشیو عمومی قرار گیرد.
-- APK نوع Release با همان گواهی برای ارتقای نصب‌های Release نسخه‌های پیشین سازگار است؛ نصب Debug قبلی با Release به‌صورت ارتقایی جایگزین نمی‌شود.
-- برای 2.2.0 فقط آزمون‌های فهرست‌شده در `Dour-Test-Report.md` انجام شده‌اند؛ نصب/اجرای دستگاه یا شبیه‌ساز در این محیط انجام نشده است.
+- The recorded 2.2.0 APK was a **signed Release**. Its key alias was `armadillo-release`, and its certificate SHA-256 fingerprint was `07:2A:8E:FB:08:75:88:FF:64:90:EB:E6:AF:75:C9:A8:9A:98:71:B5:F9:A2:F4:D5:1F:9D:6C:88:94:CC:EF:93`; the same certificate was used for releases 2.0.0 and 2.1.0.
+- The encrypted keystore and password recovery information were historically kept in an owner-only private signing folder. The same keystore was reused and must not be included in source or public archives.
+- A Release APK signed with the same certificate can upgrade earlier Release installations; a prior Debug installation cannot be upgraded in place with the Release APK.
+- Only the 2.2.0 checks listed in `Dour-Test-Report.md` were performed for that release; no device or emulator installation or execution was performed in that environment.
 
-## سوابق
+## History
 
-- v1.0.0 و v1.1.0 در پوشه‌های نسخهٔ خود نگهداری می‌شوند و بازنویسی نشده‌اند.
-- وضعیت آزمون/ساخت نسخهٔ 1.2.0 در `Dour-Test-Report.md` ثبت شده است.
-- محدودیت شناخته‌شده: نصب/اجرای 2.2.0 روی دستگاه واقعی یا شبیه‌ساز در این محیط انجام نشده است؛ وضعیت به‌روزشده در `Dour-Test-Report.md` ثبت شده است.
+- Versions 1.0.0 and 1.1.0 were retained in their own release folders and were not rewritten.
+- The recorded 1.2.0 build/test status is in `Dour-Test-Report.md`.
+- Known limitation: 2.2.0 was not installed or run on a physical device or emulator in the recorded release environment; see `Dour-Test-Report.md` for its verification status.
