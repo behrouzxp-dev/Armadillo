@@ -23,7 +23,9 @@ android {
         applicationId = "com.armadillo.game"
         minSdk = 23
         targetSdk = 35
-        versionCode = 6
+        // This application ID has never been published, so versioning starts at 1.
+        // Historical 2.2.0/versionCode 6 builds used the earlier com.dour.game identity.
+        versionCode = 1
         testInstrumentationRunner = "android.test.InstrumentationTestRunner"
     }
 
