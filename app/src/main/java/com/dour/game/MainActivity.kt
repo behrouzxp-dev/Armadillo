@@ -1336,13 +1336,15 @@ class MainActivity : Activity() {
         val (page, body) = createPage("درباره بازی", { renderHome() })
         val version = try {
             @Suppress("DEPRECATION")
-            packageManager.getPackageInfo(packageName, 0).versionName ?: "2.2.0"
-        } catch (_: Exception) { "2.2.0" }
+            packageManager.getPackageInfo(packageName, 0).versionName?.takeIf { it.isNotBlank() }
+        } catch (_: Exception) { null }
         body.addView(space(14))
         body.addView(label("آرمادیلو (Armadillo)", 28f, palette.BLUE, true), matchParams(bottom = 12))
-        body.addView(label("نسخهٔ $version", 16f, palette.INK, true), matchParams(bottom = 14))
+        if (version != null) {
+            body.addView(label("نسخهٔ $version", 16f, palette.INK, true), matchParams(bottom = 14))
+        }
         body.addView(label("یک بازی گروهی، آفلاین و فارسی برای توضیح و حدس‌زدن واژه‌ها. نام بازیکنان، زمان‌سنج و وضعیت بازی روی همین دستگاه نگهداری می‌شوند.", 15f, palette.MUTED), matchParams(bottom = 16))
-        body.addView(label("نسخهٔ تازه · رایگان · بدون تبلیغ", 13f, palette.MUTED), matchParams())
+        body.addView(label("رایگان · بدون تبلیغ", 13f, palette.MUTED), matchParams())
         showPage(page)
     }
 
