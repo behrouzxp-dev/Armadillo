@@ -91,5 +91,10 @@ jobs:
             grep -E "^e: |[Ee]rror:|FAILED|Execution failed|What went wrong|Lint found|Caused by|Exception|bug in lint|at com\.android|at java\." -A3 gradle-release.log \
               | head -80 | while IFS= read -r line; do echo "::error::$line"; done
           fi
+          if grep -q "Unexpected failure during lint analysis" gradle-release.log; then
+            sed -n '/Unexpected failure during lint analysis/,+60p' gradle-release.log \
+              | tr '\n' ' ' | cut -c1-1000 \
+              | while IFS= read -r line; do echo "::error::STACK $line"; done
+          fi
           tail -150 gradle-release.log
           exit "$status"
