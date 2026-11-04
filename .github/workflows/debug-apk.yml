@@ -68,6 +68,14 @@ jobs:
           fi
           tail -30 gradle-check.log
           exit "$status"
+      - name: Upload unit test and lint log
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: debug-check-log
+          path: gradle-check.log
+          if-no-files-found: ignore
+          retention-days: 3
 
   release:
     runs-on: ubuntu-latest
@@ -98,3 +106,11 @@ jobs:
           fi
           tail -150 gradle-release.log
           exit "$status"
+      - name: Upload release build log
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-build-log
+          path: gradle-release.log
+          if-no-files-found: ignore
+          retention-days: 3
