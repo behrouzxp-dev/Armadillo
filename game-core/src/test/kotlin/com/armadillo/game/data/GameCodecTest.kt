@@ -149,6 +149,15 @@ class GameCodecTest {
     }
 
     @Test
+    fun storedPlayersWithoutNamesUseTheInjectedLabeller() {
+        val json = GameCodec.encode(state())
+        val players = json.getJSONArray("players")
+        repeat(players.length()) { players.getJSONObject(it).remove("name") }
+        val decoded = GameCodec.decode(json) { "بازیکن $it" }
+        assertEquals((1..players.length()).map { "بازیکن $it" }, decoded.players.map { it.name })
+    }
+
+    @Test
     fun finishedGameFlagsAreResetByExplicitPhaseOnly() {
         val results = state().copy(phase = GamePhase.RESULTS)
         assertFalse(GameCodec.decode(GameCodec.encode(results)).phase == GamePhase.PLAYING)

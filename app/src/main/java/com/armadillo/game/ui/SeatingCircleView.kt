@@ -59,7 +59,7 @@ class SeatingCircleView(
     init {
         // Decorative summary only: the players screen also lists every seat as a real button,
         // which is what screen-reader and switch-access users navigate with.
-        contentDescription = "چیدمان دایره‌ای صندلی‌ها. برای ویرایش نام، از دکمه‌های زیر دایره استفاده کنید."
+        contentDescription = context.getString(R.string.a11y_seating_circle)
         isClickable = true
         importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_YES
     }
@@ -73,7 +73,7 @@ class SeatingCircleView(
         hitRadius = min(DesignSystem.Metrics.SEAT_HIT_RADIUS_DP * density, minDimension * if (count >= 8) 0.095f else 0.115f)
 
         canvas.drawCircle(centerX, centerY, tableRadius, ringPaint)
-        canvas.drawText("میز بازی", centerX, centerY + centerTextPaint.textSize / 3f, centerTextPaint)
+        canvas.drawText(context.getString(R.string.seating_table), centerX, centerY + centerTextPaint.textSize / 3f, centerTextPaint)
 
         for (seat in 0 until count) {
             val point = pointForSeat(seat)
@@ -90,7 +90,7 @@ class SeatingCircleView(
                 canvas.drawCircle(markerX, markerY, DesignSystem.Metrics.SEAT_MARKER_OUTLINE_RADIUS_DP * density, nodeOutlinePaint)
             }
 
-            val shownName = names.getOrNull(seat)?.trim().orEmpty().ifEmpty { "نام بازیکن" }
+            val shownName = names.getOrNull(seat)?.trim().orEmpty().ifEmpty { context.getString(R.string.players_default_name) }
             val maxTextWidth = hitRadius * 1.78f
             val nameSize = when {
                 shownName.length > 11 -> DesignSystem.TypeScale.SEAT_NAME_SMALL
@@ -103,7 +103,7 @@ class SeatingCircleView(
 
             detailPaint.textSize = DesignSystem.TypeScale.SEAT_DETAIL * scaledDensity
             detailPaint.color = designColors.textSecondary
-            canvas.drawText("تیم ${team + 1} · ${seat + 1}", point.first, point.second + DesignSystem.Metrics.SEAT_DETAIL_BASELINE_DP * density, detailPaint)
+            canvas.drawText(context.getString(R.string.seating_team_seat, team + 1, seat + 1), point.first, point.second + DesignSystem.Metrics.SEAT_DETAIL_BASELINE_DP * density, detailPaint)
         }
     }
 
