@@ -1,6 +1,6 @@
 package com.armadillo.game.data
 
-import com.armadillo.game.game.GameConstants
+import com.armadillo.game.game.GameEngine
 import com.armadillo.game.game.GamePhase
 import com.armadillo.game.game.GameState
 import com.armadillo.game.game.Player
@@ -30,7 +30,7 @@ class GameCodecTest {
         phase = GamePhase.PLAYING,
         currentPlayerIndex = 2,
         nextRoundStarterIndex = 1,
-        roundRemainingNanos = 90 * GameConstants.NANOS_PER_SECOND,
+        roundRemainingNanos = 90 * GameEngine.NANOS_PER_SECOND,
         swapCooldownNanos = 0L,
         currentWord = "چراغ",
         usedWords = linkedSetOf("چراغ", "میز"),
@@ -131,7 +131,7 @@ class GameCodecTest {
         assertTrue(decoded.difficulty in 1..3)
         assertTrue(decoded.currentPlayerIndex in 0..3)
         assertTrue(decoded.currentRound in 1..(decoded.totalRounds + 1))
-        assertTrue(decoded.roundRemainingNanos <= decoded.durationSeconds * GameConstants.NANOS_PER_SECOND)
+        assertTrue(decoded.roundRemainingNanos <= decoded.durationSeconds * GameEngine.NANOS_PER_SECOND)
         assertTrue(decoded.swapCooldownNanos <= GameConstants.SWAP_LOCK_NANOS)
         assertTrue(decoded.totalRounds >= 3)
     }
