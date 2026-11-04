@@ -1,6 +1,6 @@
 plugins {
+    // Kotlin support is built into AGP 9; there is no kotlin-android plugin any more.
     id("com.android.application")
-    id("org.jetbrains.kotlin.android")
 }
 
 val releaseKeystorePath = providers.environmentVariable("RELEASE_KEYSTORE_PATH").orNull
@@ -60,9 +60,6 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = "17"
-    }
     testOptions {
         // Fail loudly instead of silently returning defaults when a test touches a platform API.
         unitTests.isReturnDefaultValues = false
@@ -86,8 +83,13 @@ tasks.matching { it.name == "assembleRelease" || it.name == "bundleRelease" }.co
     if (releaseSigningRequested) dependsOn("verifyReleaseSigning")
 }
 
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
+
 dependencies {
-    testImplementation("junit:junit:4.13.2")
-    // Real org.json implementation so the checkpoint codec can be tested on the JVM.
-    testImplementation("org.json:json:20260814")
+    // Engine, seat plan and checkpoint codec live in a pure Kotlin module with its own JVM tests.
+    implementation(project(":game-core"))
 }

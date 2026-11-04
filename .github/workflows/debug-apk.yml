@@ -33,10 +33,20 @@ jobs:
       - name: Validate bundled word banks
         run: python3 tools/validate_words.py
       - name: Assemble debug APK
-        run: ./gradlew --no-daemon :app:assembleDebug
+        run: |
+          set +e
+          ./gradlew --no-daemon :app:assembleDebug > gradle-assemble.log 2>&1
+          status=$?
+          if [ "$status" -ne 0 ]; then
+            grep -E "^e: |error:|FAILED|Execution failed|What went wrong" -A2 gradle-assemble.log \
+              | head -60 | while IFS= read -r line; do echo "::error::$line"; done
+          fi
+          tail -30 gradle-assemble.log
+          exit "$status"
       - name: Verify APK identity and launcher
         run: |
-          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging app/build/outputs/apk/debug/app-debug.apk > "$RUNNER_TEMP/apk-badging.txt"
+          AAPT="$(ls -d "$ANDROID_HOME"/build-tools/*/aapt | sort -V | tail -1)"
+          "$AAPT" dump badging app/build/outputs/apk/debug/app-debug.apk > "$RUNNER_TEMP/apk-badging.txt"
           grep -F "package: name='com.armadillo.game'" "$RUNNER_TEMP/apk-badging.txt"
           grep -F "launchable-activity: name='com.armadillo.game.MainActivity'" "$RUNNER_TEMP/apk-badging.txt"
       - name: Upload debug APK
@@ -49,15 +59,36 @@ jobs:
       - name: Run unit tests and lint
         run: |
           set +e
-          ./gradlew --no-daemon :app:testDebugUnitTest :app:lintDebug > gradle-check.log 2>&1
+          ./gradlew --no-daemon :game-core:test :app:testDebugUnitTest :app:lintDebug > gradle-check.log 2>&1
           status=$?
           if [ "$status" -ne 0 ]; then
             # Surface the reason as check-run annotations; the raw log needs repository access.
-            grep -E "FAILED|not mocked|Stub!|^e: |error:|Execution failed|failing tests|Lint found" gradle-check.log \
-              | head -40 | while IFS= read -r line; do echo "::error::$line"; done
+            grep -E "FAILED|not mocked|Stub!|^e: |[Ee]rror:|Execution failed|failing tests|Lint found|Caused by|Exception" gradle-check.log \
+              | head -60 | while IFS= read -r line; do echo "::error::$line"; done
           fi
           tail -30 gradle-check.log
           exit "$status"
+      - name: Report JVM test totals
+        if: success()
+        run: |
+          python3 - <<'PY'
+          import glob, xml.etree.ElementTree as ET
+          tests = failures = skipped = 0
+          for report in glob.glob("*/build/test-results/**/TEST-*.xml", recursive=True):
+              root = ET.parse(report).getroot()
+              tests += int(root.get("tests", 0))
+              failures += int(root.get("failures", 0)) + int(root.get("errors", 0))
+              skipped += int(root.get("skipped", 0))
+          print(f"::notice::JVM tests: {tests} run, {failures} failed, {skipped} skipped")
+          PY
+      - name: Upload unit test and lint log
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: debug-check-log
+          path: gradle-check.log
+          if-no-files-found: ignore
+          retention-days: 3
 
   release:
     runs-on: ubuntu-latest
@@ -73,4 +104,27 @@ jobs:
       # Verifies R8 minification, resource shrinking and release lint without signing
       # material. Signed releases stay a manual, owner-approved step.
       - name: Assemble unsigned release and run release lint
-        run: ./gradlew --no-daemon :app:assembleRelease :app:lintRelease
+        run: |
+          set +e
+          ./gradlew --no-daemon :app:assembleRelease :app:lintRelease > gradle-release.log 2>&1
+          status=$?
+          if [ "$status" -ne 0 ]; then
+            # Annotations are capped per step, so publish the lint crash window first.
+            start=$(grep -n "Unexpected failure during lint analysis" gradle-release.log | head -1 | cut -d: -f1)
+            if [ -n "$start" ]; then
+              sed -n "${start},$((start + 45))p" gradle-release.log | tr '\n' ' ' | cut -c1-950 \
+                | while IFS= read -r line; do echo "::error::LINTLOG $line"; done
+            fi
+            grep -E "^e: |[Ee]rror:|FAILED" gradle-release.log \
+              | head -3 | while IFS= read -r line; do echo "::error::$line"; done
+          fi
+          tail -150 gradle-release.log
+          exit "$status"
+      - name: Upload release build log
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-build-log
+          path: gradle-release.log
+          if-no-files-found: ignore
+          retention-days: 3

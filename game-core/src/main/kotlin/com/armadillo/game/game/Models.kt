@@ -136,7 +136,15 @@ object GameConstants {
 object SeatPlan {
     fun isAllowedCount(count: Int): Boolean = GameConstants.allowedPlayerCounts.contains(count)
 
-    fun createPlayers(count: Int, rawNames: List<String>): MutableList<Player> {
+    /**
+     * [defaultName] fills the seats whose names are blank. The engine stays free of
+     * localized text, so the caller supplies the label (the app passes a string resource).
+     */
+    fun createPlayers(
+        count: Int,
+        rawNames: List<String>,
+        defaultName: (Int) -> String = { "#$it" }
+    ): MutableList<Player> {
         require(isAllowedCount(count)) { "Player count must be 4, 6, 8, or 10" }
         val reservedNames = rawNames.take(count).map { it.trim() }.filter { it.isNotEmpty() }.toMutableSet()
         val result = mutableListOf<Player>()
@@ -147,7 +155,7 @@ object SeatPlan {
             if (name.isEmpty()) {
                 var candidate: String
                 do {
-                    candidate = "بازیکن $generated"
+                    candidate = defaultName(generated)
                     generated++
                 } while (reservedNames.contains(candidate) || result.any { it.name == candidate })
                 name = candidate

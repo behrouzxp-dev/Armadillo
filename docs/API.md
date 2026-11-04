@@ -4,7 +4,7 @@ Armadillo is an offline Android application. It exposes **no HTTP, REST or other
 
 ## Game engine
 
-Location: `app/src/main/java/com/armadillo/game/game/GameEngine.kt`.
+Location: `game-core/src/main/kotlin/com/armadillo/game/game/GameEngine.kt` (module `:game-core`, a plain Kotlin/JVM library).
 
 Construct `GameEngine(state, words, clockNanos, wallClockMillis)` with a `GameState`, a `WordSource`, a monotonic nanosecond clock and an optional wall clock for history timestamps. Callers manage persistence and UI; the engine does not save state or play audio.
 
@@ -25,11 +25,11 @@ Construct `GameEngine(state, words, clockNanos, wallClockMillis)` with a `GameSt
 
 `WordSource.nextWord(categories, difficulty, used, legacyGeneralDifficulty)` supplies a word; `count(...)` reports the selected pool size. The bundled `LocalWordBank` accepts non-empty supported categories and difficulty tiers 1–3. It draws unused normalized words and clears the used set when the pool is exhausted. The legacy difficulty parameter remains for compatibility but the current playable source does not use the general bank.
 
-`GameState` contains players, selected categories, difficulty, phase, countdown, word history and team statistics. `GameConstants` defines supported setup options, swap lock and penalty. `SeatPlan` creates players and maps seats to teams. `rankTeams` orders by final time, explosions, correct answers and swaps. See `Models.kt` and [ARCHITECTURE.md](ARCHITECTURE.md#state-and-timing) for context.
+`GameState` contains players, selected categories, difficulty, phase, countdown, word history and team statistics. `GameConstants` defines supported setup options, swap lock and penalty. `SeatPlan.createPlayers(count, rawNames, defaultName)` creates players and maps seats to teams. The module holds no user-visible text, so `defaultName: (Int) -> String` labels the seats whose names are blank; the app passes `getString(R.string.players_generated_name, it)` and the default is the locale-neutral `#1`, `#2`, … `rankTeams` orders by final time, explosions, correct answers and swaps. See `Models.kt` and [ARCHITECTURE.md](ARCHITECTURE.md#state-and-timing) for context.
 
 ## Checkpoint codec
 
-`GameCodec.encode(state): JSONObject` and `GameCodec.decode(json): GameState` own the durable format (`GameCodec.SCHEMA = 3`). `decode` migrates unknown categories to `jobs`, retires a current word that no longer matches the selection (recording it with `WordOutcome.ENDED`), and clamps out-of-range values instead of failing. The object has no Android dependency, so `GameCodecTest` covers round-trip fidelity, legacy saves, unknown categories, clamping and corrupt payloads on the JVM.
+`GameCodec.encode(state): JSONObject` and `GameCodec.decode(json, defaultName): GameState` own the durable format (`GameCodec.SCHEMA = 3`); `defaultName` fills a stored player that has no name and defaults to the locale-neutral `#N`. `decode` migrates unknown categories to `jobs`, retires a current word that no longer matches the selection (recording it with `WordOutcome.ENDED`), and clamps out-of-range values instead of failing. The object has no Android dependency, so `GameCodecTest` covers round-trip fidelity, legacy saves, unknown categories, clamping and corrupt payloads on the JVM.
 
 ## Local storage and sound
 

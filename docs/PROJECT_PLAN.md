@@ -4,7 +4,7 @@ This is a maintenance checklist based on the current repository, not an approved
 
 ## Current baseline
 
-- One offline Android application module with bundled Persian word banks and private local persistence. See [REQUIREMENTS.md](REQUIREMENTS.md) and [ARCHITECTURE.md](ARCHITECTURE.md).
+- Two Gradle modules: the `:app` Android application with bundled Persian word banks and private local persistence, and `:game-core`, a dependency-free Kotlin/JVM library holding the engine, models, seat plan, checkpoint codec and roster merge, with its own JVM tests. See [REQUIREMENTS.md](REQUIREMENTS.md) and [ARCHITECTURE.md](ARCHITECTURE.md).
 - The repository is not designated as an official release. `versionName` is `1.0.0` and `versionCode` is 1 because this application ID has never been published; both must be raised for the first store upload. The application ID change creates a separate installation and does not transfer the old app's data.
 - The Android build workflow runs on every pull request: word-bank validation, Debug build and APK identity check, artifact upload, unit tests, lint, plus an unsigned Release build with R8 and release lint. See [README.md](../README.md#github-actions-builds).
 - Historical reports and previous CI runs describe the specific builds they tested; they do not establish the results of subsequent changes.
@@ -20,15 +20,19 @@ This is a maintenance checklist based on the current repository, not an approved
 
 Before any first official repository release, the owner must approve the release and its version, and the team must verify the Android version code and signing compatibility. Use GitHub Releases and tags only after approval and verification. Preserve historical records and do not commit credentials, keys, generated caches or temporary artifacts.
 
+## Completed architecture work
+
+- **Localised strings (done).** Every user-visible Persian string lives in `app/src/main/res/values/strings.xml` as the default locale; `res/xml/locales_config.xml` and `android:localeConfig` declare `fa` for the Android 13+ per-app language settings. `:game-core` holds no UI text: `SeatPlan.createPlayers` and `GameCodec.decode` take an injectable name labeller that the app supplies from resources.
+- **Pure engine module (done).** `:game-core` contains the engine, models, seat plan, checkpoint codec and roster merge, and runs its tests with the plain Kotlin JVM plugin; the app depends on it with `implementation(project(":game-core"))`.
+- **Toolchain (done).** Gradle wrapper 9.8.2 (pinned with `distributionSha256Sum`), Android Gradle Plugin 9.5.0 with its built-in Kotlin compiler, and Kotlin 2.4.21 for the JVM module. The obsolete `org.jetbrains.kotlin.android` plugin is gone, `jvmTarget` moved to `kotlin.compilerOptions`, and `gradle.properties` now reserves enough memory for AGP 9's release lint. Verified only through CI; no local build was performed.
+
 ## Planned technical work
 
 These items are not implemented yet and need their own reviewed changes:
 
 1. Move the UI from hand-built platform views in `MainActivity` to Material 3 or Jetpack Compose and extract the view helpers into a reusable kit.
-2. Extract every user-visible Persian string into `strings.xml` with a `localeConfig`, even while the app stays Persian-only.
-3. Split the deterministic game engine and codec into a pure Kotlin module (`:game-core`) so tests run without the Android plugin.
-4. Raise the toolchain (AGP, Gradle wrapper, Kotlin) and add a wrapper `distributionSha256Sum` plus dependency verification metadata.
-5. Add instrumented/UI tests and an emulator job so pause, resume, explosion and results flows are verified on a real Android runtime.
+2. Add instrumented/UI tests and an emulator job so pause, resume, explosion and results flows are verified on a real Android runtime.
+3. Generate Gradle dependency verification metadata (`gradle/verification-metadata.xml`) on a trusted machine with `./gradlew --write-verification-metadata sha256 help` and commit the result. It is deliberately not generated in CI, where the first download would only attest to itself.
 
 ## Documentation maintenance
 

@@ -1,5 +1,6 @@
 package com.armadillo.game
 
+import android.annotation.SuppressLint
 import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.app.Activity
@@ -212,11 +213,11 @@ class MainActivity : Activity() {
 
     private fun showUnavailableWordsDialog() {
         val dialog = AlertDialog.Builder(this)
-            .setTitle("بانک واژهها بارگذاری نشد")
-            .setMessage("فایل واژههای همراه برنامه خوانده نشد. برنامه را دوباره نصب کنید؛ دادههای ذخیرهشده پاک نمیشوند.")
-            .setPositiveButton("باشه", null)
+            .setTitle(getString(R.string.dialog_words_failed_title))
+            .setMessage(getString(R.string.dialog_words_failed_message))
+            .setPositiveButton(getString(R.string.action_ok), null)
             .create()
-        showDesignDialog(dialog, titleText = "بانک واژهها بارگذاری نشد")
+        showDesignDialog(dialog, titleText = getString(R.string.dialog_words_failed_title))
     }
 
     private fun restoredEngine(state: GameState): GameEngine? =
@@ -269,6 +270,10 @@ class MainActivity : Activity() {
         }
     }
 
+    // API 33+ back gestures are served by the platform OnBackInvokedDispatcher registered in
+    // onCreate; this override only covers API 23-32, so the AndroidX migration the lint check
+    // asks for would change nothing here.
+    @SuppressLint("GestureBackNavigation")
     @Suppress("DEPRECATION")
     override fun onBackPressed() {
         handleBack()
@@ -354,7 +359,7 @@ class MainActivity : Activity() {
         }
         val heading = label(title, 23f, palette.INK, true).apply { gravity = Gravity.CENTER_VERTICAL or Gravity.START }
         header.addView(heading, LinearLayout.LayoutParams(0, dp(DesignSystem.Metrics.PAGE_HEADER_CONTENT), 1f))
-        val back = uiButton("بازگشت", outlined = true, height = DesignSystem.Metrics.MIN_TOUCH_TARGET, playEffect = true, onClick = backAction)
+        val back = uiButton(getString(R.string.action_back), outlined = true, height = DesignSystem.Metrics.MIN_TOUCH_TARGET, playEffect = true, onClick = backAction)
         header.addView(back, LinearLayout.LayoutParams(dp(82), dp(DesignSystem.Metrics.MIN_TOUCH_TARGET)))
         page.addView(header, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(DesignSystem.Metrics.PAGE_HEADER)))
 
@@ -410,26 +415,26 @@ class MainActivity : Activity() {
         val logo = ImageView(this).apply {
             setImageResource(R.drawable.armadillo_icon_hero)
             scaleType = ImageView.ScaleType.FIT_CENTER
-            contentDescription = "نشان آرمادیلو"
+            contentDescription = getString(R.string.a11y_app_logo)
         }
         hero.addView(logo, LinearLayout.LayoutParams(dp(DesignSystem.Metrics.HOME_LOGO_SIZE_DP), dp(DesignSystem.Metrics.HOME_LOGO_SIZE_DP)))
-        hero.addView(label("آرمادیلو", 36f, palette.INK, true).apply { gravity = Gravity.CENTER }, matchParams(top = 4, bottom = 1))
-        hero.addView(label("بازی گروهی حدس واژه", 16f, palette.INK).apply { gravity = Gravity.CENTER }, matchParams())
+        hero.addView(label(getString(R.string.app_name), 36f, palette.INK, true).apply { gravity = Gravity.CENTER }, matchParams(top = 4, bottom = 1))
+        hero.addView(label(getString(R.string.home_subtitle), 16f, palette.INK).apply { gravity = Gravity.CENTER }, matchParams())
         column.addView(hero, matchParams(bottom = 18))
-        column.addView(uiButton("شروع بازی", height = 62, onClick = {
+        column.addView(uiButton(getString(R.string.home_start), height = 62, onClick = {
             selectedPlayerCount = store.loadPlayerRoster()?.playerCount ?: 4
             renderPlayerCount()
         }), matchParams(bottom = 10))
         val canContinue = gameState != null && gameState?.phase != GamePhase.RESULTS && store.hasSavedGame()
         if (store.consumeDiscardedCheckpointNotice()) mainHandler.post { showDiscardedCheckpointDialog() }
         if (canContinue) {
-            column.addView(uiButton("ادامه بازی قبلی", height = 58, onClick = { continueSavedGame() }), matchParams(bottom = 10))
+            column.addView(uiButton(getString(R.string.home_continue_saved), height = 58, onClick = { continueSavedGame() }), matchParams(bottom = 10))
         }
-        column.addView(uiButton("تنظیمات صدا", height = 54, onClick = { openSoundSettings(AppScreen.HOME) }), matchParams(bottom = 10))
-        column.addView(uiButton("قوانین بازی", outlined = true, height = 54, onClick = { renderRules() }), matchParams(bottom = 10))
-        column.addView(uiButton("درباره بازی", outlined = true, height = 54, onClick = { renderAbout() }), matchParams(bottom = 8))
+        column.addView(uiButton(getString(R.string.sound_settings_title), height = 54, onClick = { openSoundSettings(AppScreen.HOME) }), matchParams(bottom = 10))
+        column.addView(uiButton(getString(R.string.home_rules), outlined = true, height = 54, onClick = { renderRules() }), matchParams(bottom = 10))
+        column.addView(uiButton(getString(R.string.home_about), outlined = true, height = 54, onClick = { renderAbout() }), matchParams(bottom = 8))
         column.addView(space(8))
-        column.addView(label("آفلاین · رایگان · بدون تبلیغ", 13f, palette.MUTED).apply { gravity = Gravity.CENTER }, matchParams())
+        column.addView(label(getString(R.string.home_tagline), 13f, palette.MUTED).apply { gravity = Gravity.CENTER }, matchParams())
         scroll.addView(column, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
         liveScroll = scroll
         showPage(scroll)
@@ -459,9 +464,9 @@ class MainActivity : Activity() {
             selectedPlayerCount = store.loadPlayerRoster()?.playerCount ?: 4
         }
         val (page, body) = createPage(
-            title = "تعداد بازیکنان",
+            title = getString(R.string.count_title),
             backAction = { renderHome() },
-            footerText = "ادامه به نام بازیکنان",
+            footerText = getString(R.string.count_continue),
             footerEnabled = { selectedPlayerCount?.let { it in GameConstants.allowedPlayerCounts } == true },
             footerAction = {
                 val count = selectedPlayerCount
@@ -473,13 +478,13 @@ class MainActivity : Activity() {
                 }
             }
         )
-        body.addView(label("تعداد بازیکنان را انتخاب کنید؛ هر تیم دو نفر دارد و چیدمان از صندلی پایین آغاز می‌شود.", 15f, palette.MUTED), matchParams(bottom = 12))
+        body.addView(label(getString(R.string.count_hint), 15f, palette.MUTED), matchParams(bottom = 12))
         GameConstants.allowedPlayerCounts.forEach { count ->
             val selected = count == selectedPlayerCount
             val card = choiceCard(selected)
-            card.addView(label("$count بازیکن", 20f, palette.INK, true), matchParams(bottom = 5))
-            card.addView(label("${count / 2} تیم · دو نفر در هر تیم", 14f, palette.MUTED), matchParams())
-            card.contentDescription = "$count بازیکن، ${if (selected) "انتخاب‌شده" else "انتخاب‌نشده"}"
+            card.addView(label(getString(R.string.count_option_label, count), 20f, palette.INK, true), matchParams(bottom = 5))
+            card.addView(label(getString(R.string.count_option_teams, count / 2), 14f, palette.MUTED), matchParams())
+            card.contentDescription = getString(R.string.count_option_description, count, selectionLabel(selected))
             card.setOnClickListener {
                 audio.playEffect()
                 rememberScroll()
@@ -504,25 +509,25 @@ class MainActivity : Activity() {
         screen = AppScreen.PLAYERS
         val current = draft ?: return renderPlayerCount()
         val (page, body) = createPage(
-            title = "نام بازیکنان",
+            title = getString(R.string.players_title),
             backAction = { backFromPlayers() },
-            footerText = "ادامه به انتخاب دسته‌ها",
+            footerText = getString(R.string.players_continue),
             footerAction = { renderCategories() }
         )
-        body.addView(label("صندلی پایین دایره شروع‌کنندهٔ دست اول است. هم‌تیمی‌ها روبه‌روی یکدیگر می‌نشینند.", 14f, palette.MUTED), matchParams(bottom = 6))
+        body.addView(label(getString(R.string.players_hint), 14f, palette.MUTED), matchParams(bottom = 6))
         val seats = SeatingCircleView(this, current.playerCount, current.names) { seat -> editPlayerName(seat) }
         body.addView(seats, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(340)))
         body.addView(
-            label("برای ویرایش نام، دکمهٔ صندلی موردنظر را بزنید یا صندلی را روی دایره لمس کنید. نام خالی خودکار تکمیل می‌شود.", 13f, palette.MUTED),
+            label(getString(R.string.players_edit_hint), 13f, palette.MUTED),
             matchParams(top = 2, bottom = 8)
         )
         // The canvas circle cannot expose one accessibility node per seat, so every seat is
         // also a real focusable button for screen-reader and switch-access users.
         for (seat in 0 until current.playerCount) {
-            val seatName = current.names.getOrNull(seat)?.trim().orEmpty().ifEmpty { "نام بازیکن" }
+            val seatName = current.names.getOrNull(seat)?.trim().orEmpty().ifEmpty { getString(R.string.players_default_name) }
             val teamNumber = seat % (current.playerCount / 2) + 1
             body.addView(
-                uiButton("صندلی ${seat + 1} · $seatName · تیم $teamNumber", outlined = true, height = 48) { editPlayerName(seat) },
+                uiButton(getString(R.string.players_seat_button, seat + 1, seatName, teamNumber), outlined = true, height = 48) { editPlayerName(seat) },
                 matchParams(bottom = 6)
             )
         }
@@ -533,7 +538,7 @@ class MainActivity : Activity() {
         val current = draft ?: return
         val input = EditText(this).apply {
             setText(current.names.getOrNull(seat).orEmpty())
-            hint = "نام بازیکن ${seat + 1}"
+            hint = getString(R.string.players_name_dialog_title, seat + 1)
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
             filters = arrayOf(InputFilter.LengthFilter(MAX_PLAYER_NAME_LENGTH))
             setSingleLine(true)
@@ -547,35 +552,35 @@ class MainActivity : Activity() {
             setPadding(dp(DesignSystem.Spacing.SM), dp(DesignSystem.Spacing.INSET_10), dp(DesignSystem.Spacing.SM), dp(DesignSystem.Spacing.INSET_10))
         }
         val dialog = AlertDialog.Builder(this)
-            .setTitle("نام بازیکن ${seat + 1}")
+            .setTitle(getString(R.string.players_name_dialog_title, seat + 1))
             .setView(input)
-            .setPositiveButton("ذخیره") { _, _ ->
+            .setPositiveButton(getString(R.string.action_save)) { _, _ ->
                 current.names[seat] = input.text.toString().trim()
                 store.savePlayerRoster(current.names, current.playerCount, durable = true)
                 renderPlayers()
             }
-            .setNegativeButton("انصراف", null)
+            .setNegativeButton(getString(R.string.action_cancel), null)
             .create()
-        showDesignDialog(dialog, titleText = "نام بازیکن ${seat + 1}")
+        showDesignDialog(dialog, titleText = getString(R.string.players_name_dialog_title, seat + 1))
     }
 
     private fun renderCategories() {
         screen = AppScreen.CATEGORIES
         val current = draft ?: return renderPlayerCount()
         val (page, body) = createPage(
-            title = "دسته‌بندی واژه‌ها",
+            title = getString(R.string.categories_title),
             backAction = { backFromCategories() },
-            footerText = "ادامه به تنظیمات بازی",
+            footerText = getString(R.string.categories_continue),
             footerEnabled = { current.categories.isNotEmpty() },
             footerAction = { if (current.categories.isNotEmpty()) renderOptions() }
         )
-        body.addView(label("یک یا چند دسته را انتخاب کنید. واژه‌ها از بانک آفلاین و در سه سطح دشواری انتخاب می‌شوند.", 14f, palette.MUTED), matchParams(bottom = 12))
+        body.addView(label(getString(R.string.categories_hint), 14f, palette.MUTED), matchParams(bottom = 12))
         val categories = listOf(
-            Triple(WordCategories.JOBS, "مشاغل", "۱۰۰ واژه در هر سطح"),
-            Triple(WordCategories.ANIMALS, "حیوانات", "۱۰۰ واژه در هر سطح"),
-            Triple(WordCategories.FOODS, "خوراکی‌ها", "۱۰۰ واژه در هر سطح"),
-            Triple(WordCategories.PLACES, "مکان‌ها", "۱۰۰ واژه در هر سطح"),
-            Triple(WordCategories.TECHNOLOGY, "تکنولوژی", "۱۰۰ واژه در هر سطح")
+            Triple(WordCategories.JOBS, getString(R.string.category_jobs), getString(R.string.category_word_count)),
+            Triple(WordCategories.ANIMALS, getString(R.string.category_animals), getString(R.string.category_word_count)),
+            Triple(WordCategories.FOODS, getString(R.string.category_foods), getString(R.string.category_word_count)),
+            Triple(WordCategories.PLACES, getString(R.string.category_places), getString(R.string.category_word_count)),
+            Triple(WordCategories.TECHNOLOGY, getString(R.string.category_technology), getString(R.string.category_word_count))
         )
         categories.chunked(3).forEach { categoryRow ->
             val row = LinearLayout(this).apply {
@@ -585,7 +590,7 @@ class MainActivity : Activity() {
             categoryRow.forEach { (id, title, description) ->
                 val selected = id in current.categories
                 val card = choiceCard(selected).apply { gravity = Gravity.CENTER }
-                card.addView(label(if (selected) "✓ $title" else title, 14f, if (selected) palette.BLUE else palette.INK, true).apply {
+                card.addView(label(if (selected) getString(R.string.category_selected_label, title) else title, 14f, if (selected) palette.BLUE else palette.INK, true).apply {
                     gravity = Gravity.CENTER
                     textAlignment = View.TEXT_ALIGNMENT_CENTER
                     maxLines = 2
@@ -595,7 +600,7 @@ class MainActivity : Activity() {
                     textAlignment = View.TEXT_ALIGNMENT_CENTER
                     maxLines = 2
                 }, matchParams())
-                card.contentDescription = "$title، ${if (selected) "انتخاب‌شده" else "انتخاب‌نشده"}"
+                card.contentDescription = getString(R.string.category_card_description, title, selectionLabel(selected))
                 card.setOnClickListener {
                     audio.playEffect()
                     rememberScroll()
@@ -618,7 +623,7 @@ class MainActivity : Activity() {
             body.addView(row, matchParams())
         }
         if (current.categories.isEmpty()) {
-            body.addView(label("برای ادامه دست‌کم یک دسته را انتخاب کنید.", 13f, palette.RED, true), matchParams(top = 2, bottom = 8))
+            body.addView(label(getString(R.string.categories_required), 13f, palette.RED, true), matchParams(top = 2, bottom = 8))
         }
         showPage(page)
     }
@@ -627,17 +632,17 @@ class MainActivity : Activity() {
         screen = AppScreen.OPTIONS
         val current = draft ?: return renderPlayerCount()
         val (page, body) = createPage(
-            title = "تنظیمات بازی",
+            title = getString(R.string.options_title),
             backAction = { renderCategories() },
-            footerText = "رفتن به آماده‌سازی",
+            footerText = getString(R.string.options_continue),
             footerAction = { beginGame(current) }
         )
 
-        body.addView(label("سطح دشواری", 18f, palette.INK, true), matchParams(bottom = 8))
+        body.addView(label(getString(R.string.options_difficulty), 18f, palette.INK, true), matchParams(bottom = 8))
         val difficulties = listOf(
-            "آسان" to "واژه‌های روزمره و آشنا.",
-            "متوسط" to "واژه‌های کم‌آشناتر و موضوعی.",
-            "سخت" to "واژه‌های تخصصی‌تر و دشوارتر."
+            getString(R.string.difficulty_easy) to getString(R.string.difficulty_easy_hint),
+            getString(R.string.difficulty_medium) to getString(R.string.difficulty_medium_hint),
+            getString(R.string.difficulty_hard) to getString(R.string.difficulty_hard_hint)
         )
         difficulties.forEachIndexed { index, pair ->
             val level = index + 1
@@ -649,7 +654,7 @@ class MainActivity : Activity() {
         }
 
         body.addView(space(10))
-        body.addView(label("مدت هر دست", 18f, palette.INK, true), matchParams(bottom = 8))
+        body.addView(label(getString(R.string.options_duration), 18f, palette.INK, true), matchParams(bottom = 8))
         val durationRow = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             layoutDirection = View.LAYOUT_DIRECTION_RTL
@@ -657,7 +662,7 @@ class MainActivity : Activity() {
         GameConstants.allowedDurations.forEach { seconds ->
             val selected = current.durationSeconds == seconds
             val option = uiButton(
-                "$seconds ثانیه",
+                getString(R.string.options_duration_option, seconds),
                 outlined = !selected,
                 height = 48
             ) {
@@ -672,7 +677,7 @@ class MainActivity : Activity() {
         }
         body.addView(durationRow, matchParams(bottom = 16))
 
-        body.addView(label("تعداد دست‌ها", 18f, palette.INK, true), matchParams(bottom = 8))
+        body.addView(label(getString(R.string.options_rounds), 18f, palette.INK, true), matchParams(bottom = 8))
         val roundRow = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             layoutDirection = View.LAYOUT_DIRECTION_RTL
@@ -680,7 +685,7 @@ class MainActivity : Activity() {
         GameConstants.allowedRounds.forEach { rounds ->
             val selected = current.rounds == rounds
             val option = uiButton(
-                "$rounds دست",
+                getString(R.string.options_rounds_option, rounds),
                 outlined = !selected,
                 height = 48
             ) {
@@ -694,7 +699,7 @@ class MainActivity : Activity() {
             })
         }
         body.addView(roundRow, matchParams(bottom = 12))
-        body.addView(label("زمان هر دست و تعداد دست‌ها در طول یک بازی ثابت می‌ماند.", 12f, palette.MUTED), matchParams(bottom = 4))
+        body.addView(label(getString(R.string.options_fixed_hint), 12f, palette.MUTED), matchParams(bottom = 4))
         showPage(page)
     }
 
@@ -705,14 +710,14 @@ class MainActivity : Activity() {
             setup.rounds in GameConstants.allowedRounds && setup.names.size == setup.playerCount
         if (!valid) {
             val dialog = AlertDialog.Builder(this)
-                .setTitle("تنظیمات ناقص است")
-                .setMessage("تعداد بازیکنان، دست‌کم یک دسته، سطح دشواری، مدت و تعداد دست‌ها را بررسی کنید.")
-                .setPositiveButton("باشه", null)
+                .setTitle(getString(R.string.setup_incomplete_title))
+                .setMessage(getString(R.string.setup_incomplete_message))
+                .setPositiveButton(getString(R.string.action_ok), null)
                 .create()
-            showDesignDialog(dialog, titleText = "تنظیمات ناقص است")
+            showDesignDialog(dialog, titleText = getString(R.string.setup_incomplete_title))
             return
         }
-        val players = SeatPlan.createPlayers(setup.playerCount, setup.names)
+        val players = SeatPlan.createPlayers(setup.playerCount, setup.names) { getString(R.string.players_generated_name, it) }
         val state = GameState(
             players = players,
             difficulty = setup.difficulty,
@@ -799,18 +804,18 @@ class MainActivity : Activity() {
         top.addView(teamRow, LinearLayout.LayoutParams(0, dp(44), 1f))
         // One control remains usable in preparation and while manually paused; ending the game
         // remains a separate, explicit action inside the pause overlay/dialog.
-        val pauseLabel = if (state.phase == GamePhase.MANUAL_PAUSED) "ادامه بازی" else "توقف موقت"
+        val pauseLabel = if (state.phase == GamePhase.MANUAL_PAUSED) getString(R.string.game_resume) else getString(R.string.game_pause)
         val pause = uiButton(pauseLabel, height = DesignSystem.Metrics.MIN_TOUCH_TARGET, playEffect = false) {
             handlePauseControl()
         }.apply {
             pauseButton = this
             isEnabled = true
-            contentDescription = if (state.phase == GamePhase.MANUAL_PAUSED) "ادامه بازی" else "توقف موقت بازی"
+            contentDescription = if (state.phase == GamePhase.MANUAL_PAUSED) getString(R.string.game_resume) else getString(R.string.a11y_game_pause)
         }
         top.addView(pause, LinearLayout.LayoutParams(dp(88), dp(DesignSystem.Metrics.MIN_TOUCH_TARGET)).apply { marginStart = dp(DesignSystem.Spacing.XXXS) })
         content.addView(top, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(56)))
 
-        val roundLabel = label("دست ${state.currentRound} از ${state.totalRounds}", 13f, palette.MUTED, true).apply {
+        val roundLabel = label(getString(R.string.game_round_of, state.currentRound, state.totalRounds), 13f, palette.MUTED, true).apply {
             gravity = Gravity.CENTER
             setPadding(0, dp(1), 0, dp(1))
         }
@@ -825,7 +830,7 @@ class MainActivity : Activity() {
         val currentCard = playerCard(state.currentPlayer.name, state.currentPlayer.teamIndex, secondary = false)
         val arrow = label("→", 26f, palette.MUTED, true).apply {
             gravity = Gravity.CENTER
-            contentDescription = "حرکت پادساعت‌گرد به بازیکن بعدی"
+            contentDescription = getString(R.string.a11y_next_player)
         }
         val nextCard = playerCard(state.nextPlayer.name, state.nextPlayer.teamIndex, secondary = true)
         currentCardView = currentCard.first
@@ -848,8 +853,8 @@ class MainActivity : Activity() {
                 layoutDirection = View.LAYOUT_DIRECTION_RTL
                 setPadding(dp(DesignSystem.Spacing.INSET_18), dp(DesignSystem.Spacing.SM), dp(DesignSystem.Spacing.INSET_18), dp(DesignSystem.Spacing.SM))
             }
-            prepare.addView(label("کلمه پس از شروع نمایش داده می‌شود", 16f, palette.MUTED).apply { gravity = Gravity.CENTER }, matchParams(bottom = 16))
-            val start = uiButton("شروع", height = 62, playEffect = false) {
+            prepare.addView(label(getString(R.string.game_word_hidden), 16f, palette.MUTED).apply { gravity = Gravity.CENTER }, matchParams(bottom = 16))
+            val start = uiButton(getString(R.string.game_start_round), height = 62, playEffect = false) {
                 startAnimator?.cancel()
                 if (activeEngine.startRound()) {
                     store.saveGame(state, durable = true)
@@ -864,7 +869,7 @@ class MainActivity : Activity() {
                 it.realTimeNanos == 0L && it.penaltyNanos == 0L && it.correctWords == 0 && it.swaps == 0
             }
             if (beforeFirstHand) {
-                prepare.addView(uiButton("ویرایش نام بازیکنان", outlined = true, height = DesignSystem.Metrics.MIN_TOUCH_TARGET, playEffect = false) {
+                prepare.addView(uiButton(getString(R.string.game_edit_names), outlined = true, height = DesignSystem.Metrics.MIN_TOUCH_TARGET, playEffect = false) {
                     draft = SetupDraft(
                         playerCount = state.players.size,
                         names = state.players.sortedBy { it.seat }.map { it.name }.toMutableList(),
@@ -904,7 +909,7 @@ class MainActivity : Activity() {
                 orientation = LinearLayout.HORIZONTAL
                 layoutDirection = View.LAYOUT_DIRECTION_LTR
             }
-            val swap = uiButton("تعویض کلمه", height = 68, playEffect = false) {
+            val swap = uiButton(getString(R.string.game_swap), height = 68, playEffect = false) {
                 val result = activeEngine.swapWord()
                 handleActionResult(result)
                 if (result.accepted) {
@@ -913,7 +918,7 @@ class MainActivity : Activity() {
                 }
             }
             swapButton = swap
-            val correct = uiButton("حدس زد", height = 68, playEffect = false) {
+            val correct = uiButton(getString(R.string.game_correct), height = 68, playEffect = false) {
                 val result = activeEngine.markCorrect()
                 handleActionResult(result)
                 if (result.accepted) {
@@ -940,7 +945,7 @@ class MainActivity : Activity() {
             isClickable = true
             isFocusable = true
             importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_YES
-            contentDescription = "بازی متوقف است"
+            contentDescription = getString(R.string.a11y_game_paused)
         }
         val card = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -950,18 +955,18 @@ class MainActivity : Activity() {
             elevation = dp(DesignSystem.Spacing.MD).toFloat()
             setPadding(dp(DesignSystem.Spacing.XL), dp(DesignSystem.Spacing.MD), dp(DesignSystem.Spacing.XL), dp(DesignSystem.Spacing.MD))
         }
-        card.addView(label("توقف موقت", 23f, palette.INK, true).apply { gravity = Gravity.CENTER }, matchParams(bottom = DesignSystem.Spacing.XS))
-        card.addView(label("زمان‌ها و بوق‌ها متوقف شده‌اند.", 14f, palette.MUTED).apply { gravity = Gravity.CENTER }, matchParams(bottom = DesignSystem.Spacing.MD))
-        val resume = uiButton("ادامه بازی", height = 56, onClick = {
+        card.addView(label(getString(R.string.game_pause), 23f, palette.INK, true).apply { gravity = Gravity.CENTER }, matchParams(bottom = DesignSystem.Spacing.XS))
+        card.addView(label(getString(R.string.pause_frozen), 14f, palette.MUTED).apply { gravity = Gravity.CENTER }, matchParams(bottom = DesignSystem.Spacing.MD))
+        val resume = uiButton(getString(R.string.game_resume), height = 56, onClick = {
             handlePauseControl()
         }).apply {
             pauseButton = this
             isEnabled = true
-            contentDescription = "ادامه بازی"
+            contentDescription = getString(R.string.game_resume)
         }
         card.addView(resume, matchParams(bottom = DesignSystem.Spacing.XS))
-        card.addView(uiButton("پایان بازی", outlined = true, height = 54, onClick = { confirmEndGame() }), matchParams(bottom = DesignSystem.Spacing.XS))
-        card.addView(uiButton("تنظیمات صدا", height = DesignSystem.Metrics.MIN_TOUCH_TARGET, playEffect = false, onClick = { openSoundSettings(AppScreen.GAME) }), matchParams())
+        card.addView(uiButton(getString(R.string.game_end), outlined = true, height = 54, onClick = { confirmEndGame() }), matchParams(bottom = DesignSystem.Spacing.XS))
+        card.addView(uiButton(getString(R.string.sound_settings_title), height = DesignSystem.Metrics.MIN_TOUCH_TARGET, playEffect = false, onClick = { openSoundSettings(AppScreen.GAME) }), matchParams())
         val cardParams = FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER).apply {
             leftMargin = dp(DesignSystem.Spacing.PAUSE_MARGIN)
             rightMargin = dp(DesignSystem.Spacing.PAUSE_MARGIN)
@@ -1003,14 +1008,14 @@ class MainActivity : Activity() {
             background = rounded(palette.SURFACE, DesignSystem.Radius.CARD, palette.LINE, DesignSystem.Interaction.DEFAULT_STROKE_DP.toFloat())
             elevation = dp(DesignSystem.Spacing.XS).toFloat()
         }
-        column.addView(label("بازی متوقف است", 28f, palette.INK, true).apply { gravity = Gravity.CENTER }, matchParams(bottom = 12))
-        column.addView(label("وضعیت بازی ذخیره شده است. برای ادامه، دکمه را بزنید.", 15f, palette.MUTED).apply { gravity = Gravity.CENTER }, matchParams(bottom = 24))
-        val resume = uiButton("ادامه بازی", height = 62, onClick = {
+        column.addView(label(getString(R.string.a11y_game_paused), 28f, palette.INK, true).apply { gravity = Gravity.CENTER }, matchParams(bottom = 12))
+        column.addView(label(getString(R.string.system_pause_hint), 15f, palette.MUTED).apply { gravity = Gravity.CENTER }, matchParams(bottom = 24))
+        val resume = uiButton(getString(R.string.game_resume), height = 62, onClick = {
             handlePauseControl()
         }).apply {
             pauseButton = this
             isEnabled = true
-            contentDescription = "ادامه بازی"
+            contentDescription = getString(R.string.game_resume)
         }
         column.addView(resume, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(62)))
         page.addView(column, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER).apply {
@@ -1037,9 +1042,9 @@ class MainActivity : Activity() {
             setBackgroundColor(palette.CANVAS)
             isClickable = true
             isFocusable = true
-            contentDescription = "انفجار؛ برای ادامه صفحه را لمس کنید یا توقف موقت را بزنید"
+            contentDescription = getString(R.string.a11y_explosion)
         }
-        val blast = label("بوم!", 58f, palette.RED, true).apply { gravity = Gravity.CENTER }
+        val blast = label(getString(R.string.explosion_boom), 58f, palette.RED, true).apply { gravity = Gravity.CENTER }
         column.addView(blast, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(150)))
         val penaltyRow = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
@@ -1048,16 +1053,16 @@ class MainActivity : Activity() {
         }
         val penaltySwatch = View(this).apply { background = teamSwatch(team, 6f) }
         penaltyRow.addView(penaltySwatch, LinearLayout.LayoutParams(dp(DesignSystem.Spacing.INSET_14), dp(DesignSystem.Spacing.INSET_22)).apply { marginStart = dp(DesignSystem.Spacing.INSET_6) })
-        penaltyRow.addView(label("تیم ${team + 1} جریمهٔ ۱۰ ثانیه‌ای گرفت", 19f, teamLabelColor(), true).apply { gravity = Gravity.CENTER })
+        penaltyRow.addView(label(getString(R.string.explosion_penalty, team + 1), 19f, teamLabelColor(), true).apply { gravity = Gravity.CENTER })
         column.addView(penaltyRow, matchParams(top = 6, bottom = 6))
-        column.addView(label("دست ${state.currentRound} پایان یافت", 14f, palette.MUTED).apply { gravity = Gravity.CENTER }, matchParams(bottom = 18))
-        column.addView(label("برای ادامه، صفحه را لمس کنید", 15f, palette.BLUE, true).apply { gravity = Gravity.CENTER }, matchParams())
-        val pause = uiButton("توقف موقت", height = DesignSystem.Metrics.MIN_TOUCH_TARGET, playEffect = false) {
+        column.addView(label(getString(R.string.explosion_round_finished, state.currentRound), 14f, palette.MUTED).apply { gravity = Gravity.CENTER }, matchParams(bottom = 18))
+        column.addView(label(getString(R.string.explosion_tap_hint), 15f, palette.BLUE, true).apply { gravity = Gravity.CENTER }, matchParams())
+        val pause = uiButton(getString(R.string.game_pause), height = DesignSystem.Metrics.MIN_TOUCH_TARGET, playEffect = false) {
             handlePauseControl()
         }.apply {
             pauseButton = this
             isEnabled = true
-            contentDescription = "توقف موقت بازی"
+            contentDescription = getString(R.string.a11y_game_pause)
         }
         column.addView(pause, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(DesignSystem.Metrics.MIN_TOUCH_TARGET)).apply {
             topMargin = dp(DesignSystem.Spacing.XL)
@@ -1154,7 +1159,7 @@ class MainActivity : Activity() {
             }
             lastTeamSeconds = teamSeconds
         }
-        roundLabelView?.text = "دست ${state.currentRound} از ${state.totalRounds}"
+        roundLabelView?.text = getString(R.string.game_round_of, state.currentRound, state.totalRounds)
         if (lastPlayerIndex != state.currentPlayerIndex) {
             currentPlayerView?.text = state.currentPlayer.name
             val currentColor = colorOf(state.currentPlayer.teamIndex)
@@ -1180,8 +1185,8 @@ class MainActivity : Activity() {
         swapButton?.isEnabled = canSwap
         val isPlaying = state.phase == GamePhase.PLAYING
         correctButton?.isEnabled = isPlaying
-        pauseButton?.text = if (state.phase == GamePhase.MANUAL_PAUSED) "ادامه بازی" else "توقف موقت"
-        pauseButton?.contentDescription = if (state.phase == GamePhase.MANUAL_PAUSED) "ادامه بازی" else "توقف موقت بازی"
+        pauseButton?.text = if (state.phase == GamePhase.MANUAL_PAUSED) getString(R.string.game_resume) else getString(R.string.game_pause)
+        pauseButton?.contentDescription = if (state.phase == GamePhase.MANUAL_PAUSED) getString(R.string.game_resume) else getString(R.string.a11y_game_pause)
         pauseButton?.isEnabled = true
     }
 
@@ -1237,9 +1242,9 @@ class MainActivity : Activity() {
         }
         dialogOpen = true
         val dialog = AlertDialog.Builder(this)
-            .setTitle("پایان بازی؟")
-            .setMessage("نتایج بر اساس اطلاعات ثبت‌شده تا همین لحظه محاسبه می‌شوند.")
-            .setNegativeButton("انصراف") { _, _ ->
+            .setTitle(getString(R.string.dialog_end_title))
+            .setMessage(getString(R.string.dialog_end_message))
+            .setNegativeButton(getString(R.string.action_cancel)) { _, _ ->
                 val current = engine
                 if (wasPlaying && current?.state?.phase == GamePhase.SYSTEM_PAUSED) {
                     current.resumeFromSystemPause()
@@ -1248,7 +1253,7 @@ class MainActivity : Activity() {
                     if (current.state.phase == GamePhase.PLAYING) startGameLoop()
                 } else renderCurrentGameState()
             }
-            .setPositiveButton("پایان بازی") { _, _ ->
+            .setPositiveButton(getString(R.string.game_end)) { _, _ ->
                 val current = engine ?: return@setPositiveButton
                 current.finishEarly()
                 audio.stopAll()
@@ -1257,7 +1262,7 @@ class MainActivity : Activity() {
                 renderResults()
             }
             .create()
-        showDesignDialog(dialog, titleText = "پایان بازی؟") { dialogOpen = false }
+        showDesignDialog(dialog, titleText = getString(R.string.dialog_end_title)) { dialogOpen = false }
     }
 
     private fun confirmExitGame() {
@@ -1272,9 +1277,9 @@ class MainActivity : Activity() {
         }
         dialogOpen = true
         val dialog = AlertDialog.Builder(this)
-            .setTitle("خروج از بازی")
-            .setMessage("وضعیت بازی ذخیره می‌شود. با خروج از برنامه، زمان و صدا متوقف می‌مانند.")
-            .setNegativeButton("بازگشت به بازی") { _, _ ->
+            .setTitle(getString(R.string.dialog_exit_game_title))
+            .setMessage(getString(R.string.dialog_exit_game_message))
+            .setNegativeButton(getString(R.string.dialog_return_to_game)) { _, _ ->
                 val current = engine
                 if (wasPlaying && current?.state?.phase == GamePhase.SYSTEM_PAUSED) {
                     current.resumeFromSystemPause()
@@ -1283,7 +1288,7 @@ class MainActivity : Activity() {
                     if (current.state.phase == GamePhase.PLAYING) startGameLoop()
                 } else renderCurrentGameState()
             }
-            .setPositiveButton("خروج") { _, _ ->
+            .setPositiveButton(getString(R.string.action_exit)) { _, _ ->
                 engine?.let {
                     it.pauseForSystem()
                     store.saveGame(it.state, durable = true)
@@ -1293,18 +1298,18 @@ class MainActivity : Activity() {
                 finish()
             }
             .create()
-        showDesignDialog(dialog, titleText = "خروج از بازی") { dialogOpen = false }
+        showDesignDialog(dialog, titleText = getString(R.string.dialog_exit_game_title)) { dialogOpen = false }
     }
 
     private fun showHomeExitDialog() {
         dialogOpen = true
         val dialog = AlertDialog.Builder(this)
-            .setTitle("خروج از برنامه")
-            .setMessage("آیا می‌خواهید از آرمادیلو خارج شوید؟")
-            .setNegativeButton("لغو", null)
-            .setPositiveButton("خروج") { _, _ -> finish() }
+            .setTitle(getString(R.string.dialog_exit_app_title))
+            .setMessage(getString(R.string.dialog_exit_app_message))
+            .setNegativeButton(getString(R.string.action_dismiss), null)
+            .setPositiveButton(getString(R.string.action_exit)) { _, _ -> finish() }
             .create()
-        showDesignDialog(dialog, titleText = "خروج از برنامه") { dialogOpen = false }
+        showDesignDialog(dialog, titleText = getString(R.string.dialog_exit_app_title)) { dialogOpen = false }
     }
 
     private fun showDesignDialog(dialog: AlertDialog, titleText: String? = null, onDismiss: (() -> Unit)? = null) {
@@ -1354,64 +1359,64 @@ class MainActivity : Activity() {
         stopActiveLoops()
         val ranking = rankTeams(state.teamStats)
         val winners = ranking.filter { it.rank == 1 }
-        val (page, body) = createPage("نتایج بازی", { returnToHome() })
+        val (page, body) = createPage(getString(R.string.results_title), { returnToHome() })
         if (state.wordHistory.isEmpty() && state.teamStats.all { it.realTimeNanos == 0L && it.penaltyNanos == 0L }) {
             body.addView(
-                label("این بازی پیش از پایان دست اول بسته شد؛ آماری برای رتبه‌بندی ثبت نشده است.", 13f, palette.RED, true),
+                label(getString(R.string.results_never_started), 13f, palette.RED, true),
                 matchParams(bottom = 10)
             )
         }
         val winnerCard = sectionCard(fillColor = palette.PALE_ACCENT, stroke = palette.BLUE)
-        winnerCard.addView(label(if (winners.size == 1) "تیم برنده" else "تساوی در رتبهٔ اول", 17f, palette.INK, true), matchParams(bottom = 8))
+        winnerCard.addView(label(if (winners.size == 1) getString(R.string.results_winner) else getString(R.string.results_tie), 17f, palette.INK, true), matchParams(bottom = 8))
         winners.forEach { winner ->
             val teamRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; layoutDirection = View.LAYOUT_DIRECTION_RTL; gravity = Gravity.CENTER_VERTICAL }
             val swatch = View(this).apply { background = teamSwatch(winner.teamIndex, 5f) }
             teamRow.addView(swatch, LinearLayout.LayoutParams(dp(DesignSystem.Spacing.INSET_10), dp(32)).apply { marginEnd = dp(DesignSystem.Spacing.XXS) })
-            val winnerLabel = label("تیم ${winner.teamIndex + 1}", 18f, teamLabelColor(), true)
+            val winnerLabel = label(getString(R.string.results_team_label, winner.teamIndex + 1), 18f, teamLabelColor(), true)
             teamRow.addView(winnerLabel, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
             teamRow.addView(label(formatFinalTime(winner.stats.finalTimeNanos), 16f, palette.INK, true))
             winnerCard.addView(teamRow, matchParams(bottom = 3))
-            val winnerNames = state.players.filter { it.teamIndex == winner.teamIndex }.sortedBy { it.seat }.joinToString(" و ") { it.name }
+            val winnerNames = state.players.filter { it.teamIndex == winner.teamIndex }.sortedBy { it.seat }.joinToString(getString(R.string.join_and)) { it.name }
             winnerCard.addView(label(winnerNames, 13f, palette.MUTED), matchParams(bottom = 7))
         }
         body.addView(winnerCard, matchParams(bottom = 14))
 
-        body.addView(label("رتبه‌بندی تیم‌ها", 18f, palette.INK, true), matchParams(bottom = 8))
+        body.addView(label(getString(R.string.results_ranking), 18f, palette.INK, true), matchParams(bottom = 8))
         ranking.forEach { row ->
             val card = sectionCard()
             val top = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; layoutDirection = View.LAYOUT_DIRECTION_RTL; gravity = Gravity.CENTER_VERTICAL }
-            top.addView(label("رتبهٔ ${row.rank}", 13f, palette.MUTED, true), LinearLayout.LayoutParams(dp(62), ViewGroup.LayoutParams.WRAP_CONTENT))
+            top.addView(label(getString(R.string.results_rank, row.rank), 13f, palette.MUTED, true), LinearLayout.LayoutParams(dp(62), ViewGroup.LayoutParams.WRAP_CONTENT))
             val colorBar = View(this).apply { background = teamSwatch(row.teamIndex, 4f) }
             top.addView(colorBar, LinearLayout.LayoutParams(dp(DesignSystem.Spacing.XS), dp(30)).apply { marginEnd = dp(5); marginStart = dp(5) })
-            top.addView(label("تیم ${row.teamIndex + 1}", 16f, teamLabelColor(), true), LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+            top.addView(label(getString(R.string.results_team_label_row, row.teamIndex + 1), 16f, teamLabelColor(), true), LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
             top.addView(label(formatFinalTime(row.stats.finalTimeNanos), 15f, palette.INK, true))
             card.addView(top, matchParams(bottom = 6))
-            val teamNames = state.players.filter { it.teamIndex == row.teamIndex }.sortedBy { it.seat }.joinToString(" و ") { it.name }
-            card.addView(label("بازیکنان: $teamNames", 13f, palette.INK, true), matchParams(bottom = 4))
-            card.addView(label("کلمات صحیح: ${row.stats.correctWords}     جریمه‌های انفجار: ${row.stats.explosions}", 13f, palette.MUTED), matchParams())
+            val teamNames = state.players.filter { it.teamIndex == row.teamIndex }.sortedBy { it.seat }.joinToString(getString(R.string.join_and)) { it.name }
+            card.addView(label(getString(R.string.results_team_players, teamNames), 13f, palette.INK, true), matchParams(bottom = 4))
+            card.addView(label(getString(R.string.results_team_stats, row.stats.correctWords, row.stats.explosions), 13f, palette.MUTED), matchParams())
             body.addView(card, matchParams(bottom = 8))
         }
-        body.addView(label("زمان نهایی = زمان واقعی نگه‌داشتن گوشی + جریمه‌های انفجار", 12f, palette.MUTED), matchParams(top = 3, bottom = 12))
-        body.addView(label("فهرست واژه‌ها · به‌ترتیب نمایش", 18f, palette.INK, true), matchParams(bottom = 7))
+        body.addView(label(getString(R.string.results_time_note), 12f, palette.MUTED), matchParams(top = 3, bottom = 12))
+        body.addView(label(getString(R.string.results_words_title), 18f, palette.INK, true), matchParams(bottom = 7))
         if (state.wordHistory.isEmpty()) {
-            body.addView(label("در این بازی هنوز واژه‌ای ثبت نشده است.", 13f, palette.MUTED), matchParams(bottom = 12))
+            body.addView(label(getString(R.string.results_no_words), 13f, palette.MUTED), matchParams(bottom = 12))
         } else {
             val historyCard = sectionCard()
             state.wordHistory.forEachIndexed { index, entry ->
                 val player = state.players.getOrNull(entry.playerSeat)
-                val playerName = player?.name ?: "بازیکن نامشخص"
-                val teamText = player?.let { "تیم ${it.teamIndex + 1}" } ?: "تیم نامشخص"
+                val playerName = player?.name ?: getString(R.string.results_unknown_player)
+                val teamText = player?.let { getString(R.string.results_team_label_history, it.teamIndex + 1) } ?: getString(R.string.results_team_unknown)
                 historyCard.addView(label("${index + 1}. ${entry.word}", 15f, palette.INK, true), matchParams(bottom = 1))
                 historyCard.addView(label(
-                    "$playerName · $teamText · دست ${entry.round} · ${formatWordTimestamp(entry.shownAtEpochMillis)} · ${wordOutcomeLabel(entry.outcome)}",
+                    getString(R.string.results_history_line, playerName, teamText, entry.round, formatWordTimestamp(entry.shownAtEpochMillis), wordOutcomeLabel(entry.outcome)),
                     12f,
                     palette.MUTED
                 ), matchParams(bottom = 8))
             }
             body.addView(historyCard, matchParams(bottom = 12))
         }
-        body.addView(uiButton("بازی دوباره با همین بازیکنان", height = 58, onClick = { replayWithSamePlayers(state) }), matchParams(bottom = 10))
-        body.addView(uiButton("بازگشت به صفحه اصلی", outlined = true, height = 54, onClick = { returnToHome() }), matchParams())
+        body.addView(uiButton(getString(R.string.results_replay), height = 58, onClick = { replayWithSamePlayers(state) }), matchParams(bottom = 10))
+        body.addView(uiButton(getString(R.string.results_home), outlined = true, height = 54, onClick = { returnToHome() }), matchParams())
         showPage(page)
     }
 
@@ -1439,16 +1444,16 @@ class MainActivity : Activity() {
 
     private fun renderRules() {
         screen = AppScreen.RULES
-        val (page, body) = createPage("قوانین بازی", { renderHome() })
+        val (page, body) = createPage(getString(R.string.home_rules), { renderHome() })
         val sections = listOf(
-            "هدف بازی" to "کلمه را به هم‌تیمی‌ها برسانید تا آن را حدس بزنند؛ گفتن خود واژه یا بخشی از آن مجاز نیست. برنده تیمی است که در پایان کمترین زمان نهایی را داشته باشد.",
-            "بازیکنان و تیم‌ها" to "برای ۴، ۶، ۸ یا ۱۰ نفر؛ از ۲ تا ۵ تیمِ دونفره. هم‌تیمی‌ها روبه‌روی هم می‌نشینند. صندلی پایین آغازگر است و نوبت‌ها پادساعت‌گرد می‌چرخند.",
-            "دسته‌ها و سطح واژه‌ها" to "پیش از شروع، یک یا چند دسته از مشاغل، حیوانات، خوراکی‌ها، مکان‌ها و تکنولوژی انتخاب کنید. واژه‌های عمومی در چرخهٔ بازی نیستند. هر دسته ۱۰۰ واژه در هرکدام از سه سطح آسان، متوسط و سخت دارد.",
-            "حدس درست و انتقال گوشی" to "به‌محض حدس درست، بازیکن «حدس زد» را می‌زند. کلمه با نام بازیکن، زمان نمایش و نتیجه ثبت می‌شود و گوشی به نفر بعدی در مسیر پادساعت‌گرد می‌رسد؛ زمان تیم جدید همان لحظه شروع می‌شود.",
-            "تعویض کلمه" to "دکمهٔ «تعویض کلمه» در ۷ ثانیهٔ اول پس از نمایش هر کلمه غیرفعال است. بعد از آن می‌توان کلمه را عوض کرد؛ کلمهٔ قبلی مصرف‌شده می‌ماند، اما پاسخ صحیح نیست و تیم یک تعویض می‌گیرد.",
-            "پایان زمان و انفجار" to "زمان دست در پس‌زمینهٔ بازی محاسبه می‌شود و نمایش داده نمی‌شود. با پایان زمان، تیمی که گوشی دستش است ۱۰ ثانیه جریمه می‌گیرد. انیمیشن انفجار تا لمس صفحه باقی می‌ماند؛ لمس، دست بعد را آغاز می‌کند یا در آخرین دست نتایج را نشان می‌دهد.",
-            "وقفه‌ها و ادامه" to "با رفتن برنامه به پس‌زمینه، قفل صفحه یا وقفهٔ سیستمی، شمارش معکوس، زمان تیم‌ها و صدا متوقف می‌شوند. صفحهٔ ادامهٔ بازی، وضعیت ذخیره‌شده را از همان زمان باقی‌مانده بازمی‌گرداند؛ زمان بیرون از برنامه حساب نمی‌شود. تنظیمات صدا از صفحهٔ اصلی در دسترس است.",
-            "پایان و رتبه‌بندی" to "زمان نهایی هر تیم برابر است با زمان واقعی گوشی‌داشتن به‌علاوهٔ جریمه‌ها. ابتدا زمان کمتر، سپس انفجار کمتر، پاسخ صحیح بیشتر و تعویض کمتر ملاک است. نتایج نام همهٔ اعضای تیم، رنگ تیم و امتیازهای همان بازی را نشان می‌دهد؛ تساوی کامل، رتبهٔ مشترک دارد. پایان زودهنگام نیز نتایج ثبت‌شده تا همان لحظه را محاسبه می‌کند."
+            getString(R.string.rules_goal_title) to getString(R.string.rules_goal_body),
+            getString(R.string.rules_players_title) to getString(R.string.rules_players_body),
+            getString(R.string.rules_categories_title) to getString(R.string.rules_categories_body),
+            getString(R.string.rules_correct_title) to getString(R.string.rules_correct_body),
+            getString(R.string.rules_swap_title) to getString(R.string.rules_swap_body),
+            getString(R.string.rules_explosion_title) to getString(R.string.rules_explosion_body),
+            getString(R.string.rules_pause_title) to getString(R.string.rules_pause_body),
+            getString(R.string.rules_ranking_title) to getString(R.string.rules_ranking_body)
         )
         sections.forEach { (title, description) ->
             body.addView(label(title, 17f, palette.INK, true), matchParams(top = 8, bottom = 4))
@@ -1459,18 +1464,18 @@ class MainActivity : Activity() {
 
     private fun renderAbout() {
         screen = AppScreen.ABOUT
-        val (page, body) = createPage("درباره بازی", { renderHome() })
+        val (page, body) = createPage(getString(R.string.home_about), { renderHome() })
         val version = try {
             @Suppress("DEPRECATION")
             packageManager.getPackageInfo(packageName, 0).versionName?.takeIf { it.isNotBlank() }
         } catch (_: Exception) { null }
         body.addView(space(14))
-        body.addView(label("آرمادیلو (Armadillo)", 28f, palette.BLUE, true), matchParams(bottom = 12))
+        body.addView(label(getString(R.string.about_product_name), 28f, palette.BLUE, true), matchParams(bottom = 12))
         if (version != null) {
-            body.addView(label("نسخهٔ $version", 16f, palette.INK, true), matchParams(bottom = 14))
+            body.addView(label(getString(R.string.about_version, version), 16f, palette.INK, true), matchParams(bottom = 14))
         }
-        body.addView(label("یک بازی گروهی، آفلاین و فارسی برای توضیح و حدس‌زدن واژه‌ها. نام بازیکنان، زمان‌سنج و وضعیت بازی روی همین دستگاه نگهداری می‌شوند.", 15f, palette.MUTED), matchParams(bottom = 16))
-        body.addView(label("رایگان · بدون تبلیغ", 13f, palette.MUTED), matchParams())
+        body.addView(label(getString(R.string.about_body), 15f, palette.MUTED), matchParams(bottom = 16))
+        body.addView(label(getString(R.string.about_tagline), 13f, palette.MUTED), matchParams())
         showPage(page)
     }
 
@@ -1481,29 +1486,29 @@ class MainActivity : Activity() {
 
     private fun renderSoundSettings() {
         screen = AppScreen.SOUND_SETTINGS
-        val (page, body) = createPage("تنظیمات صدا", { returnFromSoundSettings() })
-        body.addView(label("تغییرها بلافاصله ذخیره و اعمال می‌شوند. هنگام رفتن بازی به پس‌زمینه، شمارش معکوس و صدا متوقف می‌شوند.", 13f, palette.MUTED), matchParams(bottom = 12))
+        val (page, body) = createPage(getString(R.string.sound_settings_title), { returnFromSoundSettings() })
+        body.addView(label(getString(R.string.sound_hint), 13f, palette.MUTED), matchParams(bottom = 12))
         addSoundControl(
-            body, "بوق بمب", soundSettings.beepEnabled, soundSettings.beepVolume,
+            body, getString(R.string.sound_beep), soundSettings.beepEnabled, soundSettings.beepVolume,
             enabledUpdate = { value -> soundSettings.beepEnabled = value; persistSoundSettings() },
             volumeUpdate = { value -> soundSettings.beepVolume = value; persistSoundSettings() },
             preview = { audio.previewBeep() }
         )
         addSoundControl(
-            body, "صدای انفجار", soundSettings.explosionEnabled, soundSettings.explosionVolume,
+            body, getString(R.string.sound_explosion), soundSettings.explosionEnabled, soundSettings.explosionVolume,
             enabledUpdate = { value -> soundSettings.explosionEnabled = value; persistSoundSettings() },
             volumeUpdate = { value -> soundSettings.explosionVolume = value; persistSoundSettings() },
             preview = { audio.previewExplosion() }
         )
         addSoundControl(
-            body, "جلوه‌های صوتی دیگر", soundSettings.effectsEnabled, soundSettings.effectsVolume,
+            body, getString(R.string.sound_effects), soundSettings.effectsEnabled, soundSettings.effectsVolume,
             enabledUpdate = { value -> soundSettings.effectsEnabled = value; persistSoundSettings() },
             volumeUpdate = { value -> soundSettings.effectsVolume = value; persistSoundSettings() },
             preview = { audio.previewEffect() }
         )
-        body.addView(toggleRow("قطع کامل صدای برنامه", soundSettings.muteAll) { value -> soundSettings.muteAll = value; persistSoundSettings() }, matchParams(top = 4, bottom = 10))
-        body.addView(toggleRow("لرزش هنگام انفجار", soundSettings.vibrateOnExplosion) { value -> soundSettings.vibrateOnExplosion = value; persistSoundSettings() }, matchParams(bottom = 14))
-        body.addView(label("در حالت بی‌صدا یا قطع بودن صدای رسانهٔ گوشی، صداهای بازی و نمونه‌ها نیز پخش نمی‌شوند.", 12f, palette.MUTED), matchParams(bottom = 8))
+        body.addView(toggleRow(getString(R.string.sound_mute_all), soundSettings.muteAll) { value -> soundSettings.muteAll = value; persistSoundSettings() }, matchParams(top = 4, bottom = 10))
+        body.addView(toggleRow(getString(R.string.sound_vibrate), soundSettings.vibrateOnExplosion) { value -> soundSettings.vibrateOnExplosion = value; persistSoundSettings() }, matchParams(bottom = 14))
+        body.addView(label(getString(R.string.sound_device_note), 12f, palette.MUTED), matchParams(bottom = 8))
         showPage(page)
     }
 
@@ -1519,10 +1524,10 @@ class MainActivity : Activity() {
         val card = sectionCard()
         val header = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; layoutDirection = View.LAYOUT_DIRECTION_RTL; gravity = Gravity.CENTER_VERTICAL }
         header.addView(label(title, 16f, palette.INK, true), LinearLayout.LayoutParams(0, dp(DesignSystem.Metrics.MIN_TOUCH_TARGET), 1f))
-        header.addView(uiButton("پخش نمونه", height = DesignSystem.Metrics.MIN_TOUCH_TARGET, playEffect = false, onClick = preview), LinearLayout.LayoutParams(dp(104), dp(DesignSystem.Metrics.MIN_TOUCH_TARGET)))
+        header.addView(uiButton(getString(R.string.sound_preview), height = DesignSystem.Metrics.MIN_TOUCH_TARGET, playEffect = false, onClick = preview), LinearLayout.LayoutParams(dp(104), dp(DesignSystem.Metrics.MIN_TOUCH_TARGET)))
         card.addView(header, matchParams(bottom = 4))
         val check = CheckBox(this).apply {
-            text = "فعال باشد"
+            text = getString(R.string.sound_enabled)
             textSize = DesignSystem.TypeScale.label(13f)
             typeface = appFont
             setTextColor(palette.MUTED)
@@ -1532,7 +1537,7 @@ class MainActivity : Activity() {
             setOnCheckedChangeListener { _, checked -> enabledUpdate(checked); audio.applySettings(soundSettings) }
         }
         card.addView(check, matchParams())
-        val volumeLabel = label("بلندی صدا: $volume٪", 12f, palette.MUTED)
+        val volumeLabel = label(getString(R.string.sound_volume, volume), 12f, palette.MUTED)
         card.addView(volumeLabel, matchParams(top = 2))
         val seek = SeekBar(this).apply {
             max = 100
@@ -1543,7 +1548,7 @@ class MainActivity : Activity() {
         seek.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(bar: SeekBar?, progress: Int, fromUser: Boolean) {
                 val amount = progress.coerceIn(0, 100)
-                volumeLabel.text = "بلندی صدا: $amount٪"
+                volumeLabel.text = getString(R.string.sound_volume_live, amount)
                 volumeUpdate(amount)
                 audio.applySettings(soundSettings)
             }
@@ -1716,6 +1721,10 @@ class MainActivity : Activity() {
 
     private fun teamLabelColor(): Int = palette.INK
 
+    /** Localised "selected"/"not selected" label used by accessibility descriptions. */
+    private fun selectionLabel(selected: Boolean): String =
+        getString(if (selected) R.string.state_selected else R.string.state_not_selected)
+
     private fun teamSwatch(team: Int, radiusDp: Float = DesignSystem.Radius.CHIP): GradientDrawable {
         val isYellowTeam = team == DesignSystem.Metrics.TEAM_YELLOW_INDEX
         return rounded(
@@ -1738,20 +1747,22 @@ class MainActivity : Activity() {
         view.textSize = DesignSystem.TypeScale.word(word.length)
     }
 
-    private fun formatFinalTime(nanos: Long): String =
-        String.format(Locale.US, "%.2f", nanos.coerceAtLeast(0L) / 1_000_000_000.0) + " ثانیه"
+    private fun formatFinalTime(nanos: Long): String {
+        val seconds = String.format(Locale.US, "%.2f", nanos.coerceAtLeast(0L) / 1_000_000_000.0)
+        return getString(R.string.unit_seconds_suffix, seconds)
+    }
 
     private fun formatWordTimestamp(epochMillis: Long): String =
-        if (epochMillis <= 0L) "زمان نامشخص" else wordTimestampFormat.format(Date(epochMillis))
+        if (epochMillis <= 0L) getString(R.string.time_unknown) else wordTimestampFormat.format(Date(epochMillis))
 
-    private fun teamChipText(team: Int, seconds: Long): String = "ت${team + 1} ${seconds}s"
+    private fun teamChipText(team: Int, seconds: Long): String = getString(R.string.game_team_chip, team + 1, seconds)
 
     private fun wordOutcomeLabel(outcome: WordOutcome): String = when (outcome) {
-        WordOutcome.PENDING -> "در جریان"
-        WordOutcome.CORRECT -> "حدس درست"
-        WordOutcome.SWAPPED -> "تعویض‌شده"
-        WordOutcome.EXPIRED -> "پایان زمان"
-        WordOutcome.ENDED -> "پایان بازی"
+        WordOutcome.PENDING -> getString(R.string.outcome_pending)
+        WordOutcome.CORRECT -> getString(R.string.outcome_correct)
+        WordOutcome.SWAPPED -> getString(R.string.outcome_swapped)
+        WordOutcome.EXPIRED -> getString(R.string.outcome_expired)
+        WordOutcome.ENDED -> getString(R.string.outcome_ended)
     }
 
     private fun nearestAllowedDuration(value: Int): Int =
@@ -1819,21 +1830,21 @@ class MainActivity : Activity() {
     private fun showDiscardedCheckpointDialog() {
         if (isFinishing || isDestroyed) return
         val dialog = AlertDialog.Builder(this)
-            .setTitle("بازی نیمه‌کاره بازیابی نشد")
-            .setMessage("وضعیت ذخیره‌شدهٔ بازی پیشین خوانا نبود و از حافظه پاک شد. فهرست بازیکنان و تنظیمات صدا حفظ شده‌اند.")
-            .setPositiveButton("باشه", null)
+            .setTitle(getString(R.string.dialog_checkpoint_title))
+            .setMessage(getString(R.string.dialog_checkpoint_message))
+            .setPositiveButton(getString(R.string.action_ok), null)
             .create()
-        showDesignDialog(dialog, titleText = "بازی نیمه‌کاره بازیابی نشد")
+        showDesignDialog(dialog, titleText = getString(R.string.dialog_checkpoint_title))
     }
 
     private fun showWordsNotReadyDialog() {
         if (isFinishing || isDestroyed) return
         val dialog = AlertDialog.Builder(this)
-            .setTitle("واژه‌ها هنوز آماده نیستند")
-            .setMessage("بانک واژه‌ها در حال بارگذاری است. چند لحظه بعد دوباره تلاش کنید.")
-            .setPositiveButton("باشه", null)
+            .setTitle(getString(R.string.dialog_words_pending_title))
+            .setMessage(getString(R.string.dialog_words_pending_message))
+            .setPositiveButton(getString(R.string.action_ok), null)
             .create()
-        showDesignDialog(dialog, titleText = "واژه‌ها هنوز آماده نیستند")
+        showDesignDialog(dialog, titleText = getString(R.string.dialog_words_pending_title))
     }
 
     private companion object {

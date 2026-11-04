@@ -16,3 +16,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "Armadillo"
 include(":app")
+include(":game-core")

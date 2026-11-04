@@ -101,11 +101,19 @@ class GameEngineTest {
     }
 
     @Test fun missingNamesAreUniqueAndUserDuplicatesRemainAllowed() {
-        val players = SeatPlan.createPlayers(4, listOf("", "بازیکن 1", "ندا", "ندا"))
+        val players = SeatPlan.createPlayers(4, listOf("", "بازیکن 1", "ندا", "ندا")) { "بازیکن $it" }
         assertEquals("بازیکن 2", players[0].name)
         assertEquals("بازیکن 1", players[1].name)
         assertEquals("ندا", players[2].name)
         assertEquals("ندا", players[3].name)
+    }
+
+    @Test fun blankNamesUseTheInjectedLabellerAndStayUnique() {
+        val players = SeatPlan.createPlayers(4, listOf("", "", "ندا", "نیما"))
+        assertEquals("#1", players[0].name)
+        assertEquals("#2", players[1].name)
+        assertEquals("ندا", players[2].name)
+        assertEquals("نیما", players[3].name)
     }
 
     @Test fun wordHistoryStoresDisplayTimePlayerRoundAndOutcome() {

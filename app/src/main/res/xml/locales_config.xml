@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The app ships Persian only; the list documents the supported locale for the
+     per-app language settings on Android 13 and newer. -->
+<locale-config xmlns:android="http://schemas.android.com/apk/res/android">
+    <locale android:name="fa" />
+</locale-config>

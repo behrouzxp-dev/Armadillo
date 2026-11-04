@@ -4,6 +4,10 @@ This project follows semantic versioning (SemVer). The versioned entries below a
 
 ## Unreleased
 
+- Move every user-visible Persian string into `res/values/strings.xml` (Persian as the default locale), declare `android:localeConfig` with `res/xml/locales_config.xml`, and take the manifest label from `@string/app_name`. The engine no longer hard-codes player names: `SeatPlan.createPlayers` and `GameCodec.decode` accept an injected labeller that the app fills from resources.
+- Split the deterministic engine, models, seat plan, checkpoint codec and roster merge into the pure Kotlin/JVM module `:game-core` (no Android dependency) and run its tests with `:game-core:test`; the app depends on it via `implementation(project(":game-core"))`.
+- Move the toolchain to Gradle 9.8.2 (wrapper pinned with `distributionSha256Sum`), Android Gradle Plugin 9.5.0 and its built-in Kotlin compiler, and Kotlin 2.4.21 for the JVM module; drop the obsolete `org.jetbrains.kotlin.android` plugin, move `jvmTarget` to `kotlin.compilerOptions`, and raise the Gradle daemon memory after AGP 9 release lint ran out of metaspace.
+- Annotate the pre-33 `onBackPressed()` override with the reason it stays next to the API 33+ `OnBackInvokedCallback`, so AGP 9's `GestureBackNavigation` check no longer fails the build.
 - Replace the Lalezar typeface with the bundled Mikhak font (Regular and Bold masters, SIL OFL 1.1).
 - Take the page canvas from the icon background (`#F9CB03`) and rebuild the palette around it; filled buttons stay navy while outlined buttons get a cream fill with a navy edge, so the two hierarchies are visually distinct again.
 - Force one static light theme: no night resources and `forceDarkAllowed=false`, so the system theme setting cannot change the app.
