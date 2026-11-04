@@ -4,18 +4,21 @@ This project follows semantic versioning (SemVer). The versioned entries below a
 
 ## Unreleased
 
+- Consolidate the historical version-specific changelogs into this file.
+- Add current requirements, architecture, internal interface and maintenance-plan documentation under `docs/`.
+- Remove an unreferenced legacy drawable and the redundant `Dour-README.md` pointer; retain the main README and historical project records.
 - Remove the configured user-facing version name while retaining the existing Android version code and application ID. The About screen shows a version only when one is configured for a future build.
 - Document the repository's Debug APK workflow, artifact retention, trigger limitations, signing and upgrade caveats.
 - Clarify historical test-report scope and correct documentation links without changing the application version or behavior.
 
 ## [2.2.0] — 2026-10-29
 
-- Based this release on the verified v2.1.0 source, increased `versionCode` to 6 and `versionName` to 2.2.0, and retained `applicationId=com.dour.game`.
+- Based this historical build on the then-latest verified v2.1.0 Drive source, increased `versionCode` to 6 and `versionName` to 2.2.0, and retained `applicationId=com.dour.game`.
 - Set the central page background token to exactly `#F2C50A` and the background token for all buttons, including dialogs, to exactly `#07223C`. Retained white/disabled-gray high-contrast text, ripple feedback and selection borders.
 - Removed the end button from the active game screen; early ending remains available from the pause panel/dialog and rounds still finish automatically.
 - Made pause/resume available during preparation, active play, manual pause, system pause and the explosion screen. Repeated pauses and background restoration retain the player, word, history, remaining time and timer behavior; after restoring a manual pause, the user must explicitly continue.
-- Retained Lalezar, team colors, icon artwork and other existing features.
-- The historical release report records 21 passing unit tests, passing vocabulary validation and Debug/Release builds, and lint with 0 errors and 29 warnings; the release certificate fingerprint matches the v2.1.0 key. No device/emulator installation or execution was performed. See `Dour-Test-Report.md`.
+- Retained Lalezar, team colors, original icon artwork, offline/free/ad-free behavior, Persian RTL and portrait orientation, game rules and timing, durable local saves, sound settings, and background time/audio pausing.
+- The historical report records 21 passing unit tests, passing vocabulary validation and Debug/signed Release builds, and lint with 0 errors and 29 warnings; release signature, APK metadata and alignment checks passed, and the certificate fingerprint matched the previous key. No device/emulator installation or interaction was performed. These results refer to that historical build, not later checkouts. See [Dour-Test-Report.md](Dour-Test-Report.md) for details.
 
 ## [2.1.0] — 2026-10-29
 
