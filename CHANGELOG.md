@@ -4,6 +4,8 @@ This project follows semantic versioning (SemVer). The versioned entries below a
 
 ## Unreleased
 
+- Add current requirements, architecture, internal interface and maintenance-plan documentation under `docs/`.
+- Remove an unreferenced legacy drawable and the redundant `Dour-README.md` pointer; retain the main README and historical project records.
 - Remove the configured user-facing version name while retaining the existing Android version code and application ID. The About screen shows a version only when one is configured for a future build.
 - Document the repository's Debug APK workflow, artifact retention, trigger limitations, signing and upgrade caveats.
 - Clarify historical test-report scope and correct documentation links without changing the application version or behavior.

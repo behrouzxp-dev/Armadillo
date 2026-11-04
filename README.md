@@ -6,6 +6,13 @@ Armadillo is an offline, right-to-left Persian group game. Its `applicationId` i
 
 This repository does not designate a current official release or a user-facing application version. `versionCode` remains 6 for Android compatibility; choose a `versionName` and an appropriate `versionCode` when preparing a future release. The repository on GitHub is the source of truth. See [AGENTS.md](AGENTS.md) for project rules and [CHANGELOG.md](CHANGELOG.md) for changes. Historical test reports and changelogs describe earlier builds, not an official release of the current repository.
 
+## Documentation
+
+- [Requirements](docs/REQUIREMENTS.md) — current product, compatibility and verification requirements.
+- [Architecture](docs/ARCHITECTURE.md) — components, state, timing and persistence.
+- [Internal interfaces](docs/API.md) — Kotlin contracts; the app has no network API.
+- [Project plan](docs/PROJECT_PLAN.md) — maintenance and verification backlog, not an approved release schedule.
+
 ## Features
 
 - The central page background token is `#F2C50A`; button backgrounds use `#07223C`, with touch feedback and selection borders.
@@ -37,6 +44,7 @@ This repository does not designate a current official release or a user-facing a
 - `app/src/main/assets/fonts/` — Lalezar font and OFL license
 - `app/src/main/res/drawable-nodpi/armadillo_icon_art.jpg` — original icon artwork copy
 - `app/src/test/` — Kotlin/JVM unit tests
+- `docs/` — requirements, architecture, internal interfaces and maintenance plan
 - `tools/build_categories.py` — builds earlier categories while preserving newer categories
 - `tools/add_armadillo_categories.py` — place and technology vocabulary
 - `tools/validate_words.py` — validates the archived general bank and 1,500-word topic bank
