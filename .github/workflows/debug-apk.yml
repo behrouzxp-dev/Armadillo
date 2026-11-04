@@ -88,8 +88,8 @@ jobs:
           ./gradlew --no-daemon :app:assembleRelease :app:lintRelease > gradle-release.log 2>&1
           status=$?
           if [ "$status" -ne 0 ]; then
-            grep -E "^e: |[Ee]rror:|FAILED|Execution failed|What went wrong|Lint found|Caused by|Exception|bug in lint" -A3 gradle-release.log \
+            grep -E "^e: |[Ee]rror:|FAILED|Execution failed|What went wrong|Lint found|Caused by|Exception|bug in lint|at com\.android|at java\." -A3 gradle-release.log \
               | head -80 | while IFS= read -r line; do echo "::error::$line"; done
           fi
-          tail -30 gradle-release.log
+          tail -150 gradle-release.log
           exit "$status"

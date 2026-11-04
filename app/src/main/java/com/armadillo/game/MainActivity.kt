@@ -1,5 +1,6 @@
 package com.armadillo.game
 
+import android.annotation.SuppressLint
 import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
 import android.app.Activity
@@ -269,6 +270,10 @@ class MainActivity : Activity() {
         }
     }
 
+    // API 33+ back gestures are served by the platform OnBackInvokedDispatcher registered in
+    // onCreate; this override only covers API 23-32, so the AndroidX migration the lint check
+    // asks for would change nothing here.
+    @SuppressLint("GestureBackNavigation")
     @Suppress("DEPRECATION")
     override fun onBackPressed() {
         handleBack()
