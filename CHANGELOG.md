@@ -1,60 +1,60 @@
-# تاریخچهٔ تغییرات آرمادیلو (Armadillo)
+# Armadillo changelog
 
-این پروژه از نسخه‌بندی معنایی (SemVer) پیروی می‌کند. فایل‌های نسخه‌های تحویل‌شده در پوشه‌های مستقل نگهداری می‌شوند.
+This project follows semantic versioning (SemVer). Delivered versions were historically kept in separate release folders.
 
 ## [2.2.0] — 2026-10-29
 
-- این انتشار بر پایهٔ آخرین نسخهٔ واقعی موجود در Drive یعنی v2.1.0 است؛ نسخه به `versionCode=6` و `versionName=2.2.0` افزایش یافت و `applicationId=com.dour.game` حفظ شد.
-- توکن پس‌زمینهٔ اصلی تمام صفحه‌ها دقیقاً `#F2C50A` و توکن پس‌زمینهٔ تمام دکمه‌ها، شامل دکمه‌های دیالوگ، دقیقاً `#07223C` شد. متن سفید/حالت غیرفعال خاکستری با کنتراست بالا، ripple و حاشیه‌های انتخابی حفظ شدند.
-- دکمهٔ «پایان» از صفحهٔ بازی فعال حذف شد؛ پایان زودهنگام از پنل توقف/دیالوگ و پایان خودکار دست‌ها همچنان فعال است.
-- کنترل توقف/ادامه در آماده‌سازی، بازی فعال، توقف دستی، توقف سیستمی و صفحهٔ انفجار قابل‌استفاده است. توقف‌های تکراری و بازگشت پس از پس‌زمینه، بازیکن، واژه، تاریخچه، زمان باقی‌مانده و رفتار زمان‌سنج را حفظ می‌کنند؛ پس از بازیابی ذخیرهٔ توقف دستی، کاربر باید آگاهانه ادامه دهد.
-- Lalezar، رنگ‌های تیم‌ها، تصویر هنری آیکون و سایر قابلیت‌های قبلی حفظ شدند.
-- آزمون واحد 21 مورد موفق، اعتبارسنجی واژه‌ها موفق، Debug/Release build موفق، lint با 0 خطا و 29 هشدار؛ اثرانگشت گواهی Release با کلید v2.1.0 منطبق است. نصب/اجرای دستگاه یا شبیه‌ساز انجام نشده است؛ جزئیات در `Dour-Test-Report.md`.
+- Based this release on the verified v2.1.0 source, increased `versionCode` to 6 and `versionName` to 2.2.0, and retained `applicationId=com.dour.game`.
+- Set the central page background token to exactly `#F2C50A` and the background token for all buttons, including dialogs, to exactly `#07223C`. Retained white/disabled-gray high-contrast text, ripple feedback and selection borders.
+- Removed the end button from the active game screen; early ending remains available from the pause panel/dialog and rounds still finish automatically.
+- Made pause/resume available during preparation, active play, manual pause, system pause and the explosion screen. Repeated pauses and background restoration retain the player, word, history, remaining time and timer behavior; after restoring a manual pause, the user must explicitly continue.
+- Retained Lalezar, team colors, icon artwork and other existing features.
+- The historical release report records 21 passing unit tests, passing vocabulary validation and Debug/Release builds, and lint with 0 errors and 29 warnings; the release certificate fingerprint matches the v2.1.0 key. No device/emulator installation or execution was performed. See `Dour-Test-Report.md`.
 
 ## [2.1.0] — 2026-10-29
 
-- این به‌روزرسانی فقط از سورس تأییدشدهٔ v2.0.0 ادامه پیدا می‌کند؛ v1.1.0 فقط مرجع جایگاه و رفتار کنترل توقف موقت است.
-- بازگرداندن دکمهٔ «توقف موقت» پس از زمان‌سنج‌های تیم، همراه با توقف تایمر/صدا، ذخیرهٔ پایدار و پنل ادامه/پایان/تنظیمات صدا؛ ادامه از همان بازیکن، واژه و زمان باقی‌مانده انجام می‌شود. قابلیت پایان زودهنگام v2 حفظ شده است.
-- یکپارچه‌سازی صفحه‌ها و نمای صندلی‌ها با توکن‌های مرکزی رنگ، فاصله، شعاع، قلم Lalezar، اندازهٔ متن و تعامل.
-- رنگ زرد و سرمه‌ای از تصویر اصلی ۱۰۲۴×۱۰۲۴ آیکون نمونه‌برداری شده‌اند (`#F9CB03` و `#07223D`). فایل و جزئیات هنری آیکون تغییر نکرده‌اند؛ رنگ‌های پنج تیم حفظ شده‌اند و نشان تیم زرد با حاشیهٔ سرمه‌ای روی زمینهٔ زرد خواناست.
-- حفظ قابلیت‌های v2، تنظیمات صدا در صفحهٔ اصلی، شناسهٔ `com.dour.game`، رفتار آفلاین/رایگان/بدون تبلیغ، فارسی RTL، حالت Portrait، زمان‌سنج monotonic، ذخیرهٔ بازی و توقف زمان/صدا در پس‌زمینه.
-- `versionCode` به 5 و `versionName` به 2.1.0 افزایش یافت.
-- نتیجهٔ آزمون، ساخت، امضا و محدودیت آزمون دستگاه در `Dour-Test-Report.md` ثبت می‌شود.
+- Continued from verified v2.0.0 source only; v1.1.0 was a reference for the pause control's placement and behavior.
+- Restored the pause button after team timers, with timer/audio pause, durable saving and a panel for resume, ending and audio settings. Resume keeps the player, word and remaining time; the v2 early-end feature remains.
+- Unified screens and the seating view with central color, spacing, radius, Lalezar font, text size and interaction tokens.
+- Sampled yellow and navy from the original 1024×1024 icon (`#F9CB03` and `#07223D`); the icon file and artwork were unchanged. Preserved five team colors and used a navy border for the yellow indicator on the yellow background.
+- Preserved v2 features, home-screen audio settings, `com.dour.game`, offline/free/ad-free behavior, Persian RTL, portrait orientation, the monotonic timer, saved games and background time/audio pausing.
+- Increased `versionCode` to 5 and `versionName` to 2.1.0.
+- Test, build, signing and device-test limitations are recorded in `Dour-Test-Report.md`.
 
 ## [2.0.0] — 2026-10-29
 
-- آماده‌سازی Release تازه از نسخهٔ 1.2.0 با حفظ رفتار بازی و `applicationId=com.dour.game`؛ `versionCode` به 4 و `versionName` به 2.0.0 افزایش یافت.
-- افزودن پیکربندی امضای Gradle مبتنی بر متغیرهای محیطی؛ هیچ گذرواژه یا فایل کلیدی وارد سورس و آرشیو سورس نشده است.
-- ساخت APK نوع Release و تأیید امضای RSA 2048؛ کلید پایدار و فایل بازیابی آن در پوشهٔ خصوصی Drive `Signing-Key/` طبق درخواست مالک نگهداری می‌شوند.
-- آزمون واحد 17 مورد موفق؛ lint انتشار با 0 خطا و 29 هشدار؛ آزمون نصب روی دستگاه/شبیه‌ساز انجام نشده است.
+- Prepared a new Release from 1.2.0 while preserving game behavior and `applicationId=com.dour.game`; increased `versionCode` to 4 and `versionName` to 2.0.0.
+- Added environment-variable-based Gradle signing configuration; no passwords or key files were included in the source or source archive.
+- Built a Release APK and verified its RSA 2048 signature. The established key and recovery file were historically kept in an owner-only private signing folder at the owner's request.
+- Recorded 17 passing unit tests and release lint with 0 errors and 29 warnings; no device/emulator installation test was performed.
 
 ## [1.2.0] — 2026-10-29
 
-- تغییر نام برنامه به آرمادیلو؛ حفظ `applicationId` برابر `com.dour.game` و توسعهٔ کد Kotlin/Android موجود.
-- استفاده از تصویر پیوست کاربر برای نشان برنامه؛ فایل اصلی بدون تغییر در منابع نگهداری شد و تنها اندازه/حاشیهٔ لازم برای لایهٔ adaptive icon ساخته شد.
-- افزودن فونت محلی Lalezar همراه مجوز SIL Open Font License 1.1؛ رابط فارسی/RTL، آفلاین، رایگان و بدون تبلیغ باقی ماند.
-- افزودن دسته‌های مکان‌ها و تکنولوژی؛ بانک قابل‌بازی اکنون پنج دسته با ۱۰۰ واژه در هر سطح آسان/متوسط/سخت دارد (۱٬۵۰۰ واژهٔ یکتا). بانک عمومی قدیمی در فایل آرشیوی باقی است اما در انتخاب و چرخهٔ واژهٔ جدید استفاده نمی‌شود.
-- ذخیرهٔ جداگانهٔ نام و ترتیب بازیکنان و پیش‌پرکردن دوباره؛ انتقال امن‌تر وضعیت ذخیرهٔ قدیمی به دسته‌های قابل‌بازی، با نگهداری زمان، امتیاز و کلمات مصرف‌شده.
-- تغییر مدت‌های جدید به ۱۲۰، ۲۱۰ و ۳۰۰ ثانیه و تعداد دست‌ها به ۳، ۵ و ۷.
-- تبدیل انتخاب دسته‌ها به چیدمان سه‌ستونه و انتقال تنظیمات صدا به صفحهٔ اصلی.
-- حذف کنترل توقف موقت از صفحهٔ بازی؛ توقف زمان و صدا هنگام پس‌زمینه، قفل صفحه و وقفهٔ سیستمی حفظ شد.
-- تنظیم گردش صندلی‌ها و نوبت‌ها پادساعت‌گرد، رنگ تیم‌ها آبی/قرمز/سبز/بنفش/زرد، حذف قاب نام‌ها در انتخاب صندلی و افزودن دکمه‌های تأیید ثابت در پایین مراحل.
-- ثبت فهرست واژه‌های نمایش‌داده‌شده با نام بازیکن، زمان نمایش، دست و نتیجهٔ واژه.
-- افزایش `versionCode` به 3 و `versionName` به 1.2.0.
+- Renamed the application Armadillo, retaining `applicationId=com.dour.game` and the existing Kotlin/Android codebase.
+- Used the user's supplied icon artwork; retained the original unchanged and created only the required scaling and padding for the adaptive icon layer.
+- Added the local Lalezar font with the SIL Open Font License 1.1; the app remained Persian/RTL, offline, free and ad-free.
+- Added places and technology categories. The playable bank has five categories with 100 words at each easy/medium/hard level (1,500 unique words). The legacy general bank remains archived but is not used for new category selection or word cycles.
+- Saved player names and order separately and prefilled them; migrated old saved state more safely to playable categories while retaining time, scores and consumed words.
+- Changed round duration options to 120, 210 and 300 seconds, and round counts to 3, 5 and 7.
+- Changed category selection to a three-column layout and moved sound settings to the home screen.
+- Removed the pause control from the game screen; time and audio still paused during backgrounding, screen lock and system interruption.
+- Set seats and turns to rotate counterclockwise, team colors to blue/red/green/purple/yellow, removed name frames in seat selection and added fixed confirmation buttons at the bottom of steps.
+- Recorded displayed words with player name, display time, round and outcome.
+- Increased `versionCode` to 3 and `versionName` to 1.2.0.
 
 ## [1.1.0] — 2026-10-26
 
-- افزایش سقف تعداد بازیکنان به ۱۰ نفر؛ شمارهای زوج ۴، ۶، ۸ و ۱۰ به‌ترتیب ۲ تا ۵ تیم دونفره تشکیل می‌دهند.
-- افزودن انتخاب چندگانهٔ دسته‌های واژه و تثبیت انتخاب در طول هر بازی.
-- افزودن ۹۰۰ واژهٔ دسته‌ای یکتا: مشاغل، حیوانات و خوراکی‌ها؛ دقیقاً ۱۰۰ واژه در هر یک از سه سطح آسان، متوسط و سخت.
-- حفظ بانک عمومی ۷۲۳ واژه‌ای نسخهٔ 1.0.0 و افزودن نگاشت دادهٔ ذخیره‌شدهٔ قبلی، مشروط به اینکه نصب ارتقایی با کلید امضای سازگار انجام شود.
-- حذف کامل حالت‌ها و تنظیمات مخصوص توضیح کلمه.
-- محدودکردن دسترسی به تنظیمات صدا به پنل توقف موقت و پنهان‌کردن شمارش‌معکوس از نمای بازی؛ زمان‌سنج داخلی حفظ شد.
-- ساده‌سازی کارت‌های بازی به نام بازیکن و فلش انتقال نوبت.
-- نگه‌داشتن انیمیشن انفجار تا لمس بازیکن و اجرای انتقال وضعیت فقط یک‌بار.
-- افزودن نام بازیکنان هر تیم، رنگ تیم و امتیازهای واقعی همان بازی به نتیجه‌ها.
-- افزایش `versionCode` به 2 و `versionName` به 1.1.0.
+- Increased the player limit to 10; even counts of 4, 6, 8 and 10 form 2 to 5 two-player teams respectively.
+- Added multi-category word selection, fixed for the duration of each game.
+- Added 900 unique category words for jobs, animals and foods: exactly 100 words at each easy, medium and hard level.
+- Retained the 723-word general bank from 1.0.0 and added mapping for previously saved data, provided an in-place upgrade uses a compatible signing key.
+- Completely removed word-explanation-specific modes and settings.
+- Limited sound settings access to the pause panel and hid the countdown from the game view while retaining the internal timer.
+- Simplified game cards to the player name and turn-transfer arrow.
+- Kept the explosion animation visible until a player taps and performed the state transition only once.
+- Added each team's player names, team color and actual game scores to results.
+- Increased `versionCode` to 2 and `versionName` to 1.1.0.
 
-## [1.0.0] — نسخهٔ پایه
+## [1.0.0] — base version
 
-- نسخهٔ اولیهٔ آفلاین فارسی با زمان‌سنج، تیم‌بندی، توقف/ادامه، صدا، بانک عمومی ۷۲۳ واژه‌ای و نتایج تیمی.
+- Initial offline Persian version with timer, teams, pause/resume, audio, a 723-word general bank and team results.

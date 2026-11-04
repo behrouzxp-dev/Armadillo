@@ -2,6 +2,8 @@
 
 Updated: 2026-10-29 (Asia/Tehran)
 
+This is a historical record of the 2.2.0 release, not a current deployment checklist. Paths, storage locations and verification results below describe that earlier environment and may no longer be available. Current project work must follow `AGENTS.md`: GitHub is the authoritative source for project files and releases, and signing keys must be securely preserved outside the repository.
+
 ## Release state
 
 - Current source is based only on the latest actual Drive release, v2.1.0; older versions are comparison/history only.
@@ -29,7 +31,7 @@ Updated: 2026-10-29 (Asia/Tehran)
 - Latest source base folder `Releases/v2.1.0`: `1nBaCeTN8XGGp3s00PeuYV6-MKyB8SpJb`; source ZIP ID `1TLOk1-HN0AFSVnmmDd-W2B6Es3G_L6mv`, Drive/local MD5 `34ceb8952f3af8143b325e839e9eddf9`.
 - Pre-edit source backup: `/home/user/backups/Armadillo/Armadillo-Source-v2.1.0-original.zip`, SHA-256 `32892b50d59d0c60541f990e074a025ead4ce3c69f68fa1cd0af7e781c290c61`.
 - Existing owner-only signing folder was used. Keep that key unchanged for future releases; private files were temporarily staged outside the project in protected storage for signing and must not enter archives.
-- Keep prior release folders intact. Store APK, source archive, README, changelog and actual test report under the existing v2.2.0 release folder. Confirm Drive listing, parent, size and retrievability/checksum of all five files before cleaning temporary workspace files.
+- The original handoff instructed that prior release folders be preserved and the v2.2.0 deliverables verified in Drive. This is historical context only; use GitHub for future source and release management as required by `AGENTS.md`. Preserve existing backups and signing material.
 
 ## Current local deliverables
 
