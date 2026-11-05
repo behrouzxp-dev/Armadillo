@@ -5,7 +5,7 @@ This is a maintenance checklist based on the current repository, not an approved
 ## Current baseline
 
 - Two Gradle modules: the `:app` Android application with bundled Persian word banks and private local persistence, and `:game-core`, a dependency-free Kotlin/JVM library holding the engine, models, seat plan, checkpoint codec and roster merge, with its own JVM tests. See [REQUIREMENTS.md](REQUIREMENTS.md) and [ARCHITECTURE.md](ARCHITECTURE.md).
-- `v1.0.0` is the first official release (`versionName` `1.0.0`, `versionCode` 1, signed APK and AAB attached to the GitHub Release). Raise `versionCode` and `versionName` together for the next release and for the first store upload. The application ID change creates a separate installation and does not transfer the old app's data.
+- `v1.0.0` is the first official release (`versionName` `1.0.0`, `versionCode` 1, signed APK and AAB attached to the GitHub Release). The source is prepared for `1.1.0` with `versionCode` 2, pending verification of external distribution codes and release prerequisites. The application ID change creates a separate installation and does not transfer the old app's data.
 - CI uses a shared validation build for word-bank validation, Debug and unsigned Release builds, tests and lint; security audits resolved dependencies. The tag-triggered signed release is gated on protected tags and owner approval. See [GITHUB_ACTIONS.md](GITHUB_ACTIONS.md) and [RELEASE_GUIDE.md](RELEASE_GUIDE.md) for prerequisites and limitations.
 - Historical reports and previous CI runs describe the specific builds they tested; they do not establish the results of subsequent changes.
 
