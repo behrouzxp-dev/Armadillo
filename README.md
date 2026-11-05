@@ -1,10 +1,10 @@
 # Armadillo — group word-guessing game
 
-**Android / Kotlin · Unreleased**
+**Android / Kotlin · v1.0.0**
 
 Armadillo is an offline, right-to-left Persian group game. Its `applicationId` is `com.armadillo.game`. The app is free, ad-free and requires no internet permission; its sounds, font and words are bundled locally. It uses portrait orientation and has no background music. The manifest requests vibration permission and disables Android backup.
 
-This repository does not designate a current official release. The `com.armadillo.game` application ID has never been published, so `versionCode` starts at 1 with `versionName` `1.0.0` reserved for the first release; change both together when preparing a future release. The repository on GitHub is the source of truth. See [AGENTS.md](AGENTS.md) for project rules and [CHANGELOG.md](CHANGELOG.md) for changes. Historical test reports and changelogs describe earlier builds, not an official release of the current repository.
+The first official release is [v1.0.0](https://github.com/behrouzxp-dev/Armadillo/releases/tag/v1.0.0) (`versionCode` 1, `versionName` 1.0.0) for the `com.armadillo.game` application ID; its signed Release APK and AAB are attached to the GitHub Release. Raise `versionCode` and `versionName` together when preparing the next release. The repository on GitHub is the source of truth. See [AGENTS.md](AGENTS.md) for project rules and [CHANGELOG.md](CHANGELOG.md) for changes. Historical test reports and changelogs describe earlier builds, not an official release of the current repository.
 
 ## Documentation
 
@@ -110,7 +110,14 @@ app/build/outputs/apk/release/app-release.apk
 The [Android build workflow](.github/workflows/debug-apk.yml) runs for every pull request into `main`, for workflow-file changes on `main`, and on manual `workflow_dispatch`.
 
 - **debug job** — validates the bundled word banks with `python3 tools/validate_words.py`, assembles the Debug APK, verifies the package name and launcher activity, uploads `armadillo-debug-apk` as a ZIP artifact retained for seven days, then runs `:game-core:test`, `:app:testDebugUnitTest` and `:app:lintDebug` and reports the JVM test totals.
-- **release job** — assembles an unsigned Release APK (`R8` minification and resource shrinking) and runs `:app:lintRelease`. Signed releases remain a manual, owner-approved step requiring the four `RELEASE_*` variables.
+- **release job** — assembles an unsigned Release APK (`R8` minification and resource shrinking) and runs `:app:lintRelease`. It never signs.
+
+Signed artifacts come from the separate [Signed release workflow](.github/workflows/release.yml), which only a manual `workflow_dispatch` with a tag input can start:
+
+- it checks out the given tag and refuses to build when the tag does not exist or does not match `versionName` in `app/build.gradle.kts`;
+- it materialises the release keystore from the `KEYSTORE_BASE64` secret and passes `KEYSTORE_PASSWORD`, `KEY_ALIAS` and `KEY_PASSWORD` to Gradle as `RELEASE_STORE_PASSWORD`, `RELEASE_KEY_ALIAS` and `RELEASE_KEY_PASSWORD`;
+- it runs the word-bank validator and the JVM tests, builds the signed APK and AAB, verifies the signer with `apksigner`, writes `SHA256SUMS`, uploads the APK, AAB, checksums and Gradle metadata to the existing Release, and deletes the keystore afterwards;
+- it never creates a tag or a Release, and it publishes nothing automatically.
 
 The upload occurs before tests and lint, so read the whole run result rather than the artifact alone. The workflow never publishes a release or creates a tag. The most recent [run 41932952205](https://github.com/behrouzxp-dev/Armadillo/actions/runs/41932952205) passed both jobs on the AGP 9.5 toolchain; its only annotation was the announced `ubuntu-latest` image migration. Neither job installs or starts the app, so a green run is not a device test.
 
@@ -130,6 +137,7 @@ The repository is released under the [MIT License](LICENSE). Bundled assets keep
 
 - The application ID has changed from `com.dour.game` to `com.armadillo.game` with owner approval. Android treats them as separate applications: the new build cannot upgrade the old installation and cannot automatically access its private saved games, roster or settings. Keep the old installation and its data until the owner decides otherwise; there is no implemented cross-application data migration.
 - Keep the existing release keystore and credentials securely backed up outside the repository. Never replace an established key without explicit authorization.
-- The public certificate fingerprint recorded for earlier signed builds is `07:2A:8E:FB:08:75:88:FF:64:90:EB:E6:AF:75:C9:A8:9A:98:71:B5:F9:A2:F4:D5:1F:9D:6C:88:94:CC:EF:93`; see the historical [test report](Historical-Test-Report.md). This record does not verify a future build or the current availability of the key.
+- The `com.armadillo.game` release is signed with its own key: the `v1.0.0` certificate is `SHA-256` `4F:40:5D:B1:95:4C:17:40:56:65:36:B8:56:8C:4B:AE:56:D5:A1:E6:18:4C:21:10:CD:32:39:AF:52:98:26:B8`. Future versions of this application ID must keep using it so Android accepts upgrades.
+- The earlier `com.dour.game` builds used a different certificate, `SHA-256` `07:2A:8E:FB:08:75:88:FF:64:90:EB:E6:AF:75:C9:A8:9A:98:71:B5:F9:A2:F4:D5:1F:9D:6C:88:94:CC:EF:93`; see the historical [test report](Historical-Test-Report.md).
 - Android upgrades depend on compatible signing and version codes. In particular, a Debug APK normally cannot replace an installation signed with a different Release key.
-- Historical reports document past builds and limitations, not current build or device-test results. No official release from this repository has been designated by this documentation.
+- Historical reports document past builds and limitations, not current build or device-test results. The current release status is the one stated at the top of this file; no device or emulator test accompanies `v1.0.0`.
