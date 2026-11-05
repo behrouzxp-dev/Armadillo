@@ -20,6 +20,7 @@ SOURCE = RES / "drawable-nodpi" / "armadillo_icon_art.jpg"
 FOREGROUND = RES / "drawable-nodpi" / "armadillo_icon_foreground.png"
 MONOCHROME = RES / "drawable-nodpi" / "armadillo_icon_monochrome.png"
 HERO = RES / "drawable-nodpi" / "armadillo_icon_hero.png"
+HOME_LOGO = RES / "drawable-nodpi" / "armadillo_home_logo.png"
 
 CANVAS = 1024
 # Adaptive icons are 108dp with a 72dp visible mask, so the artwork must sit
@@ -84,6 +85,26 @@ def monochrome_art(padded: Image.Image) -> Image.Image:
     return silhouette
 
 
+def transparent_home_logo(padded: Image.Image) -> Image.Image:
+    """Extract the navy ink as a transparent, antialiased home-screen PNG.
+
+    The original artwork and the opaque launcher assets remain unchanged. The
+    red channel distinguishes the dark ink from the yellow source background;
+    intermediate values retain smooth edges when drawn over the brand canvas.
+    """
+    ink = (7, 34, 60)
+    red = padded.convert("RGB").getchannel("R")
+    alpha = red.point(lambda value: max(0, min(255, round((BACKGROUND[0] - value - 6) * 255 / (BACKGROUND[0] - ink[0] - 6)))))
+    bounds = alpha.getbbox()
+    if bounds is None:
+        raise ValueError("No artwork found for the home logo")
+    alpha = alpha.crop(bounds)
+    alpha.thumbnail((320, 320), Image.LANCZOS)
+    logo = Image.new("RGBA", alpha.size, (*ink, 0))
+    logo.putalpha(alpha)
+    return logo
+
+
 def legacy_icon(padded: Image.Image, size: int, round_icon: bool) -> Image.Image:
     icon = padded.resize((size, size), Image.LANCZOS).convert("RGBA")
     if round_icon:
@@ -98,8 +119,9 @@ def main() -> None:
     padded = scaled_art(source, ART_FRACTION)
     padded.save(FOREGROUND, optimize=True)
     monochrome_art(padded).save(MONOCHROME, optimize=True)
-    # The home screen shows the artwork at 124dp; a small bitmap avoids a 4 MB decode.
+    # Keep the previous hero bitmap for compatibility with existing assets.
     padded.resize((320, 320), Image.LANCZOS).save(HERO, optimize=True)
+    transparent_home_logo(padded).save(HOME_LOGO, optimize=True)
     for folder, size in MIPMAP_SIZES.items():
         target = RES / folder
         target.mkdir(parents=True, exist_ok=True)

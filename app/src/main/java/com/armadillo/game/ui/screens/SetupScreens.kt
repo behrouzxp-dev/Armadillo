@@ -1,31 +1,48 @@
 package com.armadillo.game.ui.screens
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.armadillo.game.GameController
@@ -36,101 +53,171 @@ import com.armadillo.game.ui.Screen
 import com.armadillo.game.ui.components.BrandButton
 import com.armadillo.game.ui.components.ChoiceCard
 import com.armadillo.game.ui.components.PageScaffold
+import com.armadillo.game.ui.components.LocalSoundEffect
 import com.armadillo.game.ui.components.SeatingCircle
 import com.armadillo.game.ui.components.selectionLabel
 import com.armadillo.game.ui.theme.BrandPalette
 import com.armadillo.game.ui.theme.Dim
-import com.armadillo.game.ui.theme.Radii
 
 @Composable
 fun HomeScreen(controller: GameController) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(
-                start = Dim.HomeSide,
-                end = Dim.HomeSide,
-                top = Dim.HomeTop,
-                bottom = Dim.HomeBottom
-            ),
-        horizontalAlignment = Alignment.CenterHorizontally
+    val context = LocalContext.current
+    val version = runCatching {
+        @Suppress("DEPRECATION")
+        context.packageManager.getPackageInfo(context.packageName, 0).versionName?.takeIf { it.isNotBlank() }
+    }.getOrNull()
+    val sound = LocalSoundEffect.current
+
+    Column(Modifier.fillMaxSize()) {
+        // The content can grow and scroll on small screens or with large system fonts.
+        BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {
+            val availableHeight = maxHeight
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .heightIn(min = availableHeight)
+                    .padding(horizontal = Dim.HomeSide, vertical = Dim.SM),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.SpaceEvenly
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Image(
+                        painter = painterResource(R.drawable.armadillo_home_logo),
+                        contentDescription = stringResource(R.string.a11y_app_logo),
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier.size(112.dp)
+                    )
+                    Text(
+                        text = stringResource(R.string.app_name),
+                        style = MaterialTheme.typography.displaySmall,
+                        color = BrandPalette.Navy
+                    )
+                    Text(
+                        text = stringResource(R.string.home_subtitle),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = BrandPalette.Navy,
+                        textAlign = TextAlign.Center
+                    )
+                }
+                Spacer(Modifier.height(16.dp))
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    HomePlayButton(onClick = { controller.startSetup() })
+                    Text(
+                        text = stringResource(R.string.home_start),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = BrandPalette.Navy,
+                        modifier = Modifier.padding(top = 6.dp)
+                    )
+                    if (controller.canContinue) {
+                        Spacer(Modifier.height(12.dp))
+                        BrandButton(
+                            text = stringResource(R.string.home_continue_saved),
+                            outlined = true,
+                            height = 50.dp,
+                            onClick = { controller.continueSavedGame() }
+                        )
+                    }
+                }
+                Spacer(Modifier.height(16.dp))
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = stringResource(R.string.home_about),
+                        style = MaterialTheme.typography.titleSmall,
+                        color = BrandPalette.Navy
+                    )
+                    Text(
+                        text = stringResource(R.string.about_body),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = BrandPalette.Navy,
+                        textAlign = TextAlign.Center
+                    )
+                    if (version != null) {
+                        Text(
+                            text = stringResource(R.string.about_version, version),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = BrandPalette.Navy
+                        )
+                    }
+                    Text(
+                        text = stringResource(R.string.home_tagline),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = BrandPalette.Navy,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+        }
+        // Physical corners stay fixed even when the app's layout direction is RTL.
+        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = Dim.HomeSide, vertical = Dim.XS),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                HomeCornerButton(R.drawable.ic_home_sound, R.string.sound_settings_title) {
+                    sound()
+                    controller.openSoundSettings(Screen.HOME)
+                }
+                HomeCornerButton(R.drawable.ic_home_rules, R.string.home_rules) {
+                    sound()
+                    controller.showRules()
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun HomeCornerButton(icon: Int, label: Int, onClick: () -> Unit) {
+    IconButton(
+        onClick = onClick,
+        modifier = Modifier.size(52.dp).background(BrandPalette.Surface, CircleShape)
     ) {
-        val heroShape = RoundedCornerShape(Radii.Hero)
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(heroShape)
-                .background(BrandPalette.Surface)
-                .border(1.dp, BrandPalette.Outline, heroShape)
-                .padding(start = Dim.MD, end = Dim.MD, top = Dim.SM, bottom = 14.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Image(
-                painter = painterResource(R.drawable.armadillo_icon_hero),
-                contentDescription = stringResource(R.string.a11y_app_logo),
-                contentScale = ContentScale.Fit,
-                modifier = Modifier.height(Dim.HomeLogo)
-            )
-            Text(
-                text = stringResource(R.string.app_name),
-                style = MaterialTheme.typography.displaySmall,
-                color = BrandPalette.Navy,
-                modifier = Modifier.padding(top = 4.dp, bottom = 1.dp)
-            )
-            Text(
-                text = stringResource(R.string.home_subtitle),
-                style = MaterialTheme.typography.bodyLarge,
-                color = BrandPalette.Navy
-            )
+        Icon(
+            painter = painterResource(icon),
+            contentDescription = stringResource(label),
+            tint = BrandPalette.Navy,
+            modifier = Modifier.size(26.dp)
+        )
+    }
+}
+
+@Composable
+private fun HomePlayButton(onClick: () -> Unit) {
+    val sound = LocalSoundEffect.current
+    val label = stringResource(R.string.home_start)
+    Button(
+        onClick = { sound(); onClick() },
+        modifier = Modifier.size(108.dp).semantics { contentDescription = label },
+        shape = CircleShape,
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = BrandPalette.Navy)
+    ) {
+        Canvas(Modifier.fillMaxSize()) {
+            val unit = size.minDimension
+            val gold = BrandPalette.Canvas
+            // Curved shell bands echo the armadillo logo, framing the play symbol.
+            drawCircle(gold, radius = unit * 0.45f, style = Stroke(width = unit * 0.025f))
+            for (i in 0..2) {
+                val inset = unit * (0.12f + i * 0.065f)
+                drawArc(
+                    color = gold.copy(alpha = 0.8f),
+                    startAngle = 110f,
+                    sweepAngle = 145f,
+                    useCenter = false,
+                    topLeft = Offset(inset, inset),
+                    size = Size(unit - 2 * inset, unit - 2 * inset),
+                    style = Stroke(width = unit * 0.025f)
+                )
+            }
+            val play = Path().apply {
+                moveTo(unit * 0.46f, unit * 0.33f)
+                lineTo(unit * 0.70f, unit * 0.50f)
+                lineTo(unit * 0.46f, unit * 0.67f)
+                close()
+            }
+            drawPath(play, Color.White)
         }
-        Spacer(Modifier.height(18.dp))
-        BrandButton(
-            text = stringResource(R.string.home_start),
-            height = 62.dp,
-            modifier = Modifier.fillMaxWidth(),
-            onClick = { controller.startSetup() }
-        )
-        Spacer(Modifier.height(10.dp))
-        if (controller.canContinue) {
-            BrandButton(
-                text = stringResource(R.string.home_continue_saved),
-                height = 58.dp,
-                modifier = Modifier.fillMaxWidth(),
-                onClick = { controller.continueSavedGame() }
-            )
-            Spacer(Modifier.height(10.dp))
-        }
-        BrandButton(
-            text = stringResource(R.string.sound_settings_title),
-            height = 54.dp,
-            modifier = Modifier.fillMaxWidth(),
-            onClick = { controller.openSoundSettings(Screen.HOME) }
-        )
-        Spacer(Modifier.height(10.dp))
-        BrandButton(
-            text = stringResource(R.string.home_rules),
-            outlined = true,
-            height = 54.dp,
-            modifier = Modifier.fillMaxWidth(),
-            onClick = { controller.showRules() }
-        )
-        Spacer(Modifier.height(10.dp))
-        BrandButton(
-            text = stringResource(R.string.home_about),
-            outlined = true,
-            height = 54.dp,
-            modifier = Modifier.fillMaxWidth(),
-            onClick = { controller.showAbout() }
-        )
-        Spacer(Modifier.height(8.dp))
-        Spacer(Modifier.height(8.dp))
-        Text(
-            text = stringResource(R.string.home_tagline),
-            style = MaterialTheme.typography.bodySmall,
-            color = BrandPalette.TextSecondary,
-            textAlign = TextAlign.Center
-        )
     }
 }
 
@@ -208,7 +295,6 @@ fun PlayersScreen(controller: GameController) {
         )
         SeatingCircle(
             count = draft.playerCount,
-            names = draft.names,
             onSeatTap = { seat -> controller.editPlayerName(seat) },
             modifier = Modifier.fillMaxWidth()
         )

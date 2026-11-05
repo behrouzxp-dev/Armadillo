@@ -7,6 +7,7 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -32,6 +33,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -63,7 +65,26 @@ fun GameScreen(controller: GameController) {
     } else {
         stringResource(R.string.game_pause)
     }
+    val correctHint = stringResource(R.string.game_correct_hint)
     Box(modifier = Modifier.fillMaxSize().background(BrandPalette.Canvas)) {
+        if (game.phase == GamePhase.PLAYING) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clickable(
+                        role = Role.Button,
+                        onClickLabel = correctHint,
+                        onClick = { controller.markCorrect() }
+                    )
+                    .semantics { contentDescription = correctHint }
+            )
+        }
+        if (game.phase != GamePhase.PREPARATION) {
+            WordText(
+                word = game.word,
+                modifier = Modifier.align(Alignment.Center).fillMaxWidth()
+            )
+        }
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -150,37 +171,28 @@ fun GameScreen(controller: GameController) {
                         onStart = { controller.startRound() },
                         onEditNames = { controller.editOwnNames() }
                     )
-                } else {
-                    WordCard(word = game.word)
                 }
             }
-            Spacer(Modifier.height(10.dp))
             if (game.phase != GamePhase.PREPARATION) {
-                CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(70.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        BrandButton(
-                            text = stringResource(R.string.game_swap),
-                            height = 68.dp,
-                            enabled = game.canSwap,
-                            playEffect = false,
-                            modifier = Modifier.weight(1f),
-                            onClick = { controller.swapWord() }
-                        )
-                        Spacer(Modifier.width(14.dp))
-                        BrandButton(
-                            text = stringResource(R.string.game_correct),
-                            height = 68.dp,
-                            enabled = game.phase == GamePhase.PLAYING,
-                            playEffect = false,
-                            modifier = Modifier.weight(1f),
-                            onClick = { controller.markCorrect() }
-                        )
-                    }
+                Text(
+                    text = correctHint,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = BrandPalette.TextSecondary,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth().padding(vertical = Dim.XS)
+                )
+                // Consume taps on the disabled control too, so they cannot count as guesses.
+                Box(Modifier.fillMaxWidth().pointerInput(Unit) { detectTapGestures { } }) {
+                    BrandButton(
+                        text = stringResource(if (game.canSwap) R.string.game_swap else R.string.game_swap_locked),
+                        height = 68.dp,
+                        enabled = game.canSwap,
+                        playEffect = false,
+                        disabledContainerColor = BrandPalette.SurfaceAlt,
+                        disabledContentColor = BrandPalette.TextSecondary,
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = { controller.swapWord() }
+                    )
                 }
             }
         }
@@ -286,7 +298,7 @@ private fun teamColorOf(team: Int): androidx.compose.ui.graphics.Color =
     com.armadillo.game.ui.components.teamColor(team)
 
 @Composable
-private fun WordCard(word: String?) {
+private fun WordText(word: String?, modifier: Modifier = Modifier) {
     val sizeSp = when {
         word == null -> 44
         word.length <= 8 -> 44
@@ -295,29 +307,17 @@ private fun WordCard(word: String?) {
         word.length <= 25 -> 27
         else -> 23
     }
-    val shape = RoundedCornerShape(Radii.GameCard)
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        shape = shape,
-        color = BrandPalette.Surface,
-        contentColor = BrandPalette.Navy,
-        border = androidx.compose.foundation.BorderStroke(1.dp, BrandPalette.Outline),
-        shadowElevation = 2.dp
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            Text(
-                text = word.orEmpty(),
-                fontSize = sizeSp.sp,
-                lineHeight = (sizeSp * 1.3f).sp,
-                fontWeight = FontWeight.Bold,
-                color = BrandPalette.Navy,
-                textAlign = TextAlign.Center,
-                maxLines = 3,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(horizontal = 18.dp, vertical = Dim.SM)
-            )
-        }
-    }
+    Text(
+        text = word.orEmpty(),
+        fontSize = sizeSp.sp,
+        lineHeight = (sizeSp * 1.3f).sp,
+        fontWeight = FontWeight.Bold,
+        color = BrandPalette.Navy,
+        textAlign = TextAlign.Center,
+        maxLines = 3,
+        overflow = TextOverflow.Ellipsis,
+        modifier = modifier.padding(horizontal = 18.dp)
+    )
 }
 
 @Composable

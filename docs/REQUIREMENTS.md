@@ -7,12 +7,19 @@ This document describes the current implementation and operational constraints. 
 - Armadillo is a Persian, right-to-left, portrait-oriented offline word-guessing game for groups. It is free and has no ads or background music.
 - The application has no internet permission. Audio, font, icon assets and playable vocabulary are packaged locally. The manifest requests vibration permission and sets `allowBackup` to `false`.
 - The owner-approved `applicationId` is `com.armadillo.game`, with minimum Android API 23 and target/compile SDK 36 (Google Play has required API 36 for new uploads since 31 August 2026). This application ID has never been published to a store, so the first release `v1.0.0` uses `versionCode` 1 and `versionName` `1.0.0`; both must be raised for the next release.
+- Use a right-to-left layout throughout the Persian UI regardless of the device language, while preserving explicitly positioned game controls and home corner buttons.
 - The app uses one static light theme. The appearance must not change with the system dark-theme setting, and no `values-night` resources are added.
 - The changed application ID is a new Android app identity: it cannot update the old installation or automatically read its private data. No cross-application data migration is implemented.
 
+## Home screen
+
+- Show the transparent armadillo artwork and game name without a surrounding card. Place the shell-inspired start control centrally, and show the saved-game continuation action only when a saved game is available.
+- Display About information on the home screen; provide accessible sound settings and rules icon controls in the physical lower-left and lower-right corners respectively. Keep the main content scrollable on smaller screens and at larger font scales.
+
 ## Game setup
 
-- Support 4, 6, 8 or 10 players, grouped into opposite-seat teams of two. Seat zero starts at the bottom and turns advance counterclockwise.
+- Support 4, 6, 8 or 10 players, grouped into opposite-seat teams of two. Seat zero starts at the bottom and turns advance counterclockwise. The setup circle displays a top-down table and numbered team-coloured armchairs; tapping a chair edits its player name, and an accessible list of named seats remains available.
+- Use blue, red, green, purple and dark navy for teams one through five, in that order.
 - Store the player roster separately from an unfinished game; prefill names for later games. A blank player name is replaced with a generated name.
 - Allow one or more categories from jobs, animals, foods, places and technology. Each category has 100 words at each of three difficulty levels, for 1,500 unique playable words.
 - Allow a round duration of 120, 210 or 300 seconds and 3, 5 or 7 rounds. Category selection, difficulty and these settings are fixed when a game begins.
@@ -20,7 +27,7 @@ This document describes the current implementation and operational constraints. 
 
 ## Gameplay and results
 
-- A correct answer records the result and moves the turn to the next seat. Each new word starts a seven-second active-time lock on swapping; a swapped word is recorded as consumed, not correct.
+- During active play, tapping the screen outside the pause and swap controls records a correct answer and moves the turn to the next seat. Show the word unboxed at the centre of the game screen; the full-width swap control visibly indicates when it is disabled. Each new word starts a five-second active-time lock on swapping; a swapped word is recorded as consumed, not correct.
 - Count time using a monotonic clock, not UI refresh counts. When the countdown reaches zero, record expiration, add a ten-second penalty to the current team and show the explosion screen. Player acknowledgement advances to the next round or results.
 - Permit pause and resume without resetting the player, word, history or remaining active time. Backgrounding, system interruptions and loss of focus suspend active time and audio; restored manual pauses require an explicit resume.
 - Support ending early through the pause/dialog flow and report the accumulated results. Rank teams by final time (real time plus penalties), then fewer explosions, more correct words and fewer swaps; full ties share a rank.

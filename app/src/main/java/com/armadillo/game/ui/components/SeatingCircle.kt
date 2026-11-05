@@ -6,46 +6,47 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.imageResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.TextMeasurer
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Constraints
-import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.armadillo.game.R
 import com.armadillo.game.ui.theme.BrandPalette
 import com.armadillo.game.ui.theme.Dim
-import com.armadillo.game.ui.theme.TeamStyle
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.min
+import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlin.math.sqrt
 
 /**
- * Circular seat picker, now drawn with Compose Canvas. Seat 1 starts at six o'clock
- * and the seats run counterclockwise. The circled names are decorative: the players
- * screen also lists every seat as a real button for screen-reader and switch access.
+ * Seat 1 starts at six o'clock and seats run counterclockwise. Armchairs face
+ * the table and use their team's colour; seat numbers stay upright as they turn.
+ * The list below the circle remains available to screen-reader and switch users.
  */
 @Composable
 fun SeatingCircle(
     count: Int,
-    names: List<String>,
     onSeatTap: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -54,40 +55,35 @@ fun SeatingCircle(
     val measurer = rememberTextMeasurer()
     val typography = MaterialTheme.typography
     val circleDescription = stringResource(R.string.a11y_seating_circle)
-    val tableLabel = stringResource(R.string.seating_table)
-    val defaultName = stringResource(R.string.players_default_name)
-    // Resolved as resources so a locale or configuration change re-reads them.
-    val details = buildList {
-        for (seat in 0 until count) {
-            add(stringResource(R.string.seating_team_seat, seat % (count / 2) + 1, seat + 1))
-        }
+    val table = ImageBitmap.imageResource(R.drawable.seating_table)
+    val armchair = ImageBitmap.imageResource(R.drawable.seating_armchair)
+    val seatNumbers = (0 until count).map { seat ->
+        stringResource(R.string.seating_seat_number, seat + 1)
     }
-    val hitRadiusPx = with(density) { 40.dp.toPx() }
+    val maxHitRadiusPx = with(density) { 40.dp.toPx() }
 
     Canvas(
         modifier = modifier
             .fillMaxWidth()
             .height(Dim.SeatingCircle)
             .semantics { contentDescription = circleDescription }
-            .pointerInput(count) {
+            .pointerInput(count, maxHitRadiusPx) {
                 detectTapGestures { tap ->
-                    val width = size.width.toFloat()
-                    val height = size.height.toFloat()
-                    val centerX = width / 2f
-                    val centerY = height / 2f
-                    val shortSide = min(width, height)
-                    val tableRadius = shortSide * 0.315f
-                    val hitRadius = min(hitRadiusPx, shortSide * if (count >= 8) 0.095f else 0.115f)
+                    val shortSide = min(size.width, size.height).toFloat()
+                    val centerX = size.width / 2f
+                    val centerY = size.height / 2f
+                    val seatRadius = shortSide * 0.36f
+                    val hitRadius = min(maxHitRadiusPx, shortSide * 0.10f)
                     var bestSeat = -1
                     var bestDistance = Float.MAX_VALUE
                     for (seat in 0 until count) {
                         val angle = PI.toFloat() - 2f * PI.toFloat() * seat / count
-                        val x = centerX + sin(angle) * tableRadius
-                        val y = centerY - cos(angle) * tableRadius
+                        val x = centerX + sin(angle) * seatRadius
+                        val y = centerY - cos(angle) * seatRadius
                         val dx = tap.x - x
                         val dy = tap.y - y
                         val distance = sqrt(dx * dx + dy * dy)
-                        if (distance <= hitRadius * 1.35f && distance < bestDistance) {
+                        if (distance <= hitRadius && distance < bestDistance) {
                             bestDistance = distance
                             bestSeat = seat
                         }
@@ -96,111 +92,45 @@ fun SeatingCircle(
                 }
             }
     ) {
-        val width = size.width
-        val height = size.height
-        val centerX = width / 2f
-        val centerY = height / 2f
-        val shortSide = min(width, height)
-        val tableRadius = shortSide * 0.315f
-        val hitRadius = min(hitRadiusPx, shortSide * if (count >= 8) 0.095f else 0.115f)
+        val shortSide = min(size.width, size.height)
+        val centerX = size.width / 2f
+        val centerY = size.height / 2f
+        val seatRadius = shortSide * 0.36f
+        val tableSize = (shortSide * 0.48f).roundToInt()
+        val chairSize = (shortSide * 0.18f).roundToInt()
 
-        drawCircle(
-            color = BrandPalette.Outline,
-            radius = tableRadius,
-            center = Offset(centerX, centerY),
-            style = Stroke(width = 2.dp.toPx())
-        )
-
-        val tableLayout = measurer.measure(
-            text = AnnotatedString(tableLabel),
-            style = typography.bodySmall.copy(color = BrandPalette.TextSecondary, textAlign = TextAlign.Center),
-            layoutDirection = layoutDirection
-        )
-        drawText(
-            textLayoutResult = tableLayout,
-            topLeft = Offset(
-                centerX - tableLayout.size.width / 2f,
-                centerY - tableLayout.size.height / 2f
-            )
+        drawImage(
+            image = table,
+            dstOffset = IntOffset((centerX - tableSize / 2f).roundToInt(), (centerY - tableSize / 2f).roundToInt()),
+            dstSize = IntSize(tableSize, tableSize)
         )
 
         for (seat in 0 until count) {
             val angle = PI.toFloat() - 2f * PI.toFloat() * seat / count
-            val x = centerX + sin(angle) * tableRadius
-            val y = centerY - cos(angle) * tableRadius
+            val x = centerX + sin(angle) * seatRadius
+            val y = centerY - cos(angle) * seatRadius
             val team = seat % (count / 2)
-            val markerY = y - 21.dp.toPx()
-
-            drawCircle(color = teamColor(team), radius = 4.dp.toPx(), center = Offset(x, markerY))
-            if (team == TeamStyle.YELLOW_INDEX) {
-                drawCircle(
+            rotate(degrees = -360f * seat / count, pivot = Offset(x, y)) {
+                drawImage(
+                    image = armchair,
+                    dstOffset = IntOffset((x - chairSize / 2f).roundToInt(), (y - chairSize / 2f).roundToInt()),
+                    dstSize = IntSize(chairSize, chairSize),
+                    colorFilter = ColorFilter.tint(teamColor(team), BlendMode.Modulate)
+                )
+            }
+            // Numbering, not colour alone, identifies each seat and remains legible.
+            drawCircle(color = Color.White, radius = 10.dp.toPx(), center = Offset(x, y))
+            val label = measurer.measure(
+                text = AnnotatedString(seatNumbers[seat]),
+                style = typography.labelSmall.copy(
                     color = BrandPalette.Navy,
-                    radius = 4.8.dp.toPx(),
-                    center = Offset(x, markerY),
-                    style = Stroke(width = 1.5.dp.toPx())
-                )
-            }
-
-            val shownName = names.getOrNull(seat)?.trim().orEmpty().ifEmpty { defaultName }
-            val nameSize = when {
-                shownName.length > 11 -> 10.sp
-                shownName.length > 7 -> 11.sp
-                else -> 12.sp
-            }
-            val nameStyle: TextStyle = typography.bodySmall.copy(
-                color = BrandPalette.Navy,
-                fontWeight = FontWeight.Normal,
-                fontSize = nameSize,
-                lineHeight = nameSize * 1.2f,
-                textAlign = TextAlign.Center
-            )
-            val nameLayout = measureName(
-                measurer = measurer,
-                text = shownName,
-                style = nameStyle,
-                maxWidth = (hitRadius * 1.78f).toInt().coerceAtLeast(1),
-                layoutDirection = layoutDirection
-            )
-            drawText(
-                textLayoutResult = nameLayout,
-                topLeft = Offset(
-                    x - nameLayout.size.width / 2f,
-                    y - 1.dp.toPx() - nameLayout.size.height
-                )
-            )
-
-            val detailLayout = measurer.measure(
-                text = AnnotatedString(details.getOrElse(seat) { "" }),
-                style = typography.bodySmall.copy(
-                    color = BrandPalette.TextSecondary,
-                    fontSize = 10.sp,
-                    lineHeight = 12.sp,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center
                 ),
                 layoutDirection = layoutDirection
             )
-            drawText(
-                textLayoutResult = detailLayout,
-                topLeft = Offset(
-                    x - detailLayout.size.width / 2f,
-                    y + 6.dp.toPx()
-                )
-            )
+            drawText(label, topLeft = Offset(x - label.size.width / 2f, y - label.size.height / 2f))
         }
     }
 }
-
-private fun measureName(
-    measurer: TextMeasurer,
-    text: String,
-    style: TextStyle,
-    maxWidth: Int,
-    layoutDirection: LayoutDirection
-) = measurer.measure(
-    text = AnnotatedString(text),
-    style = style,
-    overflow = TextOverflow.Ellipsis,
-    maxLines = 1,
-    constraints = Constraints(maxWidth = maxWidth),
-    layoutDirection = layoutDirection
-)
