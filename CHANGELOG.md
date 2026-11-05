@@ -4,6 +4,7 @@ This project follows semantic versioning (SemVer). The `1.0.0` entry below is th
 
 ## [Unreleased]
 
+- Consolidate Android CI into a reusable validation build, add OSV/POM dependency auditing and one-day temporary artifact retention with six-hour cleanup, and guard tag-triggered signed releases with protected tags, owner approval, version history and certificate verification.
 - Centre the unboxed word and record a correct guess by tapping the play area; retain separate pause and full-width swap controls with a clear disabled state. Shorten the active-time swap lock to five seconds and migrate schema 3 saved cooldowns.
 - Change the fifth team colour from gold to dark navy and replace the setup circle’s name labels with a top-down table and numbered, team-coloured armchairs; keep seat tapping and the accessible name-editing list.
 - Replace the shared page-header back button with an accessible right-pointing arrow icon for RTL navigation.

@@ -1,159 +1,161 @@
 name: Signed release
 
-# Owner-approved, manually dispatched release build. It produces a signed APK and
-# AAB from the secrets KEYSTORE_BASE64, KEYSTORE_PASSWORD, KEY_ALIAS and
-# KEY_PASSWORD, verifies the signature, and attaches the artifacts plus checksums
-# to the GitHub Release of the requested tag. The workflow never creates a tag.
 on:
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: 'Existing release tag to build and attach artifacts to, for example v1.0.0'
-        required: true
-        type: string
+  push:
+    tags: ['v*']
 
 permissions:
-  contents: write
+  contents: read
 
+# Serialize all releases, not just releases for the same tag.
 concurrency:
-  group: signed-release-${{ inputs.tag }}
+  group: signed-release
   cancel-in-progress: false
 
 jobs:
-  release:
+  preflight:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.check.outputs.version }}
+      code: ${{ steps.check.outputs.code }}
+    steps:
+      - name: Check out tag and history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Check tag, versions, prior releases and owner approval configuration
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+          REF_PROTECTED: ${{ github.ref_protected }}
+        run: python3 tools/release_preflight.py
+
+  validate:
+    needs: preflight
+    uses: ./.github/workflows/build.yml
+    with:
+      upload_debug_apk: false
+    permissions:
+      contents: read
+
+  security:
+    needs: preflight
+    uses: ./.github/workflows/security.yml
+    permissions:
+      contents: read
+
+  sign:
+    needs: [preflight, validate, security]
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    env:
-      TAG: ${{ inputs.tag }}
-      # app/build.gradle.kts reads these four variables and refuses a partial set.
-      RELEASE_KEYSTORE_PATH: ${{ github.workspace }}/.signing/armadillo-release.jks
-      RELEASE_STORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-      RELEASE_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
-      RELEASE_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+    # This environment must already exist and require the repository owner's review.
+    environment: production
+    permissions:
+      contents: read
     steps:
-      - name: Check out the release tag
-        uses: actions/checkout@v7
+      - name: Check out the approved tag
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          ref: ${{ inputs.tag }}
-          fetch-depth: 0
-
-      - name: Set up Java 17
-        uses: actions/setup-java@v6
+          persist-credentials: false
+      - name: Set up JDK 17
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6
         with:
           distribution: temurin
           java-version: '17'
-
-      - name: Materialise the release keystore
+      - name: Build signed release
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          RELEASE_STORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          RELEASE_KEYSTORE_PATH: ${{ runner.temp }}/armadillo-release.jks
         run: |
           set -euo pipefail
-          if [ -z "${KEYSTORE_BASE64}" ]; then
-            echo "::error::The KEYSTORE_BASE64 secret is empty; a signed release cannot be built."
-            exit 1
-          fi
+          trap 'rm -f "$RELEASE_KEYSTORE_PATH"' EXIT
+          for name in KEYSTORE_BASE64 RELEASE_STORE_PASSWORD RELEASE_KEY_ALIAS RELEASE_KEY_PASSWORD; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error::Required signing secret $name is not configured in the production environment."
+              exit 1
+            fi
+          done
           umask 077
-          mkdir -p "$(dirname "$RELEASE_KEYSTORE_PATH")"
-          printf '%s' "$KEYSTORE_BASE64" | tr -d '\r\n\t ' | base64 -d > "$RELEASE_KEYSTORE_PATH"
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$RELEASE_KEYSTORE_PATH"
           test -s "$RELEASE_KEYSTORE_PATH"
-          echo "Keystore materialised ($(stat -c%s "$RELEASE_KEYSTORE_PATH") bytes)."
-
-      - name: Check that the tag matches the Gradle version
+          unset KEYSTORE_BASE64
+          ./gradlew --no-daemon :app:verifyReleaseSigning :app:assembleRelease :app:bundleRelease
+      - name: Verify APK metadata and original signing certificate
+        env:
+          VERSION: ${{ needs.preflight.outputs.version }}
+          VERSION_CODE: ${{ needs.preflight.outputs.code }}
         run: |
           set -euo pipefail
-          version="$(grep -oP 'versionName\s*=\s*"\K[^"]+' app/build.gradle.kts)"
-          code="$(grep -oP 'versionCode\s*=\s*\K[0-9]+' app/build.gradle.kts)"
-          echo "Gradle versionName=$version versionCode=$code tag=$TAG"
-          if [ "v$version" != "$TAG" ]; then
-            echo "::error::Tag $TAG does not match versionName $version in app/build.gradle.kts."
-            exit 1
-          fi
-          if ! git rev-parse -q --verify "refs/tags/$TAG" > /dev/null; then
-            echo "::error::Tag $TAG does not exist in this repository."
-            exit 1
-          fi
+          apk=app/build/outputs/apk/release/app-release.apk
+          bundle=app/build/outputs/bundle/release/app-release.aab
+          test -s "$apk" && test -s "$bundle"
+          build_tools="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
+          "$build_tools/apksigner" verify --verbose --print-certs "$apk" > "$RUNNER_TEMP/signature.txt"
+          "$build_tools/aapt" dump badging "$apk" > "$RUNNER_TEMP/badging.txt"
+          jarsigner -verify "$bundle" > /dev/null
+          keytool -printcert -jarfile "$bundle" > "$RUNNER_TEMP/bundle-cert.txt"
+          python3 - "$RUNNER_TEMP/signature.txt" "$RUNNER_TEMP/badging.txt" "$RUNNER_TEMP/bundle-cert.txt" <<'PY'
+          import os, re, sys
+          from pathlib import Path
+          cert = '4f405db1954c1740566536b8568c4bae56d5a1e6184c2110cd3239af529826b8'
+          report, badging, bundle = (Path(p).read_text(encoding='utf-8') for p in sys.argv[1:])
+          signers = re.findall(r'certificate SHA-256 digest:\s*([0-9a-fA-F:]+)', report)
+          if len(signers) != 1 or signers[0].replace(':', '').lower() != cert:
+              raise SystemExit('APK must have exactly the original release signing certificate')
+          bundle_certs = re.findall(r'SHA256:\s*([0-9A-Fa-f:]+)', bundle)
+          if len(bundle_certs) != 1 or bundle_certs[0].replace(':', '').lower() != cert:
+              raise SystemExit('AAB signing certificate does not match the original release key')
+          package = next((line for line in badging.splitlines() if line.startswith('package: ')), '')
+          fields = dict(re.findall(r"(name|versionCode|versionName)='([^']*)'", package))
+          if fields != {'name': 'com.armadillo.game', 'versionCode': os.environ['VERSION_CODE'], 'versionName': os.environ['VERSION']}:
+              raise SystemExit(f'Unexpected APK package or version: {fields}')
+          print('APK and AAB signatures, application ID and APK version verified.')
+          PY
+          (cd app/build/outputs && sha256sum apk/release/app-release.apk bundle/release/app-release.aab > SHA256SUMS)
+      - name: Upload verified signed files for publishing
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: armadillo-ci-signed-release
+          path: |
+            app/build/outputs/apk/release/app-release.apk
+            app/build/outputs/apk/release/output-metadata.json
+            app/build/outputs/bundle/release/app-release.aab
+            app/build/outputs/SHA256SUMS
+          if-no-files-found: error
+          retention-days: 1
 
-      - name: Validate word banks and run tests
-        run: |
-          set -o pipefail
-          python3 tools/validate_words.py
-          ./gradlew --no-daemon :game-core:test :app:testDebugUnitTest
-
-      - name: Build the signed APK and AAB
-        run: |
-          set -o pipefail
-          ./gradlew --no-daemon :app:assembleRelease :app:bundleRelease
-
-      - name: Verify the release signature
-        run: |
-          set -uo pipefail
-          APK=app/build/outputs/apk/release/app-release.apk
-          if [ ! -f "$APK" ]; then
-            echo "::error::The signed APK was not produced at $APK."
-            ls -R app/build/outputs | head -40
-            exit 1
-          fi
-          BUILD_TOOLS="$(ls -d "${ANDROID_HOME:?ANDROID_HOME is not set}"/build-tools/* 2>/dev/null | sort -V | tail -1)"
-          echo "::notice title=SIGNING_BUILD_TOOLS::${BUILD_TOOLS:-none}"
-          echo "::notice title=SIGNING_APK::$(basename "$APK") $(stat -c%s "$APK") bytes"
-
-          report="$(mktemp)"
-          status=0
-          "$BUILD_TOOLS/apksigner" verify --print-certs "$APK" > "$report" 2>&1 || status=$?
-          echo "::notice title=SIGNING_APKSIGNER_EXIT::$status"
-          grep -E '^(V[0-9]+ Signer: certificate DN:|V[0-9]+ Signer: certificate SHA-256 digest:|ERROR)' "$report" \
-            | sed -n '1,3p' | while IFS= read -r line; do
-              echo "::notice title=SIGNING_APKSIGNER::$line"
-            done
-          if [ "$status" -ne 0 ]; then
-            sed -n '1,6p' "$report" | cut -c1-200 | while IFS= read -r line; do
-              echo "::error title=SIGNING_APKSIGNER_FAILED::$line"
-            done
-            exit 1
-          fi
-          grep -E 'certificate SHA-256 digest:' "$report" | while IFS= read -r line; do
-            echo "::notice title=SIGNING_CERT::$line"
-          done
-          if ! grep -q 'certificate SHA-256 digest:' "$report"; then
-            echo "::error::apksigner reported no signer certificate digest for the APK."
-            exit 1
-          fi
-
-          badging="$("$BUILD_TOOLS/aapt" dump badging "$APK")"
-          printf '%s\n' "$badging" | grep -E '^(package|application-label):' | while IFS= read -r line; do
-            echo "::notice title=SIGNING_BADGING::$line"
-          done
-          printf '%s\n' "$badging" | grep -qE "^package: name='com\.armadillo\.game'" || {
-            echo "::error::The signed APK does not carry the com.armadillo.game package name."
-            exit 1
-          }
-
-      - name: Write checksums
-        run: |
-          set -euo pipefail
-          cd app/build/outputs
-          sha256sum apk/release/app-release.apk bundle/release/app-release.aab > SHA256SUMS
-          cat SHA256SUMS
-          while IFS= read -r line; do
-            echo "::notice title=SIGNING_SHA256SUM::$line"
-          done < SHA256SUMS
-
-      - name: Attach artifacts to the release
+  publish:
+    needs: [preflight, sign]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download verified signed files
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: armadillo-ci-signed-release
+          path: release-files
+      - name: Verify checksums and publish a new release
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
         run: |
           set -euo pipefail
-          if ! gh release view "$TAG" > /dev/null 2>&1; then
-            echo "::error::No GitHub Release exists for tag $TAG. Create the release first; this workflow never creates tags or releases."
-            exit 1
-          fi
-          gh release upload "$TAG" \
-            app/build/outputs/apk/release/app-release.apk \
-            app/build/outputs/bundle/release/app-release.aab \
-            app/build/outputs/SHA256SUMS \
-            app/build/outputs/apk/release/output-metadata.json \
-            --clobber
-
-      - name: Remove the keystore
-        if: always()
-        run: rm -rf "$(dirname "$RELEASE_KEYSTORE_PATH")"
+          cd release-files
+          sha256sum --check SHA256SUMS
+          # Creating a draft prevents a failed upload from publishing a partial release.
+          gh release create "$RELEASE_TAG" --verify-tag --draft \
+            --title "Armadillo $RELEASE_TAG" \
+            --notes "Owner-approved signed Android release. Verify SHA256SUMS before installing." \
+            apk/release/app-release.apk bundle/release/app-release.aab SHA256SUMS apk/release/output-metadata.json
+          gh release view "$RELEASE_TAG" --json assets --jq '.assets[].name' | sort > "$RUNNER_TEMP/assets.txt"
+          printf '%s\n' SHA256SUMS app-release.aab app-release.apk output-metadata.json | sort > "$RUNNER_TEMP/expected-assets.txt"
+          diff -u "$RUNNER_TEMP/expected-assets.txt" "$RUNNER_TEMP/assets.txt"
+          gh release edit "$RELEASE_TAG" --draft=false

@@ -1,0 +1,28 @@
+name: Cleanup temporary artifacts
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+
+concurrency:
+  group: cleanup-temporary-artifacts
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out cleanup script
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Delete only known temporary artifacts older than one day
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/cleanup_artifacts.py
