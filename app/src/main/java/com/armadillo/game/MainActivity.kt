@@ -1,10 +1,8 @@
 package com.armadillo.game
 
-import android.annotation.SuppressLint
-import android.os.Build
 import android.os.Bundle
-import android.window.OnBackInvokedDispatcher
 import androidx.activity.ComponentActivity
+import androidx.activity.addCallback
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -32,33 +30,14 @@ class MainActivity : ComponentActivity() {
         val audio = GameAudio(this, store.loadSoundSettings())
         controller = GameController(this, store, audio)
         controller.start(savedInstanceState)
-        registerBackHandler()
+        // Predictive back (API 33+) and the legacy back button both arrive here, so a
+        // single OnBackPressedCallback covers every supported version.
+        onBackPressedDispatcher.addCallback(this) { controller.handleBack() }
         setContent {
             ArmadilloTheme {
                 ArmadilloApp(controller)
             }
         }
-    }
-
-    /**
-     * Targeting API 36 turns predictive back on by default, and the platform no
-     * longer calls onBackPressed(). Registering an OnBackInvokedCallback keeps the
-     * in-app back navigation working on Android 13 and newer.
-     */
-    private fun registerBackHandler() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            onBackInvokedDispatcher.registerOnBackInvokedCallback(
-                OnBackInvokedDispatcher.PRIORITY_DEFAULT
-            ) { controller.handleBack() }
-        }
-    }
-
-    // API 33+ back gestures are served by the platform callback above; this override only
-    // covers API 23-32.
-    @SuppressLint("GestureBackNavigation")
-    @Suppress("DEPRECATION")
-    override fun onBackPressed() {
-        controller.handleBack()
     }
 
     override fun onResume() {
