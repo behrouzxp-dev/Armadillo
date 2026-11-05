@@ -86,21 +86,47 @@ jobs:
 
       - name: Verify the release signature
         run: |
-          set -euo pipefail
+          set -uo pipefail
           APK=app/build/outputs/apk/release/app-release.apk
-          APKSIGNER="$(ls -d "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)"
-          "$APKSIGNER" verify --print-certs "$APK" | tee signature.txt
-          if ! grep -q '^Signer #1 certificate SHA-256 digest:' signature.txt; then
-            echo "::error::apksigner did not report a signer for $APK."
+          if [ ! -f "$APK" ]; then
+            echo "::error::The signed APK was not produced at $APK."
+            ls -R app/build/outputs | head -40
             exit 1
           fi
-          grep '^Signer #1 certificate SHA-256 digest:' signature.txt | while IFS= read -r line; do
-            echo "::notice::$line"
+          BUILD_TOOLS="$(ls -d "${ANDROID_HOME:?ANDROID_HOME is not set}"/build-tools/* 2>/dev/null | sort -V | tail -1)"
+          echo "::notice title=SIGNING_BUILD_TOOLS::${BUILD_TOOLS:-none}"
+          echo "::notice title=SIGNING_APK::$(basename "$APK") $(stat -c%s "$APK") bytes"
+
+          report="$(mktemp)"
+          status=0
+          "$BUILD_TOOLS/apksigner" verify --print-certs "$APK" > "$report" 2>&1 || status=$?
+          echo "::notice title=SIGNING_APKSIGNER_EXIT::$status"
+          grep -E '^(V[0-9]+ Signer: certificate DN:|V[0-9]+ Signer: certificate SHA-256 digest:|ERROR)' "$report" \
+            | sed -n '1,3p' | while IFS= read -r line; do
+              echo "::notice title=SIGNING_APKSIGNER::$line"
+            done
+          if [ "$status" -ne 0 ]; then
+            sed -n '1,6p' "$report" | cut -c1-200 | while IFS= read -r line; do
+              echo "::error title=SIGNING_APKSIGNER_FAILED::$line"
+            done
+            exit 1
+          fi
+          grep -E 'certificate SHA-256 digest:' "$report" | while IFS= read -r line; do
+            echo "::notice title=SIGNING_CERT::$line"
           done
-          AAPT="$(ls -d "$ANDROID_HOME"/build-tools/*/aapt | sort -V | tail -1)"
-          "$AAPT" dump badging "$APK" | grep -E "^package:" | while IFS= read -r line; do
-            echo "::notice::$line"
+          if ! grep -q 'certificate SHA-256 digest:' "$report"; then
+            echo "::error::apksigner reported no signer certificate digest for the APK."
+            exit 1
+          fi
+
+          badging="$("$BUILD_TOOLS/aapt" dump badging "$APK")"
+          printf '%s\n' "$badging" | grep -E '^(package|application-label):' | while IFS= read -r line; do
+            echo "::notice title=SIGNING_BADGING::$line"
           done
+          printf '%s\n' "$badging" | grep -qE "^package: name='com\.armadillo\.game'" || {
+            echo "::error::The signed APK does not carry the com.armadillo.game package name."
+            exit 1
+          }
 
       - name: Write checksums
         run: |
@@ -108,6 +134,9 @@ jobs:
           cd app/build/outputs
           sha256sum apk/release/app-release.apk bundle/release/app-release.aab > SHA256SUMS
           cat SHA256SUMS
+          while IFS= read -r line; do
+            echo "::notice title=SIGNING_SHA256SUM::$line"
+          done < SHA256SUMS
 
       - name: Attach artifacts to the release
         env:
