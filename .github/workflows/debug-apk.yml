@@ -50,6 +50,9 @@ jobs:
           grep -F "package: name='com.armadillo.game'" "$RUNNER_TEMP/apk-badging.txt"
           grep -F "launchable-activity: name='com.armadillo.game.MainActivity'" "$RUNNER_TEMP/apk-badging.txt"
       - name: Upload debug APK
+        # Artifact hosting lives on the account storage quota; a full quota must not
+        # hide the fact that the APK assembled and passed the identity checks.
+        continue-on-error: true
         uses: actions/upload-artifact@v7
         with:
           name: armadillo-debug-apk
@@ -83,6 +86,7 @@ jobs:
           PY
       - name: Upload unit test and lint log
         if: failure()
+        continue-on-error: true
         uses: actions/upload-artifact@v7
         with:
           name: debug-check-log
@@ -122,6 +126,7 @@ jobs:
           exit "$status"
       - name: Upload release build log
         if: failure()
+        continue-on-error: true
         uses: actions/upload-artifact@v7
         with:
           name: release-build-log

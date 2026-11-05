@@ -6,12 +6,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.contentDescription
@@ -50,16 +49,18 @@ fun SeatingCircle(
     onSeatTap: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
     val density = LocalDensity.current
     val layoutDirection = LocalLayoutDirection.current
     val measurer = rememberTextMeasurer()
     val typography = MaterialTheme.typography
-    val circleDescription = context.getString(R.string.a11y_seating_circle)
-    val tableLabel = context.getString(R.string.seating_table)
-    val defaultName = context.getString(R.string.players_default_name)
-    val details = remember(count) {
-        List(count) { seat -> context.getString(R.string.seating_team_seat, seat % (count / 2) + 1, seat + 1) }
+    val circleDescription = stringResource(R.string.a11y_seating_circle)
+    val tableLabel = stringResource(R.string.seating_table)
+    val defaultName = stringResource(R.string.players_default_name)
+    // Resolved as resources so a locale or configuration change re-reads them.
+    val details = buildList {
+        for (seat in 0 until count) {
+            add(stringResource(R.string.seating_team_seat, seat % (count / 2) + 1, seat + 1))
+        }
     }
     val hitRadiusPx = with(density) { 40.dp.toPx() }
 
