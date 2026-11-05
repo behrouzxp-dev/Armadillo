@@ -1,0 +1,43 @@
+# GitHub Actions: audit and operations
+
+This is the source of truth for workflow responsibilities and branch policies. See [RELEASE_GUIDE.md](RELEASE_GUIDE.md) for release operations and [SECRETS_SETUP.md](SECRETS_SETUP.md) for signing credentials. These workflows must be merged to the relevant default branch before GitHub can run scheduled cleanup or the intended release automation.
+
+## Audit of the starting repository
+
+- Android application `:app` and JVM library `:game-core`; Gradle wrapper 9.8.2 with a distribution SHA-256, AGP 9.5.0, Kotlin 2.4.21, JDK 17, Android compile SDK 37, target SDK 36, min SDK 23. Debug and Release are the only configured build types; there are no product flavors or custom APK output names. Debug is signed by the Android debug key; Release uses the existing environment-based signing configuration.
+- Three JVM test files cover the engine, roster and codec. There are no instrumented or UI test sources. Android lint is configured by AGP; no separate Detekt or ktlint configuration was found. `tools/validate_words.py` validates the bundled word banks.
+- The old `debug-apk.yml` ran a debug build, word validation, tests and debug lint plus an unsigned Release build and lint, on PRs to `main`, selected pushes and manual runs. It retained the debug APK for seven days and failure logs for three. It is replaced by CI plus the shared validation build, not duplicated.
+- The existing `release.yml` was manually dispatched with a tag; it checked the tag against the configured version, built a signed APK and AAB, verified the APK signature and uploaded to an existing release. Its `--clobber` could replace existing assets; it did not enforce the original signing certificate, increasing version codes or release approval via an environment. The workflow has been adapted rather than duplicated.
+- Dependabot already proposes monthly Gradle and Actions updates; it remains in place. No existing composite or reusable workflow was found. The GitHub workflow list also showed an old `signing-probe.yml` entry, but the file is not present on the default branch; the entry is historical and no deletion or remote disabling was performed. An administrator should review whether historical probe runs can be re-run and disable the obsolete workflow only after confirming that it is no longer needed.
+- No security scan, dependency-license report or scheduled artifact cleanup existed. The account is private and user-owned: GitHub's Dependency Review action requires Advanced Security on an organization-owned private repository. The OSV/POM audit below does not depend on that entitlement. Existing dependency verification metadata is absent; generate and review it on a trusted machine as a separate improvement.
+- At audit time the Actions artifact API returned zero retained artifacts and zero active caches. A recent run had hit artifact storage quota, so GitHub billing/retention usage should still be checked by an administrator. The integration could not list Actions secrets or read branch protection (HTTP 403); their configuration was not verified. `v1.0.0` is an existing official release with APK, AAB, metadata and checksums and must not be altered.
+
+## Workflows
+
+| File | Triggers / jobs | Permissions and output |
+| --- | --- | --- |
+| `ci.yml` | Push to `main`/`develop`, PR into either, manual dispatch. Calls `build.yml` once. Feature-branch pushes are checked through their PR, not duplicated as push runs. | `contents: read`; check name includes `validate / Build, test and lint`. |
+| `build.yml` | Reusable (`workflow_call`) or manual. Validates words and workflow helpers, runs `:game-core:test`, `:app:testDebugUnitTest`, Debug and unsigned Release builds and both lints; verifies the debug APK identity. | `contents: read`; debug APK artifact `armadillo-ci-debug-apk`, retained one day. Upload quota failure is a warning; it does not falsify build results. |
+| `security.yml` | PRs into and pushes to `main`/`develop`, or reusable call by Release. Resolves debug/release runtime and game-core test runtime dependencies, queries OSV, and reports POM license metadata. | `contents: read`; no signing secrets, cache, artifact or privileged PR event. Known OSV findings or scan errors fail the job. |
+| `release.yml` | Push of `v*` tags only; strict SemVer preflight rejects other tags. Preflight → shared validation and security → owner-approved signing → publishing. | Read-only preflight/sign; `contents: write` only for publication. See the release guide. |
+| `cleanup.yml` | `0 */6 * * *` (UTC) and manual dispatch. Deletes only known temporary Actions artifact names **older than 24 hours**. | `actions: write`, `contents: read`; never calls Releases, tags, source, or cache deletion endpoints. |
+
+GitHub schedules are best effort and can run late or be skipped, especially on inactive repositories. One-day `retention-days` is the primary expiration mechanism; the six-hour job is a supplementary sweep, not a six-hour artifact lifetime. The cleanup allowlist also covers the old debug APK and its two failure-log names. A stale approved-release transfer artifact is not a GitHub Release asset. All official release assets are outside the Actions artifact API and are preserved indefinitely.
+
+The security audit covers selected resolved Maven runtime and test configurations, including transitive modules. OSV findings are limited to that database and Maven coordinates; build plugins, Gradle distribution, unselected configurations, native dependencies, bundled assets and unknown advisories are not comprehensively scanned. POM license names/URLs, including simple inherited parent POMs, are reported for manual review: missing metadata is marked `UNKNOWN`, and no legal approval or license-policy gate is implied. OSV, Google Maven and Maven Central must be reachable from the runner; errors fail rather than produce a false green result. Dependabot is still useful for automated update proposals and GitHub alerts when enabled.
+
+Pinned Actions: `actions/checkout` v7, `actions/setup-java` v6, and `actions/upload-artifact`/`download-artifact` v7 at full commit SHAs. The wrapper uses its existing distribution checksum. There is no shared Actions cache or hidden artifact upload; GitHub-hosted runners are ephemeral. Actions and dependency pins require periodic review.
+
+## Branches and required checks
+
+`main` remains the stable branch. `develop` is a proposed integration branch and does **not** currently exist; the owner may create it separately after deciding how to migrate. Use `feature/*`, `fix/*` and `hotfix/*` branches for work. Never automatically merge PRs. The current Arena session branch is an exception to the naming convention and is not renamed.
+
+An administrator must configure repository rulesets or branch protection for `main` (and `develop` if created):
+
+1. Require pull requests and at least one owner/maintainer approval; restrict bypass and direct pushes to trusted administrators, and do not enable automatic merging.
+2. Require status checks to pass and require branches to be up to date. After the new workflows have run at least once, select the exact contexts shown by GitHub for **CI / validate / Build, test and lint** and **Security / Dependency and license audit** (GitHub's displayed context can vary for reusable jobs). Do not mark the artifact upload warning as a successful APK download.
+3. Require conversation resolution as appropriate; prevent force-push and deletion. Treat changes to workflows, Gradle wrapper, build files, scripts and the signing environment as security-sensitive review items.
+4. Add an active tag ruleset matching `v*` that restricts tag creation, update and deletion to the owner/trusted bypass actors. Release preflight requires GitHub's `ref_protected` to be true, but that flag alone cannot prove that the policy is properly restrictive; administrators must review the actual rules.
+5. Configure the `production` environment and its **sole required reviewer** as the repository owner, disable administrator bypass of protection rules, enable deployment/tag restrictions where supported, and place signing secrets only in that environment. Environment protection availability depends on the GitHub plan. A missing environment, missing reviewer, inaccessible API or unprotected tag fails preflight before signing.
+
+The sandbox could not inspect or modify these settings; do not assume they are already active. PRs from forks use `pull_request`, not `pull_request_target`, and receive no signing secrets or write token. Protected checks and trusted tag creation are mandatory: a tag can contain its own workflow code.

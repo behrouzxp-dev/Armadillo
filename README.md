@@ -12,6 +12,7 @@ The first official release is [v1.0.0](https://github.com/behrouzxp-dev/Armadill
 - [Architecture](docs/ARCHITECTURE.md) — components, state, timing and persistence.
 - [Internal interfaces](docs/API.md) — Kotlin contracts; the app has no network API.
 - [Project plan](docs/PROJECT_PLAN.md) — maintenance and verification backlog, not an approved release schedule.
+- [GitHub Actions](docs/GITHUB_ACTIONS.md), [release guide](docs/RELEASE_GUIDE.md) and [secrets setup](docs/SECRETS_SETUP.md) — workflow audit, operations and signing prerequisites.
 
 ## Features
 
@@ -60,7 +61,7 @@ The first official release is [v1.0.0](https://github.com/behrouzxp-dev/Armadill
 - `tools/validate_words.py` — validates the archived general bank and 1,500-word topic bank
 - `tools/build_icon.py` — regenerates the launcher assets from the original artwork
 - `tools/SESSION_HANDOFF.md` — historical session notes and verification results
-- `.github/workflows/debug-apk.yml` — manual Debug build, artifact upload, unit tests and lint
+- `.github/workflows/` — CI, reusable build, security audit, guarded release and temporary-artifact cleanup workflows
 
 ## Architecture and persistence
 
@@ -108,19 +109,9 @@ app/build/outputs/apk/release/app-release.apk
 
 ## GitHub Actions builds
 
-The [Android build workflow](.github/workflows/debug-apk.yml) runs for every pull request into `main`, for workflow-file changes on `main`, and on manual `workflow_dispatch`.
+CI runs the shared Android validation build on pushes to `main`/`develop` and pull requests into those branches. It runs unit tests, lint and Debug/unsigned Release builds and retains the optional Debug APK for one day. A separate read-only security workflow scans resolved dependencies against OSV and reports POM license metadata. The tag-triggered signed release requires a protected tag, prior validation and explicit owner approval in the protected `production` environment. A cleanup workflow sweeps known temporary Actions artifacts every six hours; official release assets are preserved.
 
-- **debug job** — validates the bundled word banks with `python3 tools/validate_words.py`, assembles the Debug APK, verifies the package name and launcher activity, uploads `armadillo-debug-apk` as a ZIP artifact retained for seven days, then runs `:game-core:test`, `:app:testDebugUnitTest` and `:app:lintDebug` and reports the JVM test totals.
-- **release job** — assembles an unsigned Release APK (`R8` minification and resource shrinking) and runs `:app:lintRelease`. It never signs.
-
-Signed artifacts come from the separate [Signed release workflow](.github/workflows/release.yml), which only a manual `workflow_dispatch` with a tag input can start:
-
-- it checks out the given tag and refuses to build when the tag does not exist or does not match `versionName` in `app/build.gradle.kts`;
-- it materialises the release keystore from the `KEYSTORE_BASE64` secret and passes `KEYSTORE_PASSWORD`, `KEY_ALIAS` and `KEY_PASSWORD` to Gradle as `RELEASE_STORE_PASSWORD`, `RELEASE_KEY_ALIAS` and `RELEASE_KEY_PASSWORD`;
-- it runs the word-bank validator and the JVM tests, builds the signed APK and AAB, verifies the signer with `apksigner`, writes `SHA256SUMS`, uploads the APK, AAB, checksums and Gradle metadata to the existing Release, and deletes the keystore afterwards;
-- it never creates a tag or a Release, and it publishes nothing automatically.
-
-The upload occurs before tests and lint, so read the whole run result rather than the artifact alone. The workflow never publishes a release or creates a tag. The most recent [run 41932952205](https://github.com/behrouzxp-dev/Armadillo/actions/runs/41932952205) passed both jobs on the AGP 9.5 toolchain; its only annotation was the announced `ubuntu-latest` image migration. Neither job installs or starts the app, so a green run is not a device test.
+See [GitHub Actions](docs/GITHUB_ACTIONS.md) for the audit, required branch settings and limitations, [release guide](docs/RELEASE_GUIDE.md) for release steps, and [secrets setup](docs/SECRETS_SETUP.md) for credentials. No signed release is published merely by merging the workflow. No device/emulator testing is implied by CI.
 
 ## Theme and accessibility
 
