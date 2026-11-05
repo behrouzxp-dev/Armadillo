@@ -2,6 +2,15 @@
 
 This project follows semantic versioning (SemVer). The `1.0.0` entry below is the first official release of this repository and uses the `com.armadillo.game` application ID. The entries after it describe earlier builds of the previous `com.dour.game` identity and are kept as historical records only.
 
+## [Unreleased]
+
+- Centre the unboxed word and record a correct guess by tapping the play area; retain separate pause and full-width swap controls with a clear disabled state. Shorten the active-time swap lock to five seconds and migrate schema 3 saved cooldowns.
+- Change the fifth team colour from gold to dark navy and replace the setup circle’s name labels with a top-down table and numbered, team-coloured armchairs; keep seat tapping and the accessible name-editing list.
+- Replace the shared page-header back button with an accessible right-pointing arrow icon for RTL navigation.
+- Apply RTL layout to all Compose screens and dialogs independently of the device language, retaining intentional local ordering of game and home controls.
+- Redesign the home screen with transparent armadillo artwork, a shell-inspired play button, conditional saved-game continuation, About information on the page, and sound and rules icon buttons in the bottom corners.
+- Generate the transparent home logo from the original artwork without changing the launcher assets.
+
 ## [1.0.0] — 2026-11-05
 
 - Publish the first official release, tag `v1.0.0` (`versionCode` 1, `versionName` 1.0.0) for the `com.armadillo.game` identity, with a signed Release APK, an AAB and a `SHA256SUMS` file attached to the GitHub Release.

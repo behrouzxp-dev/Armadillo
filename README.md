@@ -15,15 +15,16 @@ The first official release is [v1.0.0](https://github.com/behrouzxp-dev/Armadill
 
 ## Features
 
-- The UI is Jetpack Compose with Material 3 components (Compose BOM 2026.09.00, Material3 1.4.0) on a Material 3 colour scheme mapped onto the existing brand palette; every screen, dialog and the seating circle is a composable.
+- The UI is Jetpack Compose with Material 3 components (Compose BOM 2026.09.00, Material3 1.4.0) on a Material 3 colour scheme mapped onto the existing brand palette; every screen, dialog and the seating circle is a composable. The app uses RTL layout independently of the device language, with local exceptions for controls whose physical order is intentional.
 - The page canvas is taken from the icon background (`#F9CB03`), so the launcher icon and the app share one colour. Filled buttons use navy `#07223C` with white text; outlined buttons use a cream fill with a navy edge, giving the two actions distinct visual weight. The theme is static: it is always light and never follows the system theme setting.
+- The home screen displays a transparent version of the armadillo artwork, a shell-inspired play button, conditional saved-game continuation, in-page About information and icon buttons for sound settings and rules in the lower corners.
 - The bundled Mikhak typeface (Regular and Bold masters, SIL Open Font License 1.1) is used for every label, button and canvas text.
 - Pause/resume is available during preparation, active play, manual pause, system pause and the explosion screen. An early-end action is available in the pause panel/dialog.
 - The user's original icon artwork is never edited; the launcher assets are generated from it with adaptive-icon safe-zone margins (artwork at 62% of the canvas) and include a monochrome layer for Android 13+ themed icons. `python3 tools/build_icon.py` regenerates them.
 - Playable categories are jobs, animals, foods, places and technology, each with 100 words at each easy, medium and hard level: 1,500 unique words. The previous 723-word general bank remains in `words.json` but is not used in category selection or the word cycle.
 - Player names and order are stored separately and prefilled for subsequent games.
 - Round duration options are 120, 210 or 300 seconds; round counts are 3, 5 or 7. Category selection uses a three-column grid, and sound settings are available on the home screen.
-- Seats and turns rotate counterclockwise. Fixed team colors are blue, red, green, purple and yellow, in that order.
+- Seats and turns rotate counterclockwise. Fixed team colors are blue, red, green, purple and dark navy, in that order. The player setup circle shows a top-down table surrounded by team-coloured, numbered armchairs; tapping one opens name editing, and the accessible seat list remains below it.
 - Results record displayed words with player name, round, display time and outcome.
 - Time and audio stop when the app goes into the background, the screen locks or a system interruption occurs; time outside the app is not counted.
 - Within the app's own storage, migration of older saved-game formats removes the general category from active play while retaining time and scores. A legacy word may be replaced by a word from a playable category. This does not transfer data across different application IDs.
@@ -33,7 +34,7 @@ The first official release is [v1.0.0](https://github.com/behrouzxp-dev/Armadill
 1. Select 4, 6, 8 or 10 players; teams have two players each. The bottom seat starts, and turns rotate counterclockwise.
 2. Enter names and select one or more categories. Selections remain fixed for that game.
 3. Set difficulty, round duration and number of rounds.
-4. During a round, pause to save and stop the game, current word and remaining time; resume from the same point. After a correct guess, use the guessed action to pass the phone and turn to the next player. Word replacement is disabled during the first seven seconds; a replaced word still counts as used.
+4. During a round, pause to save and stop the game, current word and remaining time; resume from the same point. After a correct guess, tap the game screen to pass the phone and turn to the next player; the pause and swap controls retain their own actions. Word replacement is disabled during the first five seconds; a replaced word still counts as used.
 5. When time expires, the team holding the phone receives a 10-second penalty. The explosion screen remains until a player taps it.
 6. The results screen displays team times and the chronological word list.
 
@@ -51,7 +52,7 @@ The first official release is [v1.0.0](https://github.com/behrouzxp-dev/Armadill
 - `app/src/main/assets/categories.json` — five playable categories and 1,500 topic words
 - `app/src/main/assets/words.json` — retained legacy general bank, inactive in gameplay
 - `app/src/main/res/font/` — Mikhak Regular/Bold as Android font resources; `app/src/main/assets/fonts/` — their OFL license
-- `app/src/main/res/drawable-nodpi/` — original icon artwork, generated adaptive foreground, monochrome layer and a small hero bitmap
+- `app/src/main/res/drawable-nodpi/` — original icon artwork, generated adaptive foreground, monochrome layer, hero bitmap and transparent home logo
 - `game-core/src/test/` — Kotlin/JVM unit tests for the engine, codec and roster
 - `docs/` — requirements, architecture, internal interfaces and maintenance plan
 - `tools/build_categories.py` — builds earlier categories while preserving newer categories
@@ -126,7 +127,7 @@ The upload occurs before tests and lint, so read the whole run result rather tha
 - One static light theme: there is no `values-night` variant and `android:forceDarkAllowed` is `false`, so changing the system theme cannot change the app's colours.
 - Buttons are platform `Button`s, so TalkBack announces them as buttons. Each seat on the players screen is also exposed as an individual button, because a canvas drawing cannot provide per-seat accessibility nodes.
 - Team identity is never colour-only: team numbers accompany every team chip, label and result row.
-- Body text on the canvas (`#38434F` on `#F9CB03`) and white text on navy buttons exceed the WCAG AA contrast ratio; the yellow team marker keeps a navy edge because gold on yellow cannot reach 3:1.
+- Body text on the canvas (`#38434F` on `#F9CB03`) and white text on navy buttons exceed the WCAG AA contrast ratio. Team numbers accompany team colours, so team identity does not depend on colour alone.
 - The seating canvas now follows the system font scale, and pages preserve their scroll position when a selection re-renders them.
 
 ## License

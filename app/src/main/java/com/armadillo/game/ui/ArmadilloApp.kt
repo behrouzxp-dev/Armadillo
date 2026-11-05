@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
 import com.armadillo.game.GameController
 import com.armadillo.game.ui.components.LocalSoundEffect
 import com.armadillo.game.ui.screens.AboutScreen
@@ -31,7 +33,12 @@ import com.armadillo.game.ui.theme.BrandPalette
  */
 @Composable
 fun ArmadilloApp(controller: GameController) {
-    CompositionLocalProvider(LocalSoundEffect provides { controller.playEffect() }) {
+    // The app is Persian-only, so do not inherit LTR from the device language.
+    // Scoped exceptions preserve intentional physical ordering in game controls.
+    CompositionLocalProvider(
+        LocalLayoutDirection provides LayoutDirection.Rtl,
+        LocalSoundEffect provides { controller.playEffect() }
+    ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()

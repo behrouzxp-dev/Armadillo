@@ -22,6 +22,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -45,13 +47,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.armadillo.game.R
 import com.armadillo.game.game.GameConstants
 import com.armadillo.game.ui.theme.BrandPalette
 import com.armadillo.game.ui.theme.Dim
 import com.armadillo.game.ui.theme.Radii
-import com.armadillo.game.ui.theme.TeamStyle
 import kotlin.math.roundToInt
 
 /** Plays the short UI click sample. Screens stay free of the audio implementation. */
@@ -62,8 +64,7 @@ fun teamColor(index: Int): Color {
     return Color(colors[index.coerceIn(0, colors.lastIndex)])
 }
 
-fun teamEdgeColor(index: Int): Color =
-    if (index == TeamStyle.YELLOW_INDEX) BrandPalette.Navy else teamColor(index)
+fun teamEdgeColor(index: Int): Color = teamColor(index)
 
 /** Blend a team colour towards white; matches the old Pillow-free tint helper. */
 fun softTint(color: Color, fraction: Float): Color = lerp(color, Color.White, fraction)
@@ -95,6 +96,8 @@ fun BrandButton(
     height: Dp = 54.dp,
     enabled: Boolean = true,
     playEffect: Boolean = true,
+    disabledContainerColor: Color? = null,
+    disabledContentColor: Color? = null,
     onClick: () -> Unit
 ) {
     val sound = LocalSoundEffect.current
@@ -117,8 +120,8 @@ fun BrandButton(
         colors = ButtonDefaults.buttonColors(
             containerColor = container,
             contentColor = content,
-            disabledContainerColor = container,
-            disabledContentColor = BrandPalette.ButtonDisabledText
+            disabledContainerColor = disabledContainerColor ?: container,
+            disabledContentColor = disabledContentColor ?: BrandPalette.ButtonDisabledText
         ),
         modifier = modifier
             .height(height)
@@ -206,7 +209,6 @@ fun TeamSwatch(
             .size(width, height)
             .clip(shape)
             .background(teamColor(teamIndex))
-            .then(if (teamIndex == TeamStyle.YELLOW_INDEX) Modifier.border(1.5.dp, BrandPalette.Navy, shape) else Modifier)
     )
 }
 
@@ -321,6 +323,7 @@ fun PageScaffold(
     footer: (@Composable () -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
+    val sound = LocalSoundEffect.current
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -345,13 +348,17 @@ fun PageScaffold(
                 maxLines = 2,
                 modifier = Modifier.weight(1f)
             )
-            BrandButton(
-                text = stringResource(R.string.action_back),
-                outlined = true,
-                height = Dim.MinTouch,
-                modifier = Modifier.width(82.dp),
-                onClick = onBack
-            )
+            IconButton(
+                onClick = { sound(); onBack() },
+                modifier = Modifier.size(Dim.MinTouch)
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_back_arrow),
+                    contentDescription = stringResource(R.string.action_back),
+                    tint = BrandPalette.Navy,
+                    modifier = Modifier.size(26.dp)
+                )
+            }
         }
         Column(
             modifier = Modifier

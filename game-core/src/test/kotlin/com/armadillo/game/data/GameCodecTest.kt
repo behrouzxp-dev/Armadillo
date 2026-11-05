@@ -138,6 +138,25 @@ class GameCodecTest {
     }
 
     @Test
+    fun schemaThreeCooldownMigratesFromSevenSecondsWithoutLosingElapsedTime() {
+        val saved = GameCodec.encode(state().copy(phase = GamePhase.SYSTEM_PAUSED))
+            .put("schema", 3)
+        for ((oldRemaining, newRemaining) in listOf(7L to 5L, 6L to 4L, 2L to 0L, 0L to 0L)) {
+            saved.put("swapCooldownNanos", oldRemaining * GameEngine.NANOS_PER_SECOND)
+            val decoded = GameCodec.decode(saved)
+            assertEquals(newRemaining * GameEngine.NANOS_PER_SECOND, decoded.swapCooldownNanos)
+            assertEquals(GamePhase.SYSTEM_PAUSED, decoded.phase)
+        }
+    }
+
+    @Test
+    fun currentSchemaPreservesFiveSecondCooldownWithoutRemigration() {
+        val original = state().copy(swapCooldownNanos = 4L * GameEngine.NANOS_PER_SECOND)
+        val decoded = GameCodec.decode(GameCodec.encode(original))
+        assertEquals(original.swapCooldownNanos, decoded.swapCooldownNanos)
+    }
+
+    @Test
     fun encodedPayloadCarriesTheCurrentSchemaVersion() {
         val encoded = GameCodec.encode(state())
         assertEquals(GameCodec.SCHEMA, encoded.getInt("schema"))

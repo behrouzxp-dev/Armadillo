@@ -113,18 +113,18 @@ data class RankedTeam(
 )
 
 object GameConstants {
-    const val SWAP_LOCK_NANOS: Long = 7_000_000_000L
+    const val SWAP_LOCK_NANOS: Long = 5_000_000_000L
     const val EXPLOSION_PENALTY_NANOS: Long = 10_000_000_000L
     const val EXPLOSION_ANIMATION_MS: Long = 2_000L
     const val CHECKPOINT_INTERVAL_MS: Long = 1_000L
 
-    // Stable team identity order: blue, red, green, purple, yellow.
+    // Stable team identity order: blue, red, green, purple, navy.
     val teamColors: IntArray = intArrayOf(
         0xFF1683D8.toInt(), // blue
         0xFFE53935.toInt(), // red
         0xFF278A50.toInt(), // green
         0xFF7A4DB8.toInt(), // purple
-        0xFFD39F00.toInt()  // yellow / dark gold to separate it from the yellow app background
+        0xFF07223C.toInt()  // navy, contrasting with the yellow app background
     )
 
     val allowedPlayerCounts = intArrayOf(4, 6, 8, 10)

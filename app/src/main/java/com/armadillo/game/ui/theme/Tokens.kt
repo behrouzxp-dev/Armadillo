@@ -45,8 +45,3 @@ object Radii {
     val Tag = 12.dp
     val Chip = 8.dp
 }
-
-object TeamStyle {
-    /** The gold team needs a navy edge so it stays visible on the yellow canvas. */
-    const val YELLOW_INDEX = 4
-}

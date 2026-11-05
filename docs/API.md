@@ -13,7 +13,7 @@ Construct `GameEngine(state, words, clockNanos, wallClockMillis)` with a `GameSt
 | `startRound(): Boolean` | Starts only in `PREPARATION`; selects a word, sets the round clock and enters `PLAYING`. |
 | `tick(): EngineEvent` / `checkpoint(): EngineEvent` | Accrues elapsed active time; expiration returns `EXPLOSION_STARTED`. `checkpoint()` delegates to `tick()` and does not itself persist. |
 | `markCorrect(): ActionResult` | During play, accrues time, records the correct word and advances to the next player. |
-| `swapWord(): ActionResult` / `canSwap(): Boolean` | Swap only during play after the seven-second active-time lock; record the old word as swapped. |
+| `swapWord(): ActionResult` / `canSwap(): Boolean` | Swap only during play after the five-second active-time lock; record the old word as swapped. |
 | `pauseManually()` / `resumeManually()` | Pause or resume active play; return whether the action was accepted. |
 | `pauseForSystem()` / `resumeFromSystemPause()` | Suspend and restore active/preparation/manual-pause/explosion phases without counting time outside play. |
 | `finishExplosion(): EngineEvent` | After acknowledgement, prepare the next round or finish the game. |
@@ -29,7 +29,7 @@ Construct `GameEngine(state, words, clockNanos, wallClockMillis)` with a `GameSt
 
 ## Checkpoint codec
 
-`GameCodec.encode(state): JSONObject` and `GameCodec.decode(json, defaultName): GameState` own the durable format (`GameCodec.SCHEMA = 3`); `defaultName` fills a stored player that has no name and defaults to the locale-neutral `#N`. `decode` migrates unknown categories to `jobs`, retires a current word that no longer matches the selection (recording it with `WordOutcome.ENDED`), and clamps out-of-range values instead of failing. The object has no Android dependency, so `GameCodecTest` covers round-trip fidelity, legacy saves, unknown categories, clamping and corrupt payloads on the JVM.
+`GameCodec.encode(state): JSONObject` and `GameCodec.decode(json, defaultName): GameState` own the durable format (`GameCodec.SCHEMA = 4`); `defaultName` fills a stored player that has no name and defaults to the locale-neutral `#N`. `decode` adjusts schema 3 swap cooldowns for the five-second lock, migrates unknown categories to `jobs`, retires a current word that no longer matches the selection (recording it with `WordOutcome.ENDED`), and clamps out-of-range values instead of failing. The object has no Android dependency, so `GameCodecTest` covers round-trip fidelity, legacy saves, unknown categories, clamping and corrupt payloads on the JVM.
 
 ## Local storage and sound
 

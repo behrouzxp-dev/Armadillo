@@ -20,7 +20,7 @@ import com.armadillo.game.game.migrateSavedCategories
  */
 object GameCodec {
     /** Schema written by [encode]; older payloads are migrated while decoding. */
-    const val SCHEMA = 3
+    const val SCHEMA = 4
 
     fun encode(game: GameState): JSONObject = JSONObject().apply {
         put("schema", GameCodec.SCHEMA)
@@ -183,6 +183,15 @@ object GameCodec {
             )
         }
 
+        // Schema 3 saved the remaining time from a seven-second lock. Translate it
+        // to the new five-second lock without charging time spent outside the app.
+        val savedCooldown = json.optLong("swapCooldownNanos", 0L).coerceAtLeast(0L)
+        val swapCooldown = if (json.optInt("schema", 0) == 3) {
+            (savedCooldown.coerceAtMost(7_000_000_000L) - 2_000_000_000L).coerceAtLeast(0L)
+        } else {
+            savedCooldown.coerceAtMost(GameConstants.SWAP_LOCK_NANOS)
+        }
+
         return GameState(
             id = json.optString("id", java.util.UUID.randomUUID().toString()),
             players = players,
@@ -195,7 +204,7 @@ object GameCodec {
             currentPlayerIndex = currentPlayerIndex,
             nextRoundStarterIndex = json.optInt("nextRoundStarterIndex", currentPlayerIndex).coerceIn(0, players.lastIndex),
             roundRemainingNanos = json.optLong("roundRemainingNanos", duration * 1_000_000_000L).coerceIn(0L, duration * 1_000_000_000L),
-            swapCooldownNanos = json.optLong("swapCooldownNanos", 0L).coerceIn(0L, GameConstants.SWAP_LOCK_NANOS),
+            swapCooldownNanos = swapCooldown,
             currentWord = currentWord,
             usedWords = used,
             wordHistory = history,

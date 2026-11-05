@@ -49,6 +49,13 @@ class GameEngineTest {
         assertEquals(listOf(3, 5, 7), GameConstants.allowedRounds.toList())
     }
 
+    @Test fun fifthTeamUsesNavyWhileTeamOrderRemainsStable() {
+        assertEquals(
+            listOf(0xFF1683D8.toInt(), 0xFFE53935.toInt(), 0xFF278A50.toInt(), 0xFF7A4DB8.toInt(), 0xFF07223C.toInt()),
+            GameConstants.teamColors.toList()
+        )
+    }
+
     @Test fun legacyGeneralSaveMigratesToPlayableCategoryAndRefreshesCurrentWord() {
         val legacy = migrateSavedCategories(setOf(WordCategories.GENERAL))
         assertEquals(setOf(WordCategories.JOBS), legacy.selected)
@@ -322,15 +329,15 @@ class GameEngineTest {
         assertEquals(84L * GameEngine.NANOS_PER_SECOND, game.state.roundRemainingNanos)
     }
 
-    @Test fun swappingRequiresSevenActiveSecondsAndCountsAsUsedNotCorrect() {
+    @Test fun swappingRequiresFiveActiveSecondsAndCountsAsUsedNotCorrect() {
         val clock = FakeClock()
         val game = newGame(clock)
         game.startRound()
         val first = game.state.currentWord
-        clock.now = 6_999_000_000L
+        clock.now = 4_999_999_999L
         assertFalse(game.swapWord().accepted)
         assertEquals(0, game.state.teamStats[0].swaps)
-        clock.now = 7_000_000_000L
+        clock.now = 5_000_000_000L
         assertTrue(game.swapWord().accepted)
         assertEquals(WordOutcome.SWAPPED, game.state.wordHistory[0].outcome)
         assertEquals(WordOutcome.PENDING, game.state.wordHistory[1].outcome)
@@ -339,6 +346,38 @@ class GameEngineTest {
         assertEquals(2, game.state.usedWords.size)
         assertTrue(game.state.currentWord != first)
         assertFalse(game.canSwap())
+    }
+
+    @Test fun correctGuessIsRejectedOutsideActivePlayAndAfterRoundExpiry() {
+        val clock = FakeClock()
+        val game = newGame(clock, duration = 10)
+        assertFalse(game.markCorrect().accepted)
+        game.startRound()
+        assertTrue(game.pauseManually().accepted)
+        assertFalse(game.markCorrect().accepted)
+        assertEquals(0, game.state.teamStats.sumOf { it.correctWords })
+        assertTrue(game.resumeManually())
+        clock.seconds(10)
+        val result = game.markCorrect()
+        assertFalse(result.accepted)
+        assertEquals(EngineEvent.EXPLOSION_STARTED, result.event)
+        assertEquals(0, game.state.teamStats.sumOf { it.correctWords })
+    }
+
+    @Test fun correctGuessRestartsFiveSecondSwapLockForTheNextWord() {
+        val clock = FakeClock()
+        val game = newGame(clock)
+        game.startRound()
+        clock.seconds(5)
+        game.tick()
+        assertTrue(game.canSwap())
+        assertTrue(game.markCorrect().accepted)
+        assertEquals(1, game.state.currentPlayerIndex)
+        assertFalse(game.canSwap())
+        clock.now = 9_999_999_999L
+        assertFalse(game.swapWord().accepted)
+        clock.seconds(10)
+        assertTrue(game.swapWord().accepted)
     }
 
     @Test fun swapCooldownFreezesDuringPauseAndContinuesAfterResume() {
@@ -351,12 +390,12 @@ class GameEngineTest {
         game.pauseManually()
         clock.seconds(100)
         game.resumeManually()
-        clock.seconds(103)
+        clock.seconds(101)
         game.tick()
         assertFalse(game.canSwap())
-        clock.seconds(104)
+        clock.seconds(102)
         assertTrue(game.swapWord().accepted)
-        assertEquals(7L * GameEngine.NANOS_PER_SECOND, game.state.teamStats[0].realTimeNanos)
+        assertEquals(5L * GameEngine.NANOS_PER_SECOND, game.state.teamStats[0].realTimeNanos)
     }
 
     @Test fun expirationAddsTenSecondsAndNextHandStartsWithTheHolder() {
