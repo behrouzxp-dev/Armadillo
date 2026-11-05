@@ -1,9 +1,12 @@
 # Armadillo changelog
 
-This project follows semantic versioning (SemVer). The versioned entries below are historical records of earlier builds, not the current repository's official releases. The first official release from this repository will be designated separately.
+This project follows semantic versioning (SemVer). The `1.0.0` entry below is the first official release of this repository and uses the `com.armadillo.game` application ID. The entries after it describe earlier builds of the previous `com.dour.game` identity and are kept as historical records only.
 
-## Unreleased
+## [1.0.0] — 2026-11-05
 
+- Publish the first official release, tag `v1.0.0` (`versionCode` 1, `versionName` 1.0.0) for the `com.armadillo.game` identity, with a signed Release APK, an AAB and a `SHA256SUMS` file attached to the GitHub Release.
+- Add the manual **Signed release** workflow: it materialises the release keystore from the `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS` and `KEY_PASSWORD` secrets, checks that the requested tag matches `versionName`, runs the word-bank validator and the JVM tests, builds the signed APK and AAB, verifies the signer with `apksigner`, writes checksums, uploads the artifacts to the existing Release and always deletes the keystore afterwards. The workflow never creates tags or releases and does not run automatically.
+- Record the signing certificate of `v1.0.0` (`SHA-256` `4F:40:5D:B1:95:4C:17:40:56:65:36:B8:56:8C:4B:AE:56:D5:A1:E6:18:4C:21:10:CD:32:39:AF:52:98:26:B8`) as the key future upgrades of this application ID must keep using.
 - Move the entire UI to Jetpack Compose with Material 3 (Compose BOM 2026.09.00, Material3 1.4.0): all twelve screens, the eight dialogs and the seating circle are composables, `MainActivity` is a thin host and `GameController` owns the engine, timer, audio, storage and dialog state. The brand palette, Mikhak typography and static light theme are mapped onto a Material 3 colour scheme. `compileSdk` rises to 37 (Compose 1.12 requirement) while `targetSdk` stays 36, Mikhak moves from `assets/fonts` to `res/font`, back navigation uses one `OnBackPressedDispatcher` callback, and insets are applied once with `WindowInsets.safeDrawing`.
 - Move every user-visible Persian string into `res/values/strings.xml` (Persian as the default locale), declare `android:localeConfig` with `res/xml/locales_config.xml`, and take the manifest label from `@string/app_name`. The engine no longer hard-codes player names: `SeatPlan.createPlayers` and `GameCodec.decode` accept an injected labeller that the app fills from resources.
 - Split the deterministic engine, models, seat plan, checkpoint codec and roster merge into the pure Kotlin/JVM module `:game-core` (no Android dependency) and run its tests with `:game-core:test`; the app depends on it via `implementation(project(":game-core"))`.
@@ -84,6 +87,6 @@ This project follows semantic versioning (SemVer). The versioned entries below a
 - Added each team's player names, team color and actual game scores to results.
 - Increased `versionCode` to 2 and `versionName` to 1.1.0.
 
-## [1.0.0] — base version
+## [1.0.0] — base version (historical `com.dour.game` build)
 
 - Initial offline Persian version with timer, teams, pause/resume, audio, a 723-word general bank and team results.

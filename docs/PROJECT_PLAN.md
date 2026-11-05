@@ -5,8 +5,8 @@ This is a maintenance checklist based on the current repository, not an approved
 ## Current baseline
 
 - Two Gradle modules: the `:app` Android application with bundled Persian word banks and private local persistence, and `:game-core`, a dependency-free Kotlin/JVM library holding the engine, models, seat plan, checkpoint codec and roster merge, with its own JVM tests. See [REQUIREMENTS.md](REQUIREMENTS.md) and [ARCHITECTURE.md](ARCHITECTURE.md).
-- The repository is not designated as an official release. `versionName` is `1.0.0` and `versionCode` is 1 because this application ID has never been published; both must be raised for the first store upload. The application ID change creates a separate installation and does not transfer the old app's data.
-- The Android build workflow runs on every pull request: word-bank validation, Debug build and APK identity check, artifact upload, unit tests, lint, plus an unsigned Release build with R8 and release lint. See [README.md](../README.md#github-actions-builds).
+- `v1.0.0` is the first official release (`versionName` `1.0.0`, `versionCode` 1, signed APK and AAB attached to the GitHub Release). Raise `versionCode` and `versionName` together for the next release and for the first store upload. The application ID change creates a separate installation and does not transfer the old app's data.
+- The Android build workflow runs on every pull request: word-bank validation, Debug build and APK identity check, artifact upload, unit tests, lint, plus an unsigned Release build with R8 and release lint. Signed APK/AAB artifacts come from the manual Signed release workflow, which uploads them to an existing GitHub Release. See [README.md](../README.md#github-actions-builds).
 - Historical reports and previous CI runs describe the specific builds they tested; they do not establish the results of subsequent changes.
 
 ## Verification to perform when available
