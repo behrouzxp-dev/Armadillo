@@ -15,6 +15,7 @@ This repository does not designate a current official release. The `com.armadill
 
 ## Features
 
+- The UI is Jetpack Compose with Material 3 components (Compose BOM 2026.09.00, Material3 1.4.0) on a Material 3 colour scheme mapped onto the existing brand palette; every screen, dialog and the seating circle is a composable.
 - The page canvas is taken from the icon background (`#F9CB03`), so the launcher icon and the app share one colour. Filled buttons use navy `#07223C` with white text; outlined buttons use a cream fill with a navy edge, giving the two actions distinct visual weight. The theme is static: it is always light and never follows the system theme setting.
 - The bundled Mikhak typeface (Regular and Bold masters, SIL Open Font License 1.1) is used for every label, button and canvas text.
 - Pause/resume is available during preparation, active play, manual pause, system pause and the explosion screen. An early-end action is available in the pause panel/dialog.
@@ -38,15 +39,18 @@ This repository does not designate a current official release. The `com.armadill
 
 ## Project structure
 
-- `app/src/main/java/com/armadillo/game/` — activity, UI helpers, audio and local storage
-- `app/src/main/java/com/armadillo/game/ui/DesignSystem.kt` — shared palette, Mikhak typography and UI tokens
+- `app/src/main/java/com/armadillo/game/MainActivity.kt` — thin Compose host: lifecycle, edge-to-edge and back dispatch
+- `app/src/main/java/com/armadillo/game/GameController.kt` — engine, timer, persistence, audio and dialog state
+- `app/src/main/java/com/armadillo/game/ui/` — Compose screens, dialogs, shared components and the Compose seat circle
+- `app/src/main/java/com/armadillo/game/ui/theme/` — Material 3 theme, brand palette, Mikhak typography and spacing tokens
+- `app/src/main/java/com/armadillo/game/audio/`, `data/` — SoundPool audio and SharedPreferences storage
 - `app/src/main/res/values/strings.xml` — every user-visible Persian string (the default locale)
 - `app/src/main/res/xml/locales_config.xml` — the `fa` locale declared for Android 13+ per-app language settings
 - `game-core/src/main/kotlin/com/armadillo/game/game/` — engine, models and seat plan
 - `game-core/src/main/kotlin/com/armadillo/game/data/` — pure JSON checkpoint codec and roster merging
 - `app/src/main/assets/categories.json` — five playable categories and 1,500 topic words
 - `app/src/main/assets/words.json` — retained legacy general bank, inactive in gameplay
-- `app/src/main/assets/fonts/` — Mikhak font files and their OFL license
+- `app/src/main/res/font/` — Mikhak Regular/Bold as Android font resources; `app/src/main/assets/fonts/` — their OFL license
 - `app/src/main/res/drawable-nodpi/` — original icon artwork, generated adaptive foreground, monochrome layer and a small hero bitmap
 - `game-core/src/test/` — Kotlin/JVM unit tests for the engine, codec and roster
 - `docs/` — requirements, architecture, internal interfaces and maintenance plan
@@ -59,14 +63,14 @@ This repository does not designate a current official release. The `com.armadill
 
 ## Architecture and persistence
 
-The repository has two Gradle modules. `:game-core` is a plain Kotlin/JVM library with no Android dependency: it holds the deterministic engine, the models, the seat plan, the checkpoint codec and the roster merge, and its tests run on the JVM without the Android plugin. `:app` is the Android application and depends on `:game-core`. `MainActivity` owns the Android UI and lifecycle and connects the game engine, local word bank, audio and storage. `GameEngine` applies game state transitions against a caller-supplied monotonic clock; `Models.kt` defines phases, players, teams and ranking. `LocalWordBank` reads bundled topic words and starts a new cycle after the selected pool is exhausted. `LocalStore` persists settings, the player roster and unfinished-game checkpoints in the private `armadillo_local_v1` SharedPreferences file. A restored unfinished game enters a system-paused state; a manual pause remains paused until the player resumes. The legacy general word bank is retained for historical compatibility, not as a playable category.
+The repository has two Gradle modules. `:game-core` is a plain Kotlin/JVM library with no Android dependency: it holds the deterministic engine, the models, the seat plan, the checkpoint codec and the roster merge, and its tests run on the JVM without the Android plugin. `:app` is the Android application and depends on `:game-core`. `MainActivity` is a thin `ComponentActivity` that hosts the Compose tree, applies edge-to-edge insets once and forwards lifecycle and back events to `GameController`. `GameController` owns the engine, timer, word bank, audio, storage and dialog state and exposes observable state that the composables read. `GameEngine` applies game state transitions against a caller-supplied monotonic clock; `Models.kt` defines phases, players, teams and ranking. `LocalWordBank` reads bundled topic words and starts a new cycle after the selected pool is exhausted. `LocalStore` persists settings, the player roster and unfinished-game checkpoints in the private `armadillo_local_v1` SharedPreferences file. A restored unfinished game enters a system-paused state; a manual pause remains paused until the player resumes. The legacy general word bank is retained for historical compatibility, not as a playable category.
 
 ## Build requirements
 
 - JDK 17 or newer (the recorded release build used Temurin JDK 17.0.21)
-- Android SDK Platform 36 and Build Tools 36
+- Android SDK Platform 37 and Build Tools 36 (Compose 1.12 requires `compileSdk 37`; `targetSdk` stays 36)
 - Gradle Wrapper 9.8.2, checked against `distributionSha256Sum`
-- Android Gradle Plugin 9.5.0 with its built-in Kotlin compiler (Kotlin 2.4.21 for the JVM module); the obsolete `org.jetbrains.kotlin.android` plugin is no longer applied
+- Android Gradle Plugin 9.5.0 with its built-in Kotlin compiler (Kotlin 2.4.21 for the JVM module and for the Compose compiler plugin); the obsolete `org.jetbrains.kotlin.android` plugin is no longer applied
 - Android 6.0 / API 23 minimum; `minSdk=23`, `targetSdk=36` (Google Play requires API 36 for new uploads since 31 August 2026)
 
 `local.properties` contains the builder's SDK path and is not part of the source archive.
