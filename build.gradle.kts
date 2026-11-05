@@ -3,4 +3,7 @@ plugins {
     id("com.android.application") version "9.5.0" apply false
     // :game-core is a plain JVM module and still needs the Kotlin JVM plugin.
     id("org.jetbrains.kotlin.jvm") version "2.4.21" apply false
+    // AGP 9 ships the Compose compiler, but the JetBrains plugin keeps it locked to the
+    // Kotlin version used everywhere else in the build.
+    id("org.jetbrains.kotlin.plugin.compose") version "2.4.21" apply false
 }

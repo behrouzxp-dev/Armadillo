@@ -24,15 +24,15 @@ Before any first official repository release, the owner must approve the release
 
 - **Localised strings (done).** Every user-visible Persian string lives in `app/src/main/res/values/strings.xml` as the default locale; `res/xml/locales_config.xml` and `android:localeConfig` declare `fa` for the Android 13+ per-app language settings. `:game-core` holds no UI text: `SeatPlan.createPlayers` and `GameCodec.decode` take an injectable name labeller that the app supplies from resources.
 - **Pure engine module (done).** `:game-core` contains the engine, models, seat plan, checkpoint codec and roster merge, and runs its tests with the plain Kotlin JVM plugin; the app depends on it with `implementation(project(":game-core"))`.
+- **Compose UI (done).** The screens, the eight dialogs and the seating circle are Jetpack Compose composables on Material 3, with the brand palette and Mikhak typography mapped onto a static light colour scheme. `MainActivity` is a thin host; `GameController` owns the engine, timer, persistence, audio and dialog state. Compose 1.12 (BOM 2026.09.00) requires `compileSdk 37`; `targetSdk` stays 36.
 - **Toolchain (done).** Gradle wrapper 9.8.2 (pinned with `distributionSha256Sum`), Android Gradle Plugin 9.5.0 with its built-in Kotlin compiler, and Kotlin 2.4.21 for the JVM module. The obsolete `org.jetbrains.kotlin.android` plugin is gone, `jvmTarget` moved to `kotlin.compilerOptions`, and `gradle.properties` now reserves enough memory for AGP 9's release lint. Verified only through CI; no local build was performed.
 
 ## Planned technical work
 
 These items are not implemented yet and need their own reviewed changes:
 
-1. Move the UI from hand-built platform views in `MainActivity` to Material 3 or Jetpack Compose and extract the view helpers into a reusable kit.
-2. Add instrumented/UI tests and an emulator job so pause, resume, explosion and results flows are verified on a real Android runtime.
-3. Generate Gradle dependency verification metadata (`gradle/verification-metadata.xml`) on a trusted machine with `./gradlew --write-verification-metadata sha256 help` and commit the result. It is deliberately not generated in CI, where the first download would only attest to itself.
+1. Add Compose UI tests (`androidx.compose.ui:ui-test-junit4`) and instrumented tests and an emulator job so pause, resume, explosion and results flows are verified on a real Android runtime.
+2. Generate Gradle dependency verification metadata (`gradle/verification-metadata.xml`) on a trusted machine with `./gradlew --write-verification-metadata sha256 help` and commit the result. It is deliberately not generated in CI, where the first download would only attest to itself.
 
 ## Documentation maintenance
 
