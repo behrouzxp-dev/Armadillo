@@ -1,6 +1,8 @@
 plugins {
     // Kotlin support is built into AGP 9; there is no kotlin-android plugin any more.
     id("com.android.application")
+    // The Compose compiler is versioned with Kotlin, not with the Compose libraries.
+    id("org.jetbrains.kotlin.plugin.compose")
 }
 
 val releaseKeystorePath = providers.environmentVariable("RELEASE_KEYSTORE_PATH").orNull
@@ -17,7 +19,8 @@ check(!releaseSigningRequested || releaseSigningConfigured) {
 
 android {
     namespace = "com.armadillo.game"
-    compileSdk = 36
+    // Compose 1.12 (BOM 2026.09.00) requires compileSdk 37; targetSdk stays at 36.
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.armadillo.game"
@@ -56,6 +59,10 @@ android {
         }
     }
 
+    buildFeatures {
+        compose = true
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -92,4 +99,14 @@ kotlin {
 dependencies {
     // Engine, seat plan and checkpoint codec live in a pure Kotlin module with its own JVM tests.
     implementation(project(":game-core"))
+
+    // Compose BOM keeps every androidx.compose artifact on one tested version.
+    implementation(platform("androidx.compose:compose-bom:2026.09.00"))
+    implementation("androidx.activity:activity-compose:1.13.0")
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.compose.ui:ui-graphics")
+    implementation("androidx.compose.ui:ui-text")
+    implementation("androidx.compose.foundation:foundation")
+    implementation("androidx.compose.material3:material3")
+    debugImplementation("androidx.compose.ui:ui-tooling")
 }
