@@ -36,6 +36,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -171,12 +172,12 @@ fun HomeScreen(controller: GameController) {
 private fun HomeCornerButton(icon: Int, label: Int, onClick: () -> Unit) {
     IconButton(
         onClick = onClick,
-        modifier = Modifier.size(52.dp).background(BrandPalette.Surface, CircleShape)
+        modifier = Modifier.size(52.dp).background(BrandPalette.Navy, CircleShape)
     ) {
         Icon(
             painter = painterResource(icon),
             contentDescription = stringResource(label),
-            tint = BrandPalette.Navy,
+            tint = BrandPalette.ButtonText,
             modifier = Modifier.size(26.dp)
         )
     }
@@ -259,13 +260,13 @@ fun PlayerCountScreen(controller: GameController) {
                 Text(
                     text = stringResource(R.string.count_option_label, count),
                     style = MaterialTheme.typography.headlineSmall,
-                    color = BrandPalette.Navy,
+                    color = if (selected) BrandPalette.ButtonText else BrandPalette.Navy,
                     modifier = Modifier.padding(bottom = 5.dp)
                 )
                 Text(
                     text = stringResource(R.string.count_option_teams, count / 2),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = BrandPalette.TextSecondary
+                    color = if (selected) BrandPalette.ButtonText else BrandPalette.TextSecondary
                 )
             }
         }
@@ -390,7 +391,7 @@ fun CategoriesScreen(controller: GameController) {
                                 fontSize = 14.sp,
                                 lineHeight = 20.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = BrandPalette.Navy,
+                                color = if (selected) BrandPalette.ButtonText else BrandPalette.Navy,
                                 textAlign = TextAlign.Center,
                                 maxLines = 2,
                                 modifier = Modifier.padding(bottom = 5.dp)
@@ -399,7 +400,7 @@ fun CategoriesScreen(controller: GameController) {
                                 text = stringResource(R.string.category_word_count),
                                 fontSize = 11.sp,
                                 lineHeight = 16.sp,
-                                color = BrandPalette.TextSecondary,
+                                color = if (selected) BrandPalette.ButtonText else BrandPalette.TextSecondary,
                                 textAlign = TextAlign.Center,
                                 maxLines = 2
                             )
@@ -456,8 +457,9 @@ fun OptionsScreen(controller: GameController) {
         )
         difficulties.forEachIndexed { index, (titleRes, hintRes) ->
             val level = index + 1
+            val selected = draft.difficulty == level
             ChoiceCard(
-                selected = draft.difficulty == level,
+                selected = selected,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 7.dp),
@@ -466,13 +468,13 @@ fun OptionsScreen(controller: GameController) {
                 Text(
                     text = stringResource(titleRes),
                     style = MaterialTheme.typography.titleSmall,
-                    color = BrandPalette.Navy,
+                    color = if (selected) BrandPalette.ButtonText else BrandPalette.Navy,
                     modifier = Modifier.padding(bottom = Dim.XXS)
                 )
                 Text(
                     text = stringResource(hintRes),
                     style = MaterialTheme.typography.labelSmall,
-                    color = BrandPalette.TextSecondary
+                    color = if (selected) BrandPalette.ButtonText else BrandPalette.TextSecondary
                 )
             }
         }
@@ -491,11 +493,13 @@ fun OptionsScreen(controller: GameController) {
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             GameConstants.allowedDurations.forEach { seconds ->
+                val isSelected = draft.durationSeconds == seconds
                 BrandButton(
                     text = stringResource(R.string.options_duration_option, seconds),
-                    outlined = draft.durationSeconds != seconds,
+                    outlined = !isSelected,
+                    outlinedFillColor = Color.Transparent,
                     height = Dim.MinTouch,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f).semantics { selected = isSelected },
                     onClick = { controller.setDuration(seconds) }
                 )
             }
@@ -514,11 +518,13 @@ fun OptionsScreen(controller: GameController) {
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             GameConstants.allowedRounds.forEach { rounds ->
+                val isSelected = draft.rounds == rounds
                 BrandButton(
                     text = stringResource(R.string.options_rounds_option, rounds),
-                    outlined = draft.rounds != rounds,
+                    outlined = !isSelected,
+                    outlinedFillColor = Color.Transparent,
                     height = Dim.MinTouch,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f).semantics { selected = isSelected },
                     onClick = { controller.setRounds(rounds) }
                 )
             }

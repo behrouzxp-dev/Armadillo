@@ -40,6 +40,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -93,6 +94,7 @@ fun BrandButton(
     text: String,
     modifier: Modifier = Modifier,
     outlined: Boolean = false,
+    outlinedFillColor: Color = BrandPalette.ButtonOutlinedFill,
     height: Dp = 54.dp,
     enabled: Boolean = true,
     playEffect: Boolean = true,
@@ -102,7 +104,7 @@ fun BrandButton(
 ) {
     val sound = LocalSoundEffect.current
     val shape = RoundedCornerShape(Radii.Button)
-    val container = if (outlined) BrandPalette.ButtonOutlinedFill else BrandPalette.Navy
+    val container = if (outlined) outlinedFillColor else BrandPalette.Navy
     val content = if (outlined) BrandPalette.Navy else BrandPalette.ButtonText
     val fontSize = when {
         height < 44.dp -> 12.sp
@@ -137,7 +139,7 @@ fun BrandButton(
     }
 }
 
-/** A tappable option card that shows its selected state with a navy ring. */
+/** A tappable option card with a transparent unselected state and navy selected state. */
 @Composable
 fun ChoiceCard(
     selected: Boolean,
@@ -151,10 +153,10 @@ fun ChoiceCard(
     Column(
         modifier = modifier
             .clip(shape)
-            .background(if (selected) softTint(BrandPalette.Navy, 0.92f) else BrandPalette.SurfaceRaised)
+            .background(if (selected) BrandPalette.Navy else Color.Transparent)
             .border(
                 width = if (selected) 2.dp else 1.dp,
-                color = if (selected) BrandPalette.Navy else BrandPalette.Outline,
+                color = BrandPalette.Navy,
                 shape = shape
             )
             .clickable(role = Role.Button) {
@@ -162,13 +164,10 @@ fun ChoiceCard(
                 onClick()
             }
             .padding(horizontal = Dim.SM, vertical = 10.dp)
-            .then(
-                if (contentDescription != null) {
-                    Modifier.semantics { this.contentDescription = contentDescription }
-                } else {
-                    Modifier
-                }
-            ),
+            .semantics {
+                this.selected = selected
+                if (contentDescription != null) this.contentDescription = contentDescription
+            },
         content = content
     )
 }

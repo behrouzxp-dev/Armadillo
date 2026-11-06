@@ -9,15 +9,17 @@ This document describes the current implementation and operational constraints. 
 - The owner-approved `applicationId` is `com.armadillo.game`, with minimum Android API 23, target SDK 36 and compile SDK 37 (Google Play has required API 36 for new uploads since 31 August 2026). The first GitHub release `v1.0.0` uses `versionCode` 1 and `versionName` `1.0.0`. The source is prepared for `1.1.0` with code 2; verify external distribution version codes before publishing.
 - Use a right-to-left layout throughout the Persian UI regardless of the device language, while preserving explicitly positioned game controls and home corner buttons.
 - The app uses one static light theme. The appearance must not change with the system dark-theme setting, and no `values-night` resources are added.
+- The shared page-header back arrow points left without moving the control from its existing position.
 - The changed application ID is a new Android app identity: it cannot update the old installation or automatically read its private data. No cross-application data migration is implemented.
 
 ## Home screen
 
 - Show the transparent armadillo artwork and game name without a surrounding card. Place the shell-inspired start control centrally, and show the saved-game continuation action only when a saved game is available.
-- Display About information on the home screen; provide accessible sound settings and rules icon controls in the physical lower-left and lower-right corners respectively. Keep the main content scrollable on smaller screens and at larger font scales.
+- Display About information on the home screen; provide accessible sound settings and rules icon controls in the physical lower-left and lower-right corners respectively. Use navy circular backgrounds with white gear and question-mark icons. Keep the main content scrollable on smaller screens and at larger font scales.
 
 ## Game setup
 
+- Display setup choices with transparent unselected backgrounds and navy outlines, and navy selected backgrounds with white text; preserve selection semantics for accessibility. Non-selection actions keep their existing appearance.
 - Support 4, 6, 8 or 10 players, grouped into opposite-seat teams of two. Seat zero starts at the bottom and turns advance counterclockwise. The setup circle displays a top-down table and numbered team-coloured armchairs; tapping a chair edits its player name, and an accessible list of named seats remains available.
 - Use blue, red, green, purple and dark navy for teams one through five, in that order.
 - Store the player roster separately from an unfinished game; prefill names for later games. A blank player name is replaced with a generated name.
