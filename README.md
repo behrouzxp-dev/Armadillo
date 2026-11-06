@@ -20,13 +20,13 @@ The first official release is [v1.0.0](https://github.com/behrouzxp-dev/Armadill
 - The page canvas is taken from the icon background (`#F9CB03`), so the launcher icon and the app share one colour. Selected setup choices use navy `#07223C` with white text; unselected choices are transparent with a navy border. Other outlined action buttons retain their cream fill. The theme is static: it is always light and never follows the system theme setting.
 - The home screen displays the armadillo artwork, game name and subtitle, followed by the configured version (when available) and the offline/free/ad-free tagline. The start button uses the supplied artwork; saved-game continuation is conditional, and navy corner buttons use white settings and help icons. Page-header back arrows point left.
 - The bundled Mikhak typeface (Regular and Bold masters, SIL Open Font License 1.1) is used for every label, button and canvas text.
-- Pause/resume is available during preparation, active play, manual pause, system pause and the explosion screen. An early-end action is available in the pause panel/dialog.
+- During active play, pause/resume and early end are available in the pause panel; it also contains the scrollable word history. System interruptions suspend any active phase and offer a resume screen.
 - The user's original icon artwork is never edited; the launcher assets are generated from it with adaptive-icon safe-zone margins (artwork at 62% of the canvas) and include a monochrome layer for Android 13+ themed icons. `python3 tools/build_icon.py` regenerates them.
 - Playable categories are jobs, animals, foods, places and technology, each with 100 words at each easy, medium and hard level: 1,500 unique words. The previous 723-word general bank remains in `words.json` but is not used in category selection or the word cycle.
 - Player names and order are stored separately and prefilled for subsequent games.
 - Round duration options are 120, 210 or 300 seconds; round counts are 3, 5 or 7. Category selection uses a three-column grid, and sound settings are available on the home screen.
 - Seats and turns rotate counterclockwise. Fixed team colors are blue, red, green, purple and dark navy, in that order. The player setup circle shows a top-down table surrounded by team-coloured, numbered armchairs; tapping one opens name editing, and the accessible seat list remains below it.
-- Results record displayed words with player name, round, display time and outcome.
+- The pause panel lists displayed words with player name, round, display time and outcome; the results screen shows team rankings.
 - Time and audio stop when the app goes into the background, the screen locks or a system interruption occurs; time outside the app is not counted.
 - Within the app's own storage, migration of older saved-game formats removes the general category from active play while retaining time and scores. A legacy word may be replaced by a word from a playable category. This does not transfer data across different application IDs.
 
@@ -35,9 +35,9 @@ The first official release is [v1.0.0](https://github.com/behrouzxp-dev/Armadill
 1. Select 4, 6, 8 or 10 players; teams have two players each. The bottom seat starts, and turns rotate counterclockwise.
 2. Enter names and select one or more categories. Selections remain fixed for that game.
 3. Set difficulty, round duration and number of rounds.
-4. During a round, pause to save and stop the game, current word and remaining time; resume from the same point. After a correct guess, tap the game screen to pass the phone and turn to the next player; the pause and swap controls retain their own actions. Word replacement is disabled during the first five seconds; a replaced word still counts as used.
+4. Tap the preparation screen to start each round. During play, tap the screen after a correct guess; the pause and swap controls retain their own actions. Pause preserves the current word and remaining time and offers a scrollable word history and early end. Word replacement is disabled during the first five seconds; a replaced word still counts as used.
 5. When time expires, the team holding the phone receives a 10-second penalty. The explosion screen remains until a player taps it.
-6. The results screen displays team times and the chronological word list.
+6. The results screen displays team times and rankings; the word history is available while paused, not on the results screen.
 
 ## Project structure
 

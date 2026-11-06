@@ -735,20 +735,11 @@ class GameController(
             phase = state.phase,
             round = state.currentRound,
             totalRounds = state.totalRounds,
-            teamCount = state.teamCount,
+            durationSeconds = state.durationSeconds,
             currentPlayerName = state.currentPlayer.name,
             currentPlayerTeam = state.currentPlayer.teamIndex,
-            nextPlayerName = state.nextPlayer.name,
-            nextPlayerTeam = state.nextPlayer.teamIndex,
             word = state.currentWord,
-            teamSeconds = state.teamStats.map { it.finalTimeNanos / GameEngine.NANOS_PER_SECOND },
             canSwap = active.canSwap(),
-            showEditNames = state.phase == GamePhase.PREPARATION &&
-                state.currentRound == 1 &&
-                state.usedWords.isEmpty() &&
-                state.teamStats.all {
-                    it.realTimeNanos == 0L && it.penaltyNanos == 0L && it.correctWords == 0 && it.swaps == 0
-                },
             players = state.players.toList(),
             teamStats = state.teamStats.map {
                 TeamStats(

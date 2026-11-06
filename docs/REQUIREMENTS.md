@@ -30,11 +30,12 @@ This document describes the current implementation and operational constraints. 
 
 ## Gameplay and results
 
-- During active play, tapping the screen outside the pause and swap controls records a correct answer and moves the turn to the next seat. Show the word unboxed at the centre of the game screen; the full-width swap control visibly indicates when it is disabled. Each new word starts a five-second active-time lock on swapping; a swapped word is recorded as consumed, not correct.
+- Start a prepared round by tapping the preparation screen; do not display start or name-edit buttons there. During active play, tapping the screen outside the pause and swap controls records a correct answer and moves the turn to the next seat. Show the word unboxed in the main play area, without an on-screen tap hint. The swap and icon-only pause controls share the bottom row in a 4:1 ratio. Each new word starts a visible five-second active-time lock on swapping; a swapped word is recorded as consumed, not correct.
+- Show round indicators for completed (red), active (green) and upcoming (empty) rounds, with accessible state descriptions. Show the current player and team at the top right, with a subtle team-coloured glow. Display a labelled time bar for each team, scaled to `totalRounds × (roundDuration + one explosion penalty)`, including elapsed time and penalties.
 - Count time using a monotonic clock, not UI refresh counts. When the countdown reaches zero, record expiration, add a ten-second penalty to the current team and show the explosion screen. Player acknowledgement advances to the next round or results.
-- Permit pause and resume without resetting the player, word, history or remaining active time. Backgrounding, system interruptions and loss of focus suspend active time and audio; restored manual pauses require an explicit resume.
+- Offer the manual pause control only during active play; its panel provides resume, early end and an independently scrollable chronological word history. Do not show a manual pause control in preparation or on the explosion screen. Backgrounding, system interruptions and loss of focus still suspend active time and audio, and restored manual pauses require an explicit resume.
 - Support ending early through the pause/dialog flow and report the accumulated results. Rank teams by final time (real time plus penalties), then fewer explosions, more correct words and fewer swaps; full ties share a rank.
-- Record word, seat, round, display time and outcome in the game history. Display team results and the recorded word list.
+- Record word, seat, round, display time and outcome in the game history. Display the word list in the pause panel, not on the results screen; after the game ends the list is no longer accessible there. Display team results and rankings on the results screen.
 
 ## Data, audio and accessibility
 
