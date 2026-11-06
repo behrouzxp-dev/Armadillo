@@ -61,7 +61,6 @@
     <string name="game_word_hidden">کلمه پس از شروع نمایش داده می‌شود</string>
     <string name="game_start_round">شروع</string>
     <string name="game_start_by_touch">برای شروع دست، صفحه را لمس کنید</string>
-    <string name="game_player_team">%1$s · تیم %2$d</string>
     <string name="game_team_progress">تیم %1$d، زمان ثبت‌شده %2$d ثانیه</string>
     <string name="game_team_number">تیم %1$d</string>
     <string name="game_round_completed">دست %1$d، تمام‌شده</string>

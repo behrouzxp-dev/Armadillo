@@ -123,12 +123,16 @@ fun GameScreen(controller: GameController) {
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                CurrentPlayer(name = game.currentPlayerName, team = game.currentPlayerTeam)
+                CurrentPlayer(
+                    name = game.currentPlayerName,
+                    team = game.currentPlayerTeam,
+                    modifier = Modifier.weight(0.38f)
+                )
                 RoundIndicators(
                     currentRound = game.round,
                     totalRounds = game.totalRounds,
                     phase = game.phase,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(0.62f)
                 )
             }
             TeamTimeBars(
@@ -197,22 +201,31 @@ fun GameScreen(controller: GameController) {
 }
 
 @Composable
-private fun CurrentPlayer(name: String, team: Int) {
+private fun CurrentPlayer(name: String, team: Int, modifier: Modifier = Modifier) {
     val color = teamColor(team)
     val textColor = if (team in 0..2) Color.Black else Color.White
-    Text(
-        text = stringResource(R.string.game_player_team, name, team + 1),
-        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-        color = textColor,
-        textAlign = TextAlign.Center,
-        maxLines = 2,
-        overflow = TextOverflow.Ellipsis,
-        modifier = Modifier
-            .widthIn(max = 130.dp)
+    Column(
+        modifier = modifier
             .clip(RoundedCornerShape(Radii.Control))
             .background(color)
-            .padding(horizontal = Dim.XS, vertical = Dim.XS)
-    )
+            .padding(horizontal = Dim.XS, vertical = Dim.XXS),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = name,
+            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+            color = textColor,
+            textAlign = TextAlign.Center,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
+        )
+        Text(
+            text = stringResource(R.string.game_team_number, team + 1),
+            style = MaterialTheme.typography.labelSmall,
+            color = textColor,
+            textAlign = TextAlign.Center
+        )
+    }
 }
 
 @Composable
@@ -238,8 +251,8 @@ private fun RoundIndicators(currentRound: Int, totalRounds: Int, phase: GamePhas
             }
             Box(
                 modifier = Modifier
-                    .padding(horizontal = 3.dp)
-                    .size(14.dp)
+                    .padding(horizontal = 2.dp)
+                    .size(12.dp)
                     .background(color, CircleShape)
                     .border(1.dp, BrandPalette.Navy, CircleShape)
                     .semantics { contentDescription = description }
