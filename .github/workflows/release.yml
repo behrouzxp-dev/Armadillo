@@ -98,12 +98,39 @@ jobs:
           set -euo pipefail
           apk=app/build/outputs/apk/release/app-release.apk
           bundle=app/build/outputs/bundle/release/app-release.aab
-          test -s "$apk" && test -s "$bundle"
+          if [ ! -s "$apk" ] || [ ! -s "$bundle" ]; then
+            echo "::error::Signed APK or AAB output is missing or empty."
+            exit 1
+          fi
+          if [ -z "${ANDROID_HOME:-}" ] || [ ! -d "$ANDROID_HOME/build-tools" ]; then
+            echo "::error::Android SDK build-tools directory is missing."
+            exit 1
+          fi
           build_tools="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
-          "$build_tools/apksigner" verify --verbose --print-certs "$apk" > "$RUNNER_TEMP/signature.txt"
-          "$build_tools/aapt" dump badging "$apk" > "$RUNNER_TEMP/badging.txt"
-          jarsigner -verify "$bundle" > /dev/null
-          keytool -printcert -jarfile "$bundle" > "$RUNNER_TEMP/bundle-cert.txt"
+          if [ ! -x "$build_tools/apksigner" ] || [ ! -x "$build_tools/aapt" ]; then
+            echo "::error::Android build tools do not contain executable apksigner and aapt."
+            exit 1
+          fi
+          if ! "$build_tools/apksigner" verify --verbose --print-certs "$apk" > "$RUNNER_TEMP/signature.txt" 2>&1; then
+            echo "::error::APK signature verification failed."
+            cat "$RUNNER_TEMP/signature.txt"
+            exit 1
+          fi
+          if ! "$build_tools/aapt" dump badging "$apk" > "$RUNNER_TEMP/badging.txt" 2>&1; then
+            echo "::error::APK metadata inspection failed."
+            cat "$RUNNER_TEMP/badging.txt"
+            exit 1
+          fi
+          if ! jarsigner -verify "$bundle" > "$RUNNER_TEMP/jarsigner.txt" 2>&1; then
+            echo "::error::AAB signature verification failed."
+            cat "$RUNNER_TEMP/jarsigner.txt"
+            exit 1
+          fi
+          if ! keytool -printcert -jarfile "$bundle" > "$RUNNER_TEMP/bundle-cert.txt" 2>&1; then
+            echo "::error::AAB signing certificate inspection failed."
+            cat "$RUNNER_TEMP/bundle-cert.txt"
+            exit 1
+          fi
           python3 - "$RUNNER_TEMP/signature.txt" "$RUNNER_TEMP/badging.txt" "$RUNNER_TEMP/bundle-cert.txt" <<'PY'
           import os, re, sys
           from pathlib import Path
