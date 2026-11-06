@@ -7,7 +7,7 @@ This is a historical record of the 2.2.0 release, not a current deployment check
 ## Release state at handoff
 
 - The release source was based on the then-latest verified Drive release, v2.1.0; older versions were comparison/history only.
-- Project at the time: `/home/user/Dour/`; `applicationId=com.dour.game`; `versionName=2.2.0`; `versionCode=6`.
+- Project at the time: the historical `Dour` project; `applicationId=com.dour.game`; `versionName=2.2.0`; `versionCode=6`.
 - Requested design tokens are exact: page canvas `#F2C50A`; all app/dialog button fills `#07223C`. Text uses accessible white/disabled-gray states; Lalezar and team identity colors remain. Original icon artwork was not changed.
 - The active game page no longer has a “پایان” button. Early end remains separate in the pause overlay/dialog; automatic completion remains.
 - The pause/resume control is reachable in preparation, playing, manual-pause, system-pause and explosion states. Repeated pause/resume preserves player, current word, word history, used words and remaining time. System interruption restores a manual pause as paused until the user explicitly continues.
@@ -26,10 +26,8 @@ This is a historical record of the 2.2.0 release, not a current deployment check
 
 ## Drive and backups
 
-- Existing Releases parent: `17ZVL4sQyQlxbt4tFo6bBuVe8H7TzXJ3b`.
-- New release folder: `Releases/v2.2.0`, ID `19hRodY-bDLCoiGwKUDKhqFbXl2aW9RrQ`; verified owner-only.
-- Latest source base folder `Releases/v2.1.0`: `1nBaCeTN8XGGp3s00PeuYV6-MKyB8SpJb`; source ZIP ID `1TLOk1-HN0AFSVnmmDd-W2B6Es3G_L6mv`, Drive/local MD5 `34ceb8952f3af8143b325e839e9eddf9`.
-- Pre-edit source backup: `/home/user/backups/Armadillo/Armadillo-Source-v2.1.0-original.zip`, SHA-256 `32892b50d59d0c60541f990e074a025ead4ce3c69f68fa1cd0af7e781c290c61`.
+- The existing releases parent contained `Releases/v2.2.0`, recorded as owner-only, and the previous source base under `Releases/v2.1.0`. Storage identifiers have been omitted to reduce unnecessary disclosure.
+- The v2.1.0 source ZIP had Drive/local MD5 `34ceb8952f3af8143b325e839e9eddf9`. A pre-edit source backup was recorded with SHA-256 `32892b50d59d0c60541f990e074a025ead4ce3c69f68fa1cd0af7e781c290c61`; its local path has been omitted.
 - Existing owner-only signing folder was used. Keep that key unchanged for future releases; private files were temporarily staged outside the project in protected storage for signing and must not enter archives.
 - The original handoff instructed that prior release folders be preserved and the v2.2.0 deliverables verified in Drive. This is historical context only; use GitHub for future source and release management as required by `AGENTS.md`. Preserve existing backups and signing material.
 

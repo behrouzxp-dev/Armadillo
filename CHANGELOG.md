@@ -4,6 +4,8 @@ This project follows semantic versioning (SemVer). The `1.0.0` entry below is th
 
 ## [Unreleased]
 
+- Reduce unnecessary disclosure in historical notes and image metadata; ignore common local secret and private-key files. Existing Git history is unchanged.
+
 ## [1.1.0]
 
 Prepared with `versionCode` 2. Confirm version codes in all external distribution channels before publication.
