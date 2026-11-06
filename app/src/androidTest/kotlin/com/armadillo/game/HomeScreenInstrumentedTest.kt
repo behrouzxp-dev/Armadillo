@@ -3,6 +3,7 @@ package com.armadillo.game
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.armadillo.game.ui.theme.BrandPalette
