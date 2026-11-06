@@ -18,7 +18,7 @@ The first official release is [v1.0.0](https://github.com/behrouzxp-dev/Armadill
 
 - The UI is Jetpack Compose with Material 3 components (Compose BOM 2026.09.00, Material3 1.4.0) on a Material 3 colour scheme mapped onto the existing brand palette; every screen, dialog and the seating circle is a composable. The app uses RTL layout independently of the device language, with local exceptions for controls whose physical order is intentional.
 - The page canvas is taken from the icon background (`#F9CB03`), so the launcher icon and the app share one colour. Selected setup choices use navy `#07223C` with white text; unselected choices are transparent with a navy border. Other outlined action buttons retain their cream fill. The theme is static: it is always light and never follows the system theme setting.
-- The home screen displays a transparent version of the armadillo artwork, a shell-inspired play button, conditional saved-game continuation, in-page About information and navy corner buttons with white settings and help icons. Page-header back arrows point left.
+- The home screen displays the armadillo artwork, game name and subtitle, followed by the configured version (when available) and the offline/free/ad-free tagline. The start button uses the supplied artwork; saved-game continuation is conditional, and navy corner buttons use white settings and help icons. Page-header back arrows point left.
 - The bundled Mikhak typeface (Regular and Bold masters, SIL Open Font License 1.1) is used for every label, button and canvas text.
 - Pause/resume is available during preparation, active play, manual pause, system pause and the explosion screen. An early-end action is available in the pause panel/dialog.
 - The user's original icon artwork is never edited; the launcher assets are generated from it with adaptive-icon safe-zone margins (artwork at 62% of the canvas) and include a monochrome layer for Android 13+ themed icons. `python3 tools/build_icon.py` regenerates them.
@@ -53,7 +53,7 @@ The first official release is [v1.0.0](https://github.com/behrouzxp-dev/Armadill
 - `app/src/main/assets/categories.json` — five playable categories and 1,500 topic words
 - `app/src/main/assets/words.json` — retained legacy general bank, inactive in gameplay
 - `app/src/main/res/font/` — Mikhak Regular/Bold as Android font resources; `app/src/main/assets/fonts/` — their OFL license
-- `app/src/main/res/drawable-nodpi/` — original icon artwork, generated adaptive foreground, monochrome layer, hero bitmap and transparent home logo
+- `app/src/main/res/drawable-nodpi/` — original icon artwork, generated adaptive foreground, monochrome layer, hero bitmap, transparent home logo and prepared play-button artwork
 - `game-core/src/test/` — Kotlin/JVM unit tests for the engine, codec and roster
 - `docs/` — requirements, architecture, internal interfaces and maintenance plan
 - `tools/build_categories.py` — builds earlier categories while preserving newer categories

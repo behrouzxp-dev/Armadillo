@@ -14,8 +14,9 @@ This document describes the current implementation and operational constraints. 
 
 ## Home screen
 
-- Show the transparent armadillo artwork and game name without a surrounding card. Place the shell-inspired start control centrally, and show the saved-game continuation action only when a saved game is available.
-- Display About information on the home screen; provide accessible sound settings and rules icon controls in the physical lower-left and lower-right corners respectively. Use navy circular backgrounds with white gear and question-mark icons. Keep the main content scrollable on smaller screens and at larger font scales.
+- Show the transparent armadillo artwork and game name without a surrounding card. Under the subtitle, show the version when available and the offline/free/ad-free tagline. Do not show a separate About section on the home screen.
+- Place the supplied play artwork on the central start control, with its embedded checkerboard background removed, and show the saved-game continuation action only when a saved game is available. Preserve the start action, sound effect and accessibility label.
+- Provide accessible sound settings and rules icon controls in the physical lower-left and lower-right corners respectively. Use navy circular backgrounds with white gear and question-mark icons. Keep the main content scrollable on smaller screens and at larger font scales.
 
 ## Game setup
 

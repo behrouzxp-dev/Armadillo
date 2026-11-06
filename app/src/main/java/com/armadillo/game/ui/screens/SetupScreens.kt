@@ -1,6 +1,5 @@
 package com.armadillo.game.ui.screens
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -28,11 +27,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.contentDescription
@@ -100,6 +95,20 @@ fun HomeScreen(controller: GameController) {
                         color = BrandPalette.Navy,
                         textAlign = TextAlign.Center
                     )
+                    if (version != null) {
+                        Text(
+                            text = stringResource(R.string.about_version, version),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = BrandPalette.Navy,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                    Text(
+                        text = stringResource(R.string.home_tagline),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = BrandPalette.Navy,
+                        textAlign = TextAlign.Center
+                    )
                 }
                 Spacer(Modifier.height(16.dp))
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -119,33 +128,6 @@ fun HomeScreen(controller: GameController) {
                             onClick = { controller.continueSavedGame() }
                         )
                     }
-                }
-                Spacer(Modifier.height(16.dp))
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = stringResource(R.string.home_about),
-                        style = MaterialTheme.typography.titleSmall,
-                        color = BrandPalette.Navy
-                    )
-                    Text(
-                        text = stringResource(R.string.about_body),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = BrandPalette.Navy,
-                        textAlign = TextAlign.Center
-                    )
-                    if (version != null) {
-                        Text(
-                            text = stringResource(R.string.about_version, version),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = BrandPalette.Navy
-                        )
-                    }
-                    Text(
-                        text = stringResource(R.string.home_tagline),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = BrandPalette.Navy,
-                        textAlign = TextAlign.Center
-                    )
                 }
             }
         }
@@ -189,36 +171,17 @@ private fun HomePlayButton(onClick: () -> Unit) {
     val label = stringResource(R.string.home_start)
     Button(
         onClick = { sound(); onClick() },
-        modifier = Modifier.size(108.dp).semantics { contentDescription = label },
+        modifier = Modifier.size(160.dp).semantics { contentDescription = label },
         shape = CircleShape,
         contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = BrandPalette.Navy)
+        colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)
     ) {
-        Canvas(Modifier.fillMaxSize()) {
-            val unit = size.minDimension
-            val gold = BrandPalette.Canvas
-            // Curved shell bands echo the armadillo logo, framing the play symbol.
-            drawCircle(gold, radius = unit * 0.45f, style = Stroke(width = unit * 0.025f))
-            for (i in 0..2) {
-                val inset = unit * (0.12f + i * 0.065f)
-                drawArc(
-                    color = gold.copy(alpha = 0.8f),
-                    startAngle = 110f,
-                    sweepAngle = 145f,
-                    useCenter = false,
-                    topLeft = Offset(inset, inset),
-                    size = Size(unit - 2 * inset, unit - 2 * inset),
-                    style = Stroke(width = unit * 0.025f)
-                )
-            }
-            val play = Path().apply {
-                moveTo(unit * 0.46f, unit * 0.33f)
-                lineTo(unit * 0.70f, unit * 0.50f)
-                lineTo(unit * 0.46f, unit * 0.67f)
-                close()
-            }
-            drawPath(play, Color.White)
-        }
+        Image(
+            painter = painterResource(R.drawable.home_play_art),
+            contentDescription = null,
+            contentScale = ContentScale.Fit,
+            modifier = Modifier.fillMaxSize()
+        )
     }
 }
 
