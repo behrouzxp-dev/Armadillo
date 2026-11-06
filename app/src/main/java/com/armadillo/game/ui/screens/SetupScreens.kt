@@ -20,6 +20,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -31,6 +34,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.contentDescription
@@ -73,6 +77,25 @@ fun HomeScreen(controller: GameController) {
     val sound = LocalSoundEffect.current
 
     Column(Modifier.fillMaxSize()) {
+        // The controls stack downward from the physical top-right corner. The
+        // scoped LTR override keeps that placement stable under app-wide RTL.
+        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = Dim.HomeSide, vertical = Dim.XS),
+                horizontalArrangement = Arrangement.End
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(Dim.SM)) {
+                    HomeCornerButton(Icons.Filled.Settings, R.string.sound_settings_title) {
+                        sound()
+                        controller.openSoundSettings(Screen.HOME)
+                    }
+                    HomeCornerButton(Icons.Filled.Info, R.string.home_rules) {
+                        sound()
+                        controller.showRules()
+                    }
+                }
+            }
+        }
         // The content can grow and scroll on small screens or with large system fonts.
         BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {
             val availableHeight = maxHeight
@@ -86,12 +109,6 @@ fun HomeScreen(controller: GameController) {
                 verticalArrangement = Arrangement.SpaceEvenly
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Image(
-                        painter = painterResource(R.drawable.armadillo_home_logo),
-                        contentDescription = stringResource(R.string.a11y_app_logo),
-                        contentScale = ContentScale.Fit,
-                        modifier = Modifier.size(112.dp)
-                    )
                     Text(
                         text = stringResource(R.string.app_name),
                         style = MaterialTheme.typography.displaySmall,
@@ -139,33 +156,17 @@ fun HomeScreen(controller: GameController) {
                 }
             }
         }
-        // Physical corners stay fixed even when the app's layout direction is RTL.
-        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = Dim.HomeSide, vertical = Dim.XS),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                HomeCornerButton(R.drawable.ic_home_sound, R.string.sound_settings_title) {
-                    sound()
-                    controller.openSoundSettings(Screen.HOME)
-                }
-                HomeCornerButton(R.drawable.ic_home_rules, R.string.home_rules) {
-                    sound()
-                    controller.showRules()
-                }
-            }
-        }
     }
 }
 
 @Composable
-private fun HomeCornerButton(icon: Int, label: Int, onClick: () -> Unit) {
+private fun HomeCornerButton(icon: ImageVector, label: Int, onClick: () -> Unit) {
     IconButton(
         onClick = onClick,
         modifier = Modifier.size(52.dp).background(BrandPalette.Navy, CircleShape)
     ) {
         Icon(
-            painter = painterResource(icon),
+            imageVector = icon,
             contentDescription = stringResource(label),
             tint = BrandPalette.ButtonText,
             modifier = Modifier.size(26.dp)

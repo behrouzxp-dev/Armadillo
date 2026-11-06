@@ -25,6 +25,17 @@ class HomeScreenInstrumentedTest {
     }
 
     @Test
+    fun homeScreenShowsDesignSystemSettingsAndRulesControls() {
+        val activity = composeTestRule.activity
+        composeTestRule
+            .onNodeWithContentDescription(activity.getString(R.string.sound_settings_title))
+            .assertIsDisplayed()
+        composeTestRule
+            .onNodeWithContentDescription(activity.getString(R.string.home_rules))
+            .assertIsDisplayed()
+    }
+
+    @Test
     fun brandCanvasMatchesThePlatformThemeColour() {
         val activity = composeTestRule.activity
         assertEquals(activity.getColor(R.color.design_canvas), BrandPalette.Canvas.toArgb())

@@ -34,6 +34,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,6 +45,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
@@ -54,6 +56,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.armadillo.game.GameController
@@ -88,11 +91,15 @@ fun GameScreen(controller: GameController) {
             .fillMaxSize()
             .background(BrandPalette.Canvas)
             .drawBehind {
+                // A slightly stronger but tighter glow: clearly perceptible near
+                // the corner without washing out the canvas or the word text.
                 drawRect(
                     brush = Brush.radialGradient(
-                        colors = listOf(currentTeamColor.copy(alpha = 0.22f), Color.Transparent),
+                        0.0f to currentTeamColor.copy(alpha = 0.32f),
+                        0.45f to currentTeamColor.copy(alpha = 0.14f),
+                        1.0f to Color.Transparent,
                         center = Offset(size.width, 0f),
-                        radius = size.maxDimension * 0.85f
+                        radius = size.maxDimension * 0.72f
                     )
                 )
             }
@@ -119,28 +126,36 @@ fun GameScreen(controller: GameController) {
                     bottom = Dim.GameBottom
                 )
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                CurrentPlayer(
-                    name = game.currentPlayerName,
-                    team = game.currentPlayerTeam,
-                    modifier = Modifier.weight(0.38f)
-                )
-                RoundIndicators(
-                    currentRound = game.round,
-                    totalRounds = game.totalRounds,
-                    phase = game.phase,
-                    modifier = Modifier.weight(0.62f)
+            // Time bars lead the screen. The scoped LTR override makes each bar
+            // fill from the left edge towards the right, regardless of app RTL.
+            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                TeamTimeBars(
+                    teamStats = game.teamStats,
+                    durationSeconds = game.durationSeconds,
+                    totalRounds = game.totalRounds
                 )
             }
-            TeamTimeBars(
-                teamStats = game.teamStats,
-                durationSeconds = game.durationSeconds,
-                totalRounds = game.totalRounds,
-                modifier = Modifier.padding(top = Dim.XS)
-            )
+            Spacer(Modifier.height(Dim.XS))
+            // Explicit LTR ordering keeps the enlarged round dots on the physical
+            // left and the outlined player-name box on the physical right.
+            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    RoundIndicators(
+                        currentRound = game.round,
+                        totalRounds = game.totalRounds,
+                        phase = game.phase,
+                        modifier = Modifier.weight(0.62f)
+                    )
+                    CurrentPlayer(
+                        name = game.currentPlayerName,
+                        team = game.currentPlayerTeam,
+                        modifier = Modifier.weight(0.38f)
+                    )
+                }
+            }
             Box(
                 modifier = Modifier.weight(1f).fillMaxWidth(),
                 contentAlignment = Alignment.Center
@@ -203,18 +218,19 @@ fun GameScreen(controller: GameController) {
 @Composable
 private fun CurrentPlayer(name: String, team: Int, modifier: Modifier = Modifier) {
     val color = teamColor(team)
-    val textColor = if (team in 0..2) Color.Black else Color.White
+    val shape = RoundedCornerShape(Radii.Control)
     Column(
         modifier = modifier
-            .clip(RoundedCornerShape(Radii.Control))
-            .background(color)
+            .clip(shape)
+            .background(BrandPalette.SurfaceRaised, shape)
+            .border(2.dp, color, shape)
             .padding(horizontal = Dim.XS, vertical = Dim.XXS),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
             text = name,
             style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-            color = textColor,
+            color = BrandPalette.Navy,
             textAlign = TextAlign.Center,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis
@@ -222,7 +238,7 @@ private fun CurrentPlayer(name: String, team: Int, modifier: Modifier = Modifier
         Text(
             text = stringResource(R.string.game_team_number, team + 1),
             style = MaterialTheme.typography.labelSmall,
-            color = textColor,
+            color = color,
             textAlign = TextAlign.Center
         )
     }
@@ -232,7 +248,7 @@ private fun CurrentPlayer(name: String, team: Int, modifier: Modifier = Modifier
 private fun RoundIndicators(currentRound: Int, totalRounds: Int, phase: GamePhase, modifier: Modifier = Modifier) {
     Row(
         modifier = modifier,
-        horizontalArrangement = Arrangement.Center,
+        horizontalArrangement = Arrangement.Start,
         verticalAlignment = Alignment.CenterVertically
     ) {
         for (round in 1..totalRounds) {
@@ -249,12 +265,13 @@ private fun RoundIndicators(currentRound: Int, totalRounds: Int, phase: GamePhas
                 RoundIndicator.ACTIVE -> BrandPalette.Success
                 RoundIndicator.UPCOMING -> Color.Transparent
             }
+            // Larger dots stay legible at a glance on the left of the header.
             Box(
                 modifier = Modifier
-                    .padding(horizontal = 2.dp)
-                    .size(12.dp)
+                    .padding(horizontal = 3.dp)
+                    .size(18.dp)
                     .background(color, CircleShape)
-                    .border(1.dp, BrandPalette.Navy, CircleShape)
+                    .border(1.5.dp, BrandPalette.Navy, CircleShape)
                     .semantics { contentDescription = description }
             )
         }
@@ -273,6 +290,7 @@ private fun TeamTimeBars(
             val progress = teamTimeProgress(stats.finalTimeNanos, durationSeconds, totalRounds)
             val seconds = stats.finalTimeNanos / GameEngine.NANOS_PER_SECOND
             val description = stringResource(R.string.game_team_progress, team + 1, seconds)
+            val teamTint = teamColor(team)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
@@ -283,23 +301,26 @@ private fun TeamTimeBars(
                     color = BrandPalette.Navy,
                     modifier = Modifier.widthIn(min = 48.dp)
                 )
+                // The track is a low-opacity team colour rather than white; the
+                // loaded portion uses the full team colour.
                 Box(
                     modifier = Modifier
                         .weight(1f)
                         .height(12.dp)
                         .clip(CircleShape)
-                        .background(BrandPalette.SurfaceAlt)
-                        .border(1.dp, BrandPalette.Outline, CircleShape)
+                        .background(teamTint.copy(alpha = 0.18f), CircleShape)
+                        .border(1.dp, teamTint.copy(alpha = 0.35f), CircleShape)
                         .semantics {
                             contentDescription = description
                             progressBarRangeInfo = ProgressBarRangeInfo(progress, 0f..1f)
-                        }
+                        },
+                    contentAlignment = Alignment.TopStart
                 ) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth(progress)
                             .fillMaxHeight()
-                            .background(teamColor(team), CircleShape)
+                            .background(teamTint, CircleShape)
                     )
                 }
                 Text(
