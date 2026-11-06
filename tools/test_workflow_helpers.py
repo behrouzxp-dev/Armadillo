@@ -105,6 +105,89 @@ class ReleasePreflightTests(unittest.TestCase):
                 command.assert_not_called()
 
 
+class SignedVerificationTests(unittest.TestCase):
+    def run_verification(self, failing=''):
+        workflow = (Path(__file__).resolve().parent.parent / '.github/workflows/release.yml').read_text()
+        section = workflow.split('      - name: Verify APK metadata and original signing certificate', 1)[1]
+        section = section.split('      - name: Upload verified signed files for publishing', 1)[0]
+        script = textwrap.dedent(section.split('        run: |', 1)[1].lstrip('\n'))
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for name in ('app/build/outputs/apk/release/app-release.apk',
+                         'app/build/outputs/bundle/release/app-release.aab'):
+                file = root / name
+                file.parent.mkdir(parents=True, exist_ok=True)
+                file.write_text('sample')
+            if failing == 'missing':
+                (root / 'app/build/outputs/apk/release/app-release.apk').unlink()
+            build_tools = root / 'android/build-tools/37.0.0'
+            build_tools.mkdir(parents=True)
+            bin_dir = root / 'bin'
+            bin_dir.mkdir()
+            stub = r"""#!/usr/bin/env python3
+import os, sys
+name = os.path.basename(sys.argv[0])
+with open(os.environ['CALL_LOG'], 'a') as log:
+    log.write(name + '\n')
+if os.environ['FAILING'] == name:
+    print('diagnostic from ' + name)
+    sys.exit(1)
+cert = '4f405db1954c1740566536b8568c4bae56d5a1e6184c2110cd3239af529826b8'
+if os.environ['FAILING'] == 'mismatch':
+    cert = '0' * 64
+if name == 'apksigner':
+    print('Signer #1 certificate SHA-256 digest: ' + cert)
+elif name == 'aapt':
+    print("package: name='com.armadillo.game' versionCode='2' versionName='1.1.0'")
+elif name == 'keytool':
+    print('SHA256: ' + ':'.join(cert[i:i+2] for i in range(0, len(cert), 2)))
+else:
+    print('jar verified')
+"""
+            for path in (build_tools / 'apksigner', build_tools / 'aapt', bin_dir / 'jarsigner', bin_dir / 'keytool'):
+                path.write_text(stub)
+                path.chmod(0o755)
+            env = os.environ.copy()
+            env.update({'PATH': str(bin_dir) + os.pathsep + env['PATH'], 'RUNNER_TEMP': str(root),
+                        'ANDROID_HOME': str(root / 'android'), 'VERSION': '1.1.0', 'VERSION_CODE': '2',
+                        'FAILING': failing, 'CALL_LOG': str(root / 'calls')})
+            if failing == 'missing_sdk':
+                env['ANDROID_HOME'] = str(root / 'missing-sdk')
+            result = subprocess.run(['bash', '-e', '-c', script], cwd=root, env=env,
+                                    text=True, capture_output=True)
+            calls = (root / 'calls').read_text().splitlines() if (root / 'calls').exists() else []
+            return result, calls
+
+    def test_signed_verification_accepts_matching_fake_outputs(self):
+        result, calls = self.run_verification()
+        self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+        self.assertEqual(['apksigner', 'aapt', 'jarsigner', 'keytool'], calls)
+        self.assertIn('signatures, application ID and APK version verified', result.stdout)
+
+    def test_tool_failures_report_diagnostics_and_stop(self):
+        for name in ('apksigner', 'aapt', 'jarsigner', 'keytool'):
+            with self.subTest(name=name):
+                result, calls = self.run_verification(name)
+                self.assertNotEqual(0, result.returncode)
+                self.assertIn('::error::', result.stdout)
+                self.assertIn('diagnostic from ' + name, result.stdout)
+                self.assertEqual(name, calls[-1])
+
+    def test_missing_output_and_wrong_signer_fail_closed(self):
+        result, calls = self.run_verification('missing')
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn('missing or empty', result.stdout)
+        self.assertEqual([], calls)
+        result, calls = self.run_verification('missing_sdk')
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn('build-tools directory is missing', result.stdout)
+        self.assertEqual([], calls)
+        result, calls = self.run_verification('mismatch')
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn('original release signing certificate', result.stderr)
+        self.assertEqual(['apksigner', 'aapt', 'jarsigner', 'keytool'], calls)
+
+
 class WorkflowPublicationTests(unittest.TestCase):
     def run_publisher(self, mode):
         workflow = (Path(__file__).resolve().parent.parent / '.github/workflows/release.yml').read_text()
