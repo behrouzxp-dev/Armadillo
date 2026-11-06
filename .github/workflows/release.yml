@@ -136,19 +136,29 @@ jobs:
           from pathlib import Path
           cert = '4f405db1954c1740566536b8568c4bae56d5a1e6184c2110cd3239af529826b8'
           report, badging, bundle = (Path(p).read_text(encoding='utf-8') for p in sys.argv[1:])
+          def fail(message):
+              print(f'::error::{message}')
+              raise SystemExit(1)
           signers = re.findall(r'certificate SHA-256 digest:\s*([0-9a-fA-F:]+)', report)
-          if len(signers) != 1 or signers[0].replace(':', '').lower() != cert:
-              raise SystemExit('APK must have exactly the original release signing certificate')
+          if len(signers) != 1:
+              fail(f'APK must have exactly one signing certificate; found {len(signers)}.')
+          if signers[0].replace(':', '').lower() != cert:
+              fail('APK signing certificate does not match the original release signing certificate.')
           bundle_certs = re.findall(r'SHA256:\s*([0-9A-Fa-f:]+)', bundle)
-          if len(bundle_certs) != 1 or bundle_certs[0].replace(':', '').lower() != cert:
-              raise SystemExit('AAB signing certificate does not match the original release key')
+          if len(bundle_certs) != 1:
+              fail(f'AAB must have exactly one SHA-256 signing certificate; found {len(bundle_certs)}.')
+          if bundle_certs[0].replace(':', '').lower() != cert:
+              fail('AAB signing certificate does not match the original release key.')
           package = next((line for line in badging.splitlines() if line.startswith('package: ')), '')
           fields = dict(re.findall(r"(name|versionCode|versionName)='([^']*)'", package))
           if fields != {'name': 'com.armadillo.game', 'versionCode': os.environ['VERSION_CODE'], 'versionName': os.environ['VERSION']}:
-              raise SystemExit(f'Unexpected APK package or version: {fields}')
+              fail('APK package ID, version name or version code does not match the approved release.')
           print('APK and AAB signatures, application ID and APK version verified.')
           PY
-          (cd app/build/outputs && sha256sum apk/release/app-release.apk bundle/release/app-release.aab > SHA256SUMS)
+          if ! (cd app/build/outputs && sha256sum apk/release/app-release.apk bundle/release/app-release.aab > SHA256SUMS); then
+            echo "::error::Could not generate signed artifact checksums."
+            exit 1
+          fi
       - name: Upload verified signed files for publishing
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
