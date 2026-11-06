@@ -4,6 +4,7 @@ This project follows semantic versioning (SemVer). The `1.0.0` entry below is th
 
 ## [Unreleased]
 
+- Redesign the game HUD with round indicators, team-coloured time bars and a current-player glow; move the pause control beside swap, place the scrollable word history in pause, and start prepared rounds by tapping the screen.
 - Replace the home play control artwork with the supplied image, cleaned of its checkerboard background, and move the version and offline/free/ad-free tagline beneath the subtitle instead of showing a separate About section.
 - Show unselected setup choices transparently on the yellow canvas and selected choices in navy with white text; update home settings/help icons and point page-header back arrows left.
 - Fix release APK identity parsing so Android SDK codename fields cannot replace the application ID; reject duplicate identity fields.
