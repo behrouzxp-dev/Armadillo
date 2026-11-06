@@ -4,7 +4,7 @@
 
 Armadillo is an offline, right-to-left Persian group game. Its `applicationId` is `com.armadillo.game`. The app is free, ad-free and requires no internet permission; its sounds, font and words are bundled locally. It uses portrait orientation and has no background music. The manifest requests vibration permission and disables Android backup.
 
-The first official release is [v1.0.0](https://github.com/behrouzxp-dev/Armadillo/releases/tag/v1.0.0) (`versionCode` 1, `versionName` 1.0.0) for the `com.armadillo.game` application ID; its signed Release APK and AAB are attached to the GitHub Release. The source is configured for `1.1.0` (`versionCode` 2); verify version codes in external distribution channels before publishing. The repository on GitHub is the source of truth. See [AGENTS.md](AGENTS.md) for project rules and [CHANGELOG.md](CHANGELOG.md) for changes. Historical test reports and changelogs describe earlier builds, not an official release of the current repository.
+The first official release is [v1.0.0](https://github.com/behrouzxp-dev/Armadillo/releases/tag/v1.0.0) (`versionCode` 1, `versionName` 1.0.0) for the `com.armadillo.game` application ID; [v1.1.0](https://github.com/behrouzxp-dev/Armadillo/releases/tag/v1.1.0) uses code 2. The source is configured for `1.2.0` (`versionCode` 3); verify version codes in external distribution channels before distributing there. The repository on GitHub is the source of truth. See [AGENTS.md](AGENTS.md) for project rules and [CHANGELOG.md](CHANGELOG.md) for changes. Historical test reports and changelogs describe earlier builds, not an official release of the current repository.
 
 ## Documentation
 
