@@ -35,6 +35,8 @@ object BrandPalette {
     val Danger = Color(0xFFA6190F)
     val DangerSurface = Color(0xFFFFF1EF)
     val Scrim = Color(0xB307223C)
+    /** Electric neon blue used only for the home start-control glow. */
+    val NeonBlue = Color(0xFF00C8FF)
 }
 
 /** Mikhak ships static Regular and Bold masters, so bold text uses a real font file. */

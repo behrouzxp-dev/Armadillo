@@ -24,6 +24,8 @@ object Dim {
     val HomeSide = 24.dp
     val HomeTop = 22.dp
     val HomeBottom = 24.dp
+    val HomePlaySize = 160.dp
+    val HomeGlowSize = 260.dp
 
     val GameHorizontal = 13.dp
     val GameTop = 8.dp

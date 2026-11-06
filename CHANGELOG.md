@@ -6,6 +6,7 @@ This project follows semantic versioning (SemVer). The `1.0.0` entry below is th
 
 Security, robustness, maintainability and home/game HUD presentation changes; the gameplay rules are unchanged and there is no new release version.
 
+- Centre the home start control exactly and add a slow, heartbeat-like electric neon-blue glow beneath it; keep the title band scrollable at large font scales, respect the system animation-scale setting, and add an instrumented centering test.
 - Reduce the launcher artwork to half of the 1024px canvas (`ART_FRACTION = 0.50`, a 25% margin on each side) and regenerate the adaptive foreground, monochrome layer and all mipmaps.
 - Remove the home-screen armadillo logo, its generated WebP and the now-unused accessibility string, while keeping the title, subtitle, version and tagline.
 - Stack the home sound-settings and rules controls vertically from the top right and replace the hand-copied vector drawables with Material design-system icons (`Icons.Filled.Settings`, `Icons.Filled.Info`); declare `material-icons-core` explicitly and cover both controls with an instrumented test.

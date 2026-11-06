@@ -2,6 +2,14 @@ package com.armadillo.game.ui.screens
 
 import android.content.pm.PackageManager
 import android.os.Build
+import android.provider.Settings
+
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -14,7 +22,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -33,10 +43,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
@@ -62,6 +75,9 @@ import com.armadillo.game.ui.components.selectionLabel
 import com.armadillo.game.ui.theme.BrandPalette
 import com.armadillo.game.ui.theme.Dim
 
+/** Test tag for the home screen root, used by the centering instrumented test. */
+const val HOME_ROOT_TAG = "home_root"
+
 @Composable
 fun HomeScreen(controller: GameController) {
     val context = LocalContext.current
@@ -76,12 +92,40 @@ fun HomeScreen(controller: GameController) {
     }.getOrNull()
     val sound = LocalSoundEffect.current
 
-    Column(Modifier.fillMaxSize()) {
+    // A slow, heartbeat-like pulse drives only the decorative glow. The start
+    // control keeps a fixed size and stays a plain accessible Button.
+    val transition = rememberInfiniteTransition(label = "homeNeonPulse")
+    // Read the State inside graphicsLayer below: the draw phase alone updates,
+    // so the pulse never recomposes the whole home screen on every frame.
+    val pulseState = transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1800, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "homeNeonPulseValue"
+    )
+    // Honour the system "remove animations" accessibility setting.
+    val animationsEnabled = Settings.Global.getFloat(
+        context.contentResolver,
+        Settings.Global.ANIMATOR_DURATION_SCALE,
+        1f
+    ) != 0f
+
+    BoxWithConstraints(
+        modifier = Modifier
+            .fillMaxSize()
+            .testTag(HOME_ROOT_TAG)
+    ) {
         // The controls stack downward from the physical top-right corner. The
         // scoped LTR override keeps that placement stable under app-wide RTL.
         CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
             Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = Dim.HomeSide, vertical = Dim.XS),
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .fillMaxWidth()
+                    .padding(horizontal = Dim.HomeSide, vertical = Dim.XS),
                 horizontalArrangement = Arrangement.End
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(Dim.SM)) {
@@ -96,65 +140,92 @@ fun HomeScreen(controller: GameController) {
                 }
             }
         }
-        // The content can grow and scroll on small screens or with large system fonts.
-        BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {
-            val availableHeight = maxHeight
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
-                    .heightIn(min = availableHeight)
-                    .padding(horizontal = Dim.HomeSide, vertical = Dim.SM),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.SpaceEvenly
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = stringResource(R.string.app_name),
-                        style = MaterialTheme.typography.displaySmall,
-                        color = BrandPalette.Navy
-                    )
-                    Text(
-                        text = stringResource(R.string.home_subtitle),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = BrandPalette.Navy,
-                        textAlign = TextAlign.Center
-                    )
-                    if (version != null) {
-                        Text(
-                            text = stringResource(R.string.about_version, version),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = BrandPalette.Navy,
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                    Text(
-                        text = stringResource(R.string.home_tagline),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = BrandPalette.Navy,
-                        textAlign = TextAlign.Center
-                    )
-                }
-                Spacer(Modifier.height(16.dp))
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    HomePlayButton(onClick = { controller.startSetup() })
-                    Text(
-                        text = stringResource(R.string.home_start),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = BrandPalette.Navy,
-                        modifier = Modifier.padding(top = 6.dp)
-                    )
-                    if (controller.canContinue) {
-                        Spacer(Modifier.height(12.dp))
-                        BrandButton(
-                            text = stringResource(R.string.home_continue_saved),
-                            outlined = true,
-                            height = 50.dp,
-                            onClick = { controller.continueSavedGame() }
-                        )
-                    }
-                }
+
+        // Cap the text band and let it scroll at large font scales so it can
+        // never displace the start control from the exact centre of the screen.
+        Column(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .fillMaxWidth(0.62f)
+                .heightIn(max = maxHeight * 0.34f)
+                .verticalScroll(rememberScrollState())
+                .padding(top = Dim.HomeTop),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = stringResource(R.string.app_name),
+                style = MaterialTheme.typography.displaySmall,
+                color = BrandPalette.Navy,
+                textAlign = TextAlign.Center
+            )
+            Text(
+                text = stringResource(R.string.home_subtitle),
+                style = MaterialTheme.typography.bodyLarge,
+                color = BrandPalette.Navy,
+                textAlign = TextAlign.Center
+            )
+            if (version != null) {
+                Text(
+                    text = stringResource(R.string.about_version, version),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = BrandPalette.Navy,
+                    textAlign = TextAlign.Center
+                )
             }
+            Text(
+                text = stringResource(R.string.home_tagline),
+                style = MaterialTheme.typography.bodySmall,
+                color = BrandPalette.Navy,
+                textAlign = TextAlign.Center
+            )
+        }
+
+        // Electric neon-blue glow sitting just beneath the centred start control.
+        Box(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .offset(y = Dim.HomePlaySize / 4f)
+                .size(Dim.HomeGlowSize)
+                .graphicsLayer {
+                    val pulse = if (animationsEnabled) pulseState.value else 0.5f
+                    val scale = 0.9f + pulse * 0.14f
+                    scaleX = scale
+                    scaleY = scale
+                    alpha = 0.42f + pulse * 0.58f
+                }
+                .background(
+                    brush = Brush.radialGradient(
+                        0.0f to BrandPalette.NeonBlue.copy(alpha = 0.9f),
+                        0.45f to BrandPalette.NeonBlue.copy(alpha = 0.34f),
+                        1.0f to Color.Transparent
+                    ),
+                    shape = CircleShape
+                )
+        )
+
+        HomePlayButton(
+            onClick = { controller.startSetup() },
+            modifier = Modifier.align(Alignment.Center)
+        )
+        Text(
+            text = stringResource(R.string.home_start),
+            style = MaterialTheme.typography.titleMedium,
+            color = BrandPalette.Navy,
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .align(Alignment.Center)
+                .offset(y = Dim.HomePlaySize / 2f + Dim.SM)
+        )
+        if (controller.canContinue) {
+            BrandButton(
+                text = stringResource(R.string.home_continue_saved),
+                outlined = true,
+                height = 50.dp,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = Dim.HomeBottom),
+                onClick = { controller.continueSavedGame() }
+            )
         }
     }
 }
@@ -175,14 +246,16 @@ private fun HomeCornerButton(icon: ImageVector, label: Int, onClick: () -> Unit)
 }
 
 @Composable
-private fun HomePlayButton(onClick: () -> Unit) {
+private fun HomePlayButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
     val sound = LocalSoundEffect.current
     val label = stringResource(R.string.home_start)
     Button(
         onClick = { sound(); onClick() },
-        modifier = Modifier.size(160.dp).semantics { contentDescription = label },
+        modifier = modifier
+            .size(Dim.HomePlaySize)
+            .semantics { contentDescription = label },
         shape = CircleShape,
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp),
+        contentPadding = PaddingValues(0.dp),
         colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)
     ) {
         Image(
