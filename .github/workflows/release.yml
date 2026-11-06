@@ -150,8 +150,9 @@ jobs:
           if bundle_certs[0].replace(':', '').lower() != cert:
               fail('AAB signing certificate does not match the original release key.')
           package = next((line for line in badging.splitlines() if line.startswith('package: ')), '')
-          fields = dict(re.findall(r"(name|versionCode|versionName)='([^']*)'", package))
-          if fields != {'name': 'com.armadillo.game', 'versionCode': os.environ['VERSION_CODE'], 'versionName': os.environ['VERSION']}:
+          matches = re.findall(r"(?:^|\s)(name|versionCode|versionName)='([^']*)'", package)
+          fields = dict(matches)
+          if len(matches) != 3 or fields != {'name': 'com.armadillo.game', 'versionCode': os.environ['VERSION_CODE'], 'versionName': os.environ['VERSION']}:
               fail('APK package ID, version name or version code does not match the approved release.')
           print('APK and AAB signatures, application ID and APK version verified.')
           PY

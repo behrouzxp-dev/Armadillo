@@ -138,7 +138,14 @@ if os.environ['FAILING'] == 'mismatch' or (os.environ['FAILING'] == 'bundle_mism
 if name == 'apksigner':
     print('Signer #1 certificate SHA-256 digest: ' + cert)
 elif name == 'aapt':
-    print("package: name='com.armadillo.game' versionCode='2' versionName='1.1.0'")
+    mode = os.environ['FAILING']
+    package = 'com.wrong.game' if mode == 'wrong_name' else 'com.armadillo.game'
+    code = '9' if mode == 'wrong_code' else '2'
+    version = '9.9.9' if mode == 'wrong_version' else '1.1.0'
+    duplicate = " name='com.armadillo.game'" if mode == 'duplicate_name' else ''
+    print(f"package: name='{package}' versionCode='{code}' versionName='{version}'"
+          f" platformBuildVersionName='16' platformBuildVersionCode='36'"
+          f" compileSdkVersion='37' compileSdkVersionCodename='17'{duplicate}")
 elif name == 'keytool':
     print('SHA256: ' + ':'.join(cert[i:i+2] for i in range(0, len(cert), 2)))
 else:
@@ -172,6 +179,14 @@ else:
                 self.assertIn('::error::', result.stdout)
                 self.assertIn('diagnostic from ' + name, result.stdout)
                 self.assertEqual(name, calls[-1])
+
+    def test_wrong_or_duplicate_apk_identity_is_rejected(self):
+        for mode in ('wrong_name', 'wrong_code', 'wrong_version', 'duplicate_name'):
+            with self.subTest(mode=mode):
+                result, calls = self.run_verification(mode)
+                self.assertNotEqual(0, result.returncode)
+                self.assertIn('APK package ID, version name or version code', result.stdout)
+                self.assertEqual(['apksigner', 'aapt', 'jarsigner', 'keytool'], calls)
 
     def test_missing_output_and_wrong_signer_fail_closed(self):
         result, calls = self.run_verification('missing')
