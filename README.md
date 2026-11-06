@@ -19,10 +19,10 @@ The first official release is [v1.0.0](https://github.com/behrouzxp-dev/Armadill
 
 - The UI is Jetpack Compose with Material 3 components (Compose BOM 2026.09.00, Material3 1.4.0) on a Material 3 colour scheme mapped onto the existing brand palette; every screen, dialog and the seating circle is a composable. The app uses RTL layout independently of the device language, with local exceptions for controls whose physical order is intentional.
 - The page canvas is taken from the icon background (`#F9CB03`), so the launcher icon and the app share one colour. Selected setup choices use navy `#07223C` with white text; unselected choices are transparent with a navy border. Other outlined action buttons retain their cream fill. The theme is static: it is always light and never follows the system theme setting.
-- The home screen displays the armadillo artwork, game name and subtitle, followed by the configured version (when available) and the offline/free/ad-free tagline. The start button uses the supplied artwork; saved-game continuation is conditional, and navy corner buttons use white settings and help icons. Page-header back arrows point left.
+- The home screen displays the game name and subtitle, followed by the configured version (when available) and the offline/free/ad-free tagline; no logo image is shown. The start button uses the supplied artwork; saved-game continuation is conditional, and a vertical stack of navy circular buttons with white Material design-system icons sits at the top right. Page-header back arrows point left.
 - The bundled Mikhak typeface (Regular and Bold masters, SIL Open Font License 1.1) is used for every label, button and canvas text.
 - During active play, pause/resume and early end are available in the pause panel; it also contains the scrollable word history. System interruptions suspend any active phase and offer a resume screen.
-- The user's original icon artwork is never edited; the launcher assets are generated from it with adaptive-icon safe-zone margins (artwork at 62% of the canvas) and include a monochrome layer for Android 13+ themed icons. `python3 tools/build_icon.py` regenerates them.
+- The user's original icon artwork is never edited; the launcher assets are generated from it with adaptive-icon safe-zone margins (artwork at 50% of the canvas, i.e. half the icon) and include a monochrome layer for Android 13+ themed icons. `python3 tools/build_icon.py` regenerates them.
 - Playable categories are jobs, animals, foods, places and technology, each with 100 words at each easy, medium and hard level: 1,500 unique words. The previous 723-word general bank remains in `words.json` but is not used in category selection or the word cycle.
 - Player names and order are stored separately and prefilled for subsequent games.
 - Round duration options are 120, 210 or 300 seconds; round counts are 3, 5 or 7. Category selection uses a three-column grid, and sound settings are available on the home screen.
@@ -54,7 +54,7 @@ The first official release is [v1.0.0](https://github.com/behrouzxp-dev/Armadill
 - `app/src/main/assets/categories.json` — five playable categories and 1,500 topic words
 - `app/src/main/assets/words.json` — retained legacy general bank, inactive in gameplay
 - `app/src/main/res/font/` — Mikhak Regular/Bold as Android font resources; `app/src/main/assets/fonts/` — their OFL license
-- `app/src/main/res/drawable-nodpi/` — original icon artwork, generated adaptive foreground, monochrome layer, transparent home logo and prepared play-button artwork
+- `app/src/main/res/drawable-nodpi/` — original icon artwork, generated adaptive foreground, monochrome layer and prepared play-button artwork
 - `game-core/src/test/` — Kotlin/JVM unit tests for the engine, codec, progress and roster
 - `app/src/main/java/com/armadillo/game/util/` — pure JVM-testable setup arithmetic
 - `app/src/test/`, `app/src/androidTest/` — app-layer JVM tests and Compose instrumented tests

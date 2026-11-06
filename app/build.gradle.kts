@@ -105,6 +105,8 @@ dependencies {
     implementation("androidx.activity:activity-compose:1.13.0")
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
+    // Material design-system icons (Settings, Info) used by the home controls.
+    implementation("androidx.compose.material:material-icons-core")
     implementation("androidx.compose.ui:ui-text")
     implementation("androidx.compose.foundation:foundation")
     implementation("androidx.compose.material3:material3")

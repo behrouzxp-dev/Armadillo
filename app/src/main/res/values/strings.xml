@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- All user-visible text. The default locale is Persian (fa). -->
 <resources>
-    <string name="a11y_app_logo">نشان آرمادیلو</string>
     <string name="app_name">آرمادیلو</string>
     <string name="home_subtitle">بازی گروهی حدس واژه</string>
     <string name="home_start">شروع بازی</string>

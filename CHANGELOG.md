@@ -4,8 +4,13 @@ This project follows semantic versioning (SemVer). The `1.0.0` entry below is th
 
 ## [Unreleased]
 
-Security, robustness and maintainability changes; no user-visible gameplay redesign and no new release version.
+Security, robustness, maintainability and home/game HUD presentation changes; the gameplay rules are unchanged and there is no new release version.
 
+- Reduce the launcher artwork to half of the 1024px canvas (`ART_FRACTION = 0.50`, a 25% margin on each side) and regenerate the adaptive foreground, monochrome layer and all mipmaps.
+- Remove the home-screen armadillo logo, its generated WebP and the now-unused accessibility string, while keeping the title, subtitle, version and tagline.
+- Stack the home sound-settings and rules controls vertically from the top right and replace the hand-copied vector drawables with Material design-system icons (`Icons.Filled.Settings`, `Icons.Filled.Info`); declare `material-icons-core` explicitly and cover both controls with an instrumented test.
+- Lead the game screen with the team time bars, filling left-to-right on a low-opacity team-colour track with full-colour loaded progress; put enlarged round indicators on the left and the player name in a team-bordered box on the right.
+- Make the team-coloured radial glow perceptible but restrained with a higher alpha, a tighter radius and an intermediate colour stop.
 - Disable the obsolete `Signing probe` workflow; document that `main` branch protection still requires owner action because the integration token receives HTTP 403.
 - Clamp stored seat/team indices in `GameCodec.decode` and assert their range in `GameState.init`; add a regression test that accrues time on a repaired state.
 - Restore `org.json:json:20260814` in `game-core` (PR #11 was reverted by a later commit).
