@@ -1,8 +1,12 @@
 name: Signed release
 
 on:
-  push:
-    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Stable version tag, for example v1.1.0
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -18,19 +22,21 @@ jobs:
     outputs:
       version: ${{ steps.check.outputs.version }}
       code: ${{ steps.check.outputs.code }}
+      commit: ${{ steps.check.outputs.commit }}
     steps:
-      - name: Check out tag and history
+      - name: Check out approved main commit and history
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
           persist-credentials: false
-      - name: Check tag, versions, prior releases and owner approval configuration
+      - name: Check owner, main, version and release history
         id: check
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          RELEASE_TAG: ${{ github.ref_name }}
-          REF_PROTECTED: ${{ github.ref_protected }}
+          RELEASE_TAG: ${{ inputs.tag }}
+          RELEASE_ACTOR: ${{ github.actor }}
+          RELEASE_TRIGGERING_ACTOR: ${{ github.triggering_actor }}
         run: python3 tools/release_preflight.py
 
   validate:
@@ -51,12 +57,10 @@ jobs:
     needs: [preflight, validate, security]
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    # This environment must already exist and require the repository owner's review.
-    environment: production
     permissions:
       contents: read
     steps:
-      - name: Check out the approved tag
+      - name: Check out the approved main commit
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
@@ -77,7 +81,7 @@ jobs:
           trap 'rm -f "$RELEASE_KEYSTORE_PATH"' EXIT
           for name in KEYSTORE_BASE64 RELEASE_STORE_PASSWORD RELEASE_KEY_ALIAS RELEASE_KEY_PASSWORD; do
             if [ -z "${!name:-}" ]; then
-              echo "::error::Required signing secret $name is not configured in the production environment."
+              echo "::error::Required signing secret $name is not available to the workflow."
               exit 1
             fi
           done
@@ -145,17 +149,25 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_TAG: ${{ inputs.tag }}
+          RELEASE_COMMIT: ${{ needs.preflight.outputs.commit }}
         run: |
           set -euo pipefail
           cd release-files
           sha256sum --check SHA256SUMS
-          # Creating a draft prevents a failed upload from publishing a partial release.
+          # Create only a new tag; the API rejects an existing ref without changing it.
+          gh api --method POST "repos/$GH_REPO/git/refs" \
+            -f "ref=refs/tags/$RELEASE_TAG" -f "sha=$RELEASE_COMMIT" > /dev/null
+          # Draft releases do not create tags until publication, so create the ref first.
           gh release create "$RELEASE_TAG" --verify-tag --draft \
             --title "Armadillo $RELEASE_TAG" \
             --notes "Owner-approved signed Android release. Verify SHA256SUMS before installing." \
             apk/release/app-release.apk bundle/release/app-release.aab SHA256SUMS apk/release/output-metadata.json
+          tag_commit="$(gh api "repos/$GH_REPO/git/ref/tags/$RELEASE_TAG" --jq '.object | select(.type == "commit") | .sha')"
+          test "$tag_commit" = "$RELEASE_COMMIT" || { echo '::error::Release tag does not point to the approved commit.'; exit 1; }
           gh release view "$RELEASE_TAG" --json assets --jq '.assets[].name' | sort > "$RUNNER_TEMP/assets.txt"
           printf '%s\n' SHA256SUMS app-release.aab app-release.apk output-metadata.json | sort > "$RUNNER_TEMP/expected-assets.txt"
           diff -u "$RUNNER_TEMP/expected-assets.txt" "$RUNNER_TEMP/assets.txt"
+          tag_commit="$(gh api "repos/$GH_REPO/git/ref/tags/$RELEASE_TAG" --jq '.object | select(.type == "commit") | .sha')"
+          test "$tag_commit" = "$RELEASE_COMMIT" || { echo '::error::Release tag does not point to the approved commit.'; exit 1; }
           gh release edit "$RELEASE_TAG" --draft=false

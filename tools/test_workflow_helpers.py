@@ -2,6 +2,10 @@
 import datetime as dt
 import json
 import io
+import hashlib
+import os
+import subprocess
+import textwrap
 import tempfile
 from pathlib import Path
 import unittest
@@ -36,36 +40,34 @@ class ReleasePreflightTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             release_preflight.parse_published_metadata({'applicationId': 'other', 'elements': []})
 
-    def test_owner_must_be_the_only_required_reviewer(self):
-        env = {'protection_rules': [{'type': 'required_reviewers', 'reviewers': [
-            {'type': 'User', 'reviewer': {'login': 'owner'}}]}]}
-        release_preflight.validate_approval(env, 'owner')
-        with self.assertRaises(ValueError):
-            release_preflight.validate_approval(env, 'different-owner')
-        env['protection_rules'][0]['reviewers'].append({'type': 'User', 'reviewer': {'login': 'other'}})
-        with self.assertRaises(ValueError):
-            release_preflight.validate_approval(env, 'owner')
-        with self.assertRaises(ValueError):
-            release_preflight.validate_approval({}, 'owner')
-
+    def test_only_owner_manual_dispatch_from_main_is_allowed(self):
+        release_preflight.validate_dispatch('workflow_dispatch', 'refs/heads/main', 'Owner', 'owner', 'owner')
+        for event, ref, actor, triggering in (
+            ('push', 'refs/heads/main', 'owner', 'owner'),
+            ('workflow_dispatch', 'refs/heads/other', 'owner', 'owner'),
+            ('workflow_dispatch', 'refs/heads/main', 'other', 'owner'),
+            ('workflow_dispatch', 'refs/heads/main', 'owner', 'other'),
+        ):
+            with self.subTest(event=event, ref=ref, actor=actor, triggering=triggering), self.assertRaises(ValueError):
+                release_preflight.validate_dispatch(event, ref, actor, triggering, 'owner')
 
     def test_preflight_checks_history_and_rejects_duplicate_or_old_codes(self):
-        env_data = {'protection_rules': [{'type': 'required_reviewers', 'reviewers': [
-            {'type': 'User', 'reviewer': {'login': 'owner'}}]}]}
         settings = {'GITHUB_REPOSITORY': 'owner/repo', 'GITHUB_REPOSITORY_OWNER': 'owner',
-                    'RELEASE_TAG': 'v1.1.0', 'REF_PROTECTED': 'true'}
+                    'RELEASE_TAG': 'v1.1.0', 'GITHUB_EVENT_NAME': 'workflow_dispatch',
+                    'GITHUB_REF': 'refs/heads/main', 'RELEASE_ACTOR': 'owner',
+                    'RELEASE_TRIGGERING_ACTOR': 'owner', 'GITHUB_SHA': 'samecommit'}
         with tempfile.TemporaryDirectory() as tmp:
             settings['GITHUB_OUTPUT'] = str(Path(tmp) / 'output')
             releases = [{'tag_name': 'v1.0.0'}]
             metadata = {'applicationId': 'com.armadillo.game', 'elements': [{'versionName': '1.0.0', 'versionCode': 1}]}
 
             def fake_command(*args):
-                if args[:3] == ('gh', 'api', 'repos/owner/repo/environments/production'):
-                    return json.dumps(env_data)
                 if args[:4] == ('gh', 'api', '--paginate', '--slurp'):
                     return json.dumps([releases])
                 if args[:2] == ('git', 'rev-parse'):
                     return 'samecommit'
+                if args[:3] == ('git', 'tag', '--list'):
+                    return ''
                 if args[:2] == ('git', 'show'):
                     return 'versionName = "1.0.0"\nversionCode = 1\n'
                 if args[:3] == ('gh', 'release', 'download'):
@@ -74,8 +76,7 @@ class ReleasePreflightTests(unittest.TestCase):
                 raise AssertionError(args)
 
             with patch.dict('os.environ', settings), patch('release_preflight.command', side_effect=fake_command), \
-                 patch('release_preflight.parse_gradle', side_effect=[('1.1.0', 2), ('1.0.0', 1), ('1.1.0', 2), ('1.0.0', 1), ('1.1.0', 1), ('1.0.0', 1)]), \
-                 patch('release_preflight.subprocess.run'):
+                 patch('release_preflight.parse_gradle', side_effect=[('1.1.0', 2), ('1.0.0', 1), ('1.1.0', 2), ('1.0.0', 1), ('1.1.0', 1), ('1.0.0', 1)]):
                 release_preflight.main()
                 releases.append({'tag_name': 'v1.1.0'})
                 with self.assertRaises(ValueError):
@@ -83,15 +84,97 @@ class ReleasePreflightTests(unittest.TestCase):
                 releases.pop()
                 with self.assertRaises(ValueError):
                     release_preflight.main()
-            self.assertIn('version=1.1.0\ncode=2', Path(settings['GITHUB_OUTPUT']).read_text())
+            self.assertIn('version=1.1.0\ncode=2\ncommit=samecommit', Path(settings['GITHUB_OUTPUT']).read_text())
 
-    def test_unprotected_tag_is_rejected_before_api_access(self):
-        with patch.dict('os.environ', {'RELEASE_TAG': 'v1.1.0', 'GITHUB_REPOSITORY': 'owner/repo',
-                                      'GITHUB_REPOSITORY_OWNER': 'owner', 'REF_PROTECTED': 'false'}), \
-             patch('release_preflight.command') as command:
-            with self.assertRaises(ValueError):
-                release_preflight.main()
-            command.assert_not_called()
+    def test_preflight_rejects_non_owner_existing_tag_and_stale_main(self):
+        settings = {'GITHUB_REPOSITORY': 'owner/repo', 'GITHUB_REPOSITORY_OWNER': 'owner',
+                    'RELEASE_TAG': 'v1.1.0', 'GITHUB_EVENT_NAME': 'workflow_dispatch',
+                    'GITHUB_REF': 'refs/heads/main', 'RELEASE_ACTOR': 'owner',
+                    'RELEASE_TRIGGERING_ACTOR': 'owner', 'GITHUB_SHA': 'commit'}
+        with patch.dict('os.environ', settings, clear=True):
+            with patch('release_preflight.command', side_effect=['commit', 'different']):
+                with self.assertRaisesRegex(ValueError, 'latest'):
+                    release_preflight.main()
+            with patch('release_preflight.command', side_effect=['commit', 'commit', 'v1.1.0']):
+                with self.assertRaisesRegex(ValueError, 'already exists'):
+                    release_preflight.main()
+            with patch.dict('os.environ', {'RELEASE_TRIGGERING_ACTOR': 'other'}), \
+                 patch('release_preflight.command') as command:
+                with self.assertRaisesRegex(ValueError, 'owner'):
+                    release_preflight.main()
+                command.assert_not_called()
+
+
+class WorkflowPublicationTests(unittest.TestCase):
+    def run_publisher(self, mode):
+        workflow = (Path(__file__).resolve().parent.parent / '.github/workflows/release.yml').read_text()
+        section = workflow.split('      - name: Verify checksums and publish a new release', 1)[1]
+        script = textwrap.dedent(section.split('        run: |', 1)[1].lstrip('\n'))
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            outputs = root / 'release-files'
+            for name in ('apk/release/app-release.apk', 'bundle/release/app-release.aab',
+                         'apk/release/output-metadata.json'):
+                path = outputs / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(name.encode())
+            checksums = []
+            for name in ('apk/release/app-release.apk', 'bundle/release/app-release.aab'):
+                digest = hashlib.sha256((outputs / name).read_bytes()).hexdigest()
+                checksums.append(f'{digest}  {name}\n')
+            (outputs / 'SHA256SUMS').write_text(''.join(checksums))
+            if mode == 'checksum':
+                (outputs / 'apk/release/app-release.apk').write_bytes(b'tampered')
+            bin_dir = root / 'bin'
+            bin_dir.mkdir()
+            gh = bin_dir / 'gh'
+            gh.write_text(r"""#!/usr/bin/env python3
+import os, sys
+args = sys.argv[1:]
+with open(os.environ['CALL_LOG'], 'a') as log:
+    log.write(' '.join(args) + '\n')
+if args[:3] == ['api', '--method', 'POST']:
+    sys.exit(1 if os.environ['MODE'] == 'existing' else 0)
+if args[:2] == ['release', 'create']:
+    sys.exit(0 if '--verify-tag' in args and '--draft' in args else 1)
+if args[:2] == ['release', 'view']:
+    print('app-release.apk\napp-release.aab\nSHA256SUMS\noutput-metadata.json')
+elif args and args[0] == 'api':
+    calls = open(os.environ['CALL_LOG']).read().splitlines()
+    checks = sum(call.startswith('api repos/') for call in calls)
+    mismatch = os.environ['MODE'] == 'changed' or (os.environ['MODE'] == 'changed_late' and checks > 1)
+    print('wrongcommit' if mismatch else 'commit')
+elif args[:2] == ['release', 'edit']:
+    sys.exit(0)
+""")
+            gh.chmod(0o755)
+            env = os.environ.copy()
+            env.update({'PATH': str(bin_dir) + os.pathsep + env['PATH'], 'CALL_LOG': str(root / 'calls'),
+                        'MODE': mode, 'RUNNER_TEMP': str(root), 'GH_REPO': 'owner/repo',
+                        'RELEASE_TAG': 'v1.1.0', 'RELEASE_COMMIT': 'commit'})
+            result = subprocess.run(['bash', '-e', '-c', script], cwd=root, env=env,
+                                    text=True, capture_output=True)
+            calls = (root / 'calls').read_text().splitlines() if (root / 'calls').exists() else []
+            return result.returncode, calls
+
+    def test_publisher_creates_new_ref_before_draft_and_verifies_before_publish(self):
+        status, calls = self.run_publisher('success')
+        self.assertEqual(0, status)
+        self.assertTrue(calls[0].startswith('api --method POST '))
+        self.assertIn('--verify-tag --draft', calls[1])
+        self.assertEqual(2, sum(call.startswith('api repos/') for call in calls))
+        self.assertTrue(calls[-1].startswith('release edit '))
+
+    def test_publisher_never_publishes_existing_or_changed_tag(self):
+        for mode in ('existing', 'changed', 'changed_late', 'checksum'):
+            with self.subTest(mode=mode):
+                status, calls = self.run_publisher(mode)
+                self.assertNotEqual(0, status)
+                self.assertFalse(any(call.startswith('release edit ') for call in calls))
+                if mode in ('existing', 'checksum'):
+                    self.assertFalse(any(call.startswith('release create ') for call in calls))
+                if mode == 'checksum':
+                    self.assertEqual([], calls)
 
 
 class DependencyAuditTests(unittest.TestCase):
