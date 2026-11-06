@@ -133,7 +133,7 @@ if os.environ['FAILING'] == name:
     print('diagnostic from ' + name)
     sys.exit(1)
 cert = '4f405db1954c1740566536b8568c4bae56d5a1e6184c2110cd3239af529826b8'
-if os.environ['FAILING'] == 'mismatch':
+if os.environ['FAILING'] == 'mismatch' or (os.environ['FAILING'] == 'bundle_mismatch' and name == 'keytool'):
     cert = '0' * 64
 if name == 'apksigner':
     print('Signer #1 certificate SHA-256 digest: ' + cert)
@@ -184,7 +184,11 @@ else:
         self.assertEqual([], calls)
         result, calls = self.run_verification('mismatch')
         self.assertNotEqual(0, result.returncode)
-        self.assertIn('original release signing certificate', result.stderr)
+        self.assertIn('original release signing certificate', result.stdout)
+        self.assertEqual(['apksigner', 'aapt', 'jarsigner', 'keytool'], calls)
+        result, calls = self.run_verification('bundle_mismatch')
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn('AAB signing certificate does not match', result.stdout)
         self.assertEqual(['apksigner', 'aapt', 'jarsigner', 'keytool'], calls)
 
 
