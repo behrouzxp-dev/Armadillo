@@ -7,31 +7,8 @@
     <color name="armadillo_icon_background">#F9CB03</color>
 
     <color name="design_brand_yellow">#F9CB03</color>
-    <color name="design_brand_navy">#07223C</color>
     <color name="design_canvas">@color/design_brand_yellow</color>
-    <color name="design_primary">@color/design_brand_navy</color>
+    <color name="design_primary">#07223C</color>
 
     <!-- Filled buttons: navy with white text. Outlined buttons: cream with a navy edge. -->
-    <color name="design_button_background">@color/design_brand_navy</color>
-    <color name="design_button_text">#FFFFFF</color>
-    <color name="design_button_disabled_text">#A9B4C2</color>
-    <color name="design_button_outline">@color/design_brand_navy</color>
-    <color name="design_button_ripple">#33FFFFFF</color>
-    <color name="design_button_outlined_fill">#FFFBEF</color>
-
-    <color name="design_text_primary">@color/design_brand_navy</color>
-    <color name="design_text_secondary">#38434F</color>
-
-    <color name="design_surface">#FFFBEB</color>
-    <color name="design_surface_raised">#FFFFFF</color>
-    <color name="design_surface_alt">#FFF2C4</color>
-    <color name="design_surface_accent">#FFE79B</color>
-    <color name="design_outline">#6F5500</color>
-
-    <color name="design_success">#1B6440</color>
-    <color name="design_danger">#A6190F</color>
-    <color name="design_danger_surface">#FFF1EF</color>
-
-    <color name="design_scrim">#B307223C</color>
-    <color name="design_ripple">#3307223C</color>
 </resources>

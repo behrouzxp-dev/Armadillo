@@ -30,9 +30,6 @@ class LocalWordBank(context: Context, private val random: Random = Random()) : W
         return candidates[random.nextInt(candidates.size)]
     }
 
-    override fun count(categories: Set<String>, difficulty: Int, legacyGeneralDifficulty: Int?): Int =
-        combinedWords(categories, difficulty, legacyGeneralDifficulty).size
-
     private fun combinedWords(categories: Set<String>, difficulty: Int, legacyGeneralDifficulty: Int?): List<String> {
         require(categories.isNotEmpty() && categories.all { it in WordCategories.all }) {
             "At least one known word category must be selected"

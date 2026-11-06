@@ -29,7 +29,7 @@ import com.armadillo.game.ui.DialogState
 import com.armadillo.game.ui.GameSnapshot
 import com.armadillo.game.ui.Screen
 import com.armadillo.game.ui.SetupDraft
-import kotlin.math.abs
+import com.armadillo.game.util.GameSetupMath
 
 /**
  * Owns the game engine, the timer, persistence and audio. The Compose layer only
@@ -208,8 +208,8 @@ class GameController(
             names = names,
             difficulty = saved.getInt(KEY_DIFFICULTY, 1).coerceIn(1, 3),
             categories = categories,
-            durationSeconds = nearestAllowedDuration(saved.getInt(KEY_DURATION, 120)),
-            rounds = nearestAllowedRounds(saved.getInt(KEY_ROUNDS, 5)),
+            durationSeconds = GameSetupMath.nearestAllowedDuration(saved.getInt(KEY_DURATION, 120)),
+            rounds = GameSetupMath.nearestAllowedRounds(saved.getInt(KEY_ROUNDS, 5)),
             isReplay = saved.getBoolean(KEY_REPLAY, false),
             returnToPreparation = saved.getBoolean(KEY_RETURN_TO_PREPARATION, false)
         )
@@ -333,10 +333,6 @@ class GameController(
         screen = Screen.RULES
     }
 
-    fun showAbout() {
-        screen = Screen.ABOUT
-    }
-
     fun openSoundSettings(returnTo: Screen) {
         settingsReturnScreen = returnTo
         screen = Screen.SOUND_SETTINGS
@@ -373,7 +369,7 @@ class GameController(
             Screen.CATEGORIES -> backFromCategories()
             Screen.OPTIONS -> showCategories()
             Screen.SOUND_SETTINGS -> returnFromSoundSettings()
-            Screen.RULES, Screen.ABOUT -> showHome()
+            Screen.RULES -> showHome()
             Screen.GAME, Screen.SYSTEM_PAUSED, Screen.EXPLOSION -> requestExitGame()
             Screen.RESULTS -> returnToHome()
         }
@@ -438,25 +434,6 @@ class GameController(
         engine = newEngine
         audio.playEffect()
         syncToPhase()
-    }
-
-    /**
-     * Returns to the seating page from the first preparation screen without losing the
-     * created game: names are edited in the draft and re-applied on the next start.
-     */
-    fun editOwnNames() {
-        val state = engine?.state ?: return
-        if (state.phase != GamePhase.PREPARATION) return
-        draft = SetupDraft(
-            playerCount = state.players.size,
-            names = state.players.sortedBy { it.seat }.map { it.name },
-            difficulty = state.difficulty,
-            categories = state.selectedCategories.toSet(),
-            durationSeconds = nearestAllowedDuration(state.durationSeconds),
-            rounds = nearestAllowedRounds(state.totalRounds),
-            returnToPreparation = true
-        )
-        showPlayers()
     }
 
     fun continueSavedGame() {
@@ -627,8 +604,8 @@ class GameController(
             names = state.players.sortedBy { it.seat }.map { it.name },
             difficulty = state.difficulty,
             categories = state.selectedCategories.toSet(),
-            durationSeconds = nearestAllowedDuration(state.durationSeconds),
-            rounds = nearestAllowedRounds(state.totalRounds),
+            durationSeconds = GameSetupMath.nearestAllowedDuration(state.durationSeconds),
+            rounds = GameSetupMath.nearestAllowedRounds(state.totalRounds),
             isReplay = true
         )
         store.clearGame()
@@ -776,12 +753,6 @@ class GameController(
             // Devices without vibration support continue normally.
         }
     }
-
-    private fun nearestAllowedDuration(value: Int): Int =
-        GameConstants.allowedDurations.minByOrNull { abs(it - value) } ?: 120
-
-    private fun nearestAllowedRounds(value: Int): Int =
-        GameConstants.allowedRounds.minByOrNull { abs(it - value) } ?: 5
 
     private companion object {
         const val LIVE_UPDATE_INTERVAL_MS = 250L

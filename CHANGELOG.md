@@ -4,6 +4,23 @@ This project follows semantic versioning (SemVer). The `1.0.0` entry below is th
 
 ## [Unreleased]
 
+Security, robustness and maintainability changes; no user-visible gameplay redesign and no new release version.
+
+- Disable the obsolete `Signing probe` workflow; document that `main` branch protection still requires owner action because the integration token receives HTTP 403.
+- Clamp stored seat/team indices in `GameCodec.decode` and assert their range in `GameState.init`; add a regression test that accrues time on a repaired state.
+- Restore `org.json:json:20260814` in `game-core` (PR #11 was reverted by a later commit).
+- Make the explosion acknowledgement an explicit `Role.Button` clickable with an accessibility action label; replace nested switch click targets with `toggleable`.
+- Add `app/src/test/` (`GameSetupMath`), `app/src/androidTest/` (Compose home-screen smoke test), `AndroidJUnitRunner` and an API 35 emulator job in `ci.yml`; upload the temporary Debug APK on pull requests only.
+- Restrict release dispatch via the optional `RELEASE_ACTOR_ALLOWLIST` repository variable, tolerate historical non-SemVer tags in preflight, and clean up a failed publication's own incomplete draft/tag.
+- Shorten the signed transfer artifact cleanup window to one hour, skip expired artifacts and tolerate already-deleted artifacts.
+- Replace deprecated `getPackageInfo`/`isStreamMute` calls, localise word-history timestamps to `fa` and give history rows stable keys; debounce volume writes until the slider is released.
+- Remove dead `editOwnNames`, `AboutScreen`, `checkpoint()`, `WordSource.count()` and unused strings/colours/hero bitmap; derive the system-bar colour from `BrandPalette.Canvas`.
+Document the API 36 large-screen decision: no temporary `PROPERTY_COMPAT_ALLOW_RESTRICTED_RESIZABILITY` opt-out is added because it does not restore portrait lock and disappears at target SDK 37; portrait is phone-only and large-screen layouts require device verification.
+- Convert large bitmap assets to visually identical lossless WebP (about 45% smaller) and remove the unreferenced hero bitmap; add `SECURITY.md` and correct documentation mismatches about tests, repository visibility, artifacts and workflow triggers.
+
+Not included: `gradle/verification-metadata.xml` (requires a trusted machine with JVM, Android SDK and network) and branch protection/rulesets (HTTP 403 with the available integration token).
+
+
 ## [1.2.0] — 2026-11-06 (com.armadillo.game)
 
 Prepared with `versionCode` 3. Confirm version codes in external distribution channels before distributing this build there.

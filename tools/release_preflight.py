@@ -53,7 +53,11 @@ def parse_published_metadata(metadata: dict) -> tuple[str, int]:
 def validate_dispatch(event: str, ref: str, actor: str, triggering_actor: str, owner: str) -> None:
     if event != 'workflow_dispatch' or ref != 'refs/heads/main':
         raise ValueError('Release must be manually dispatched from main')
-    if not owner or actor.lower() != owner.lower() or triggering_actor.lower() != owner.lower():
+    # Repository-owner comparison fails for organisation-owned repositories; an
+    # optional variable lets the owner grant additional trusted dispatch actors.
+    allowed = os.environ.get('RELEASE_ACTOR_ALLOWLIST') or owner
+    actors = {value.strip().lower() for value in allowed.split(',') if value.strip()}
+    if not actors or actor.lower() not in actors or triggering_actor.lower() not in actors:
         raise ValueError('Only the repository owner may start or rerun a release')
 
 
@@ -75,7 +79,11 @@ def main() -> None:
         old_tag = release['tag_name']
         if old_tag == tag:
             raise ValueError(f'A release or draft already exists for {tag}; nothing will be overwritten')
-        old_version = parse_tag(old_tag)
+        try:
+            old_version = parse_tag(old_tag)
+        except ValueError:
+            # Historical pre-release or non-version tags are not stable releases.
+            continue
         old_config = command('git', 'show', f'refs/tags/{old_tag}:app/build.gradle.kts')
         old_name, source_code = parse_gradle(old_config)
         with tempfile.TemporaryDirectory(prefix='armadillo-release-history-') as directory:

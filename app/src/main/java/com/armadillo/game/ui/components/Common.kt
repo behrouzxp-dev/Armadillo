@@ -4,7 +4,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -32,6 +32,10 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,7 +46,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -241,6 +244,7 @@ fun SoundControlCard(
     onPreview: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var pendingVolume by remember(volume) { mutableStateOf(volume.toFloat()) }
     SectionCard(modifier = modifier) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
@@ -268,14 +272,15 @@ fun SoundControlCard(
             Switch(checked = enabled, onCheckedChange = onEnabledChange, colors = brandSwitchColors())
         }
         Text(
-            text = stringResource(R.string.sound_volume, volume),
+            text = stringResource(R.string.sound_volume, pendingVolume.roundToInt()),
             style = MaterialTheme.typography.labelSmall,
             color = BrandPalette.TextSecondary,
             modifier = Modifier.padding(top = Dim.XXXS)
         )
         Slider(
-            value = volume.toFloat(),
-            onValueChange = { onVolumeChange(it.roundToInt().coerceIn(0, 100)) },
+            value = pendingVolume,
+            onValueChange = { pendingVolume = it },
+            onValueChangeFinished = { onVolumeChange(pendingVolume.roundToInt().coerceIn(0, 100)) },
             valueRange = 0f..100f,
             colors = brandSliderColors()
         )
@@ -296,7 +301,7 @@ fun ToggleRow(
             .clip(shape)
             .background(BrandPalette.SurfaceAlt)
             .border(1.dp, BrandPalette.Outline, shape)
-            .clickable(role = Role.Switch) { onCheckedChange(!checked) }
+            .toggleable(value = checked, onValueChange = onCheckedChange, role = Role.Switch)
             .padding(horizontal = Dim.SM, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -306,7 +311,7 @@ fun ToggleRow(
             color = BrandPalette.Navy,
             modifier = Modifier.weight(1f)
         )
-        Switch(checked = checked, onCheckedChange = onCheckedChange, colors = brandSwitchColors())
+        Switch(checked = checked, onCheckedChange = null, colors = brandSwitchColors())
     }
 }
 

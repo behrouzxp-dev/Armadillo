@@ -85,6 +85,8 @@ data class GameState(
         require(selectedCategories.isNotEmpty() && selectedCategories.all { it in WordCategories.all })
         require(teamStats.size == players.size / 2)
         require(currentPlayerIndex in players.indices)
+        require(players.all { it.teamIndex in 0 until teamStats.size })
+        require(players.all { it.seat in players.indices })
     }
 
     val teamCount: Int get() = players.size / 2

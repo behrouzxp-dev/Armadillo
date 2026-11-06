@@ -40,6 +40,15 @@ class ReleasePreflightTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             release_preflight.parse_published_metadata({'applicationId': 'other', 'elements': []})
 
+    def test_additional_actor_allowlist_is_honoured(self):
+        with patch.dict('os.environ', {'RELEASE_ACTOR_ALLOWLIST': 'Owner, Maintainer'}):
+            release_preflight.validate_dispatch(
+                'workflow_dispatch', 'refs/heads/main', 'maintainer', 'maintainer', 'owner')
+        with patch.dict('os.environ', {'RELEASE_ACTOR_ALLOWLIST': 'Owner'}):
+            with self.assertRaises(ValueError):
+                release_preflight.validate_dispatch(
+                    'workflow_dispatch', 'refs/heads/main', 'other', 'other', 'owner')
+
     def test_only_owner_manual_dispatch_from_main_is_allowed(self):
         release_preflight.validate_dispatch('workflow_dispatch', 'refs/heads/main', 'Owner', 'owner', 'owner')
         for event, ref, actor, triggering in (
@@ -58,7 +67,7 @@ class ReleasePreflightTests(unittest.TestCase):
                     'RELEASE_TRIGGERING_ACTOR': 'owner', 'GITHUB_SHA': 'samecommit'}
         with tempfile.TemporaryDirectory() as tmp:
             settings['GITHUB_OUTPUT'] = str(Path(tmp) / 'output')
-            releases = [{'tag_name': 'v1.0.0'}]
+            releases = [{'tag_name': 'v1.0.0'}, {'tag_name': 'nightly-2026-11-05'}]
             metadata = {'applicationId': 'com.armadillo.game', 'elements': [{'versionName': '1.0.0', 'versionCode': 1}]}
 
             def fake_command(*args):
@@ -267,6 +276,12 @@ elif args[:2] == ['release', 'edit']:
         self.assertEqual(2, sum(call.startswith('api repos/') for call in calls))
         self.assertTrue(calls[-1].startswith('release edit '))
 
+    def test_publisher_cleans_up_incomplete_draft_on_failure(self):
+        status, calls = self.run_publisher('changed')
+        self.assertNotEqual(0, status)
+        self.assertFalse(any(call.startswith('release edit ') for call in calls))
+        self.assertTrue(any(call.startswith('release delete ') for call in calls))
+
     def test_publisher_never_publishes_existing_or_changed_tag(self):
         for mode in ('existing', 'changed', 'changed_late', 'checksum'):
             with self.subTest(mode=mode):
@@ -316,15 +331,24 @@ class DependencyAuditTests(unittest.TestCase):
 
 
 class CleanupTests(unittest.TestCase):
-    def test_only_known_artifacts_strictly_older_than_one_day(self):
+    def test_known_artifacts_use_short_and_long_retention_windows(self):
         now = dt.datetime(2026, 11, 6, 12, tzinfo=dt.timezone.utc)
         pages = [{'artifacts': [
             {'id': 1, 'name': 'armadillo-ci-debug-apk', 'created_at': '2026-11-05T11:59:59Z'},
             {'id': 2, 'name': 'armadillo-ci-debug-apk', 'created_at': '2026-11-05T12:00:00Z'},
             {'id': 3, 'name': 'official-release', 'created_at': '2020-01-01T00:00:00Z'},
             {'id': 4, 'name': 'armadillo-ci-signed-release', 'created_at': '2026-11-06T10:00:00Z'},
+            {'id': 6, 'name': 'armadillo-ci-debug-apk', 'created_at': '2020-01-01T00:00:00Z', 'expired': True},
         ]}, {'artifacts': [{'id': 5, 'name': 'debug-check-log', 'created_at': '2020-01-01T00:00:00Z'}]}]
-        self.assertEqual([1, 5], cleanup_artifacts.stale_artifact_ids(pages, now))
+        self.assertEqual([1, 4, 5], cleanup_artifacts.stale_artifact_ids(pages, now))
+
+    def test_already_removed_artifact_does_not_fail_cleanup(self):
+        page = {'artifacts': [{'id': 7, 'name': 'armadillo-ci-debug-apk',
+                              'created_at': '2020-01-01T00:00:00Z'}]}
+        with patch.dict('os.environ', {'GITHUB_REPOSITORY': 'owner/repo'}), \
+             patch('subprocess.check_output', return_value=json.dumps([page])), \
+             patch('subprocess.run', side_effect=subprocess.CalledProcessError(1, 'gh')):
+            cleanup_artifacts.main()
 
     def test_cleanup_uses_only_actions_artifact_endpoint(self):
         now = dt.datetime(2026, 11, 6, 12, tzinfo=dt.timezone.utc)

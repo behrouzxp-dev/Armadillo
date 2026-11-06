@@ -13,7 +13,6 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
 import com.armadillo.game.GameController
 import com.armadillo.game.ui.components.LocalSoundEffect
-import com.armadillo.game.ui.screens.AboutScreen
 import com.armadillo.game.ui.screens.CategoriesScreen
 import com.armadillo.game.ui.screens.ExplosionScreen
 import com.armadillo.game.ui.screens.GameScreen
@@ -53,7 +52,6 @@ fun ArmadilloApp(controller: GameController) {
                 Screen.OPTIONS -> OptionsScreen(controller)
                 Screen.SOUND_SETTINGS -> SoundSettingsScreen(controller)
                 Screen.RULES -> RulesScreen(controller)
-                Screen.ABOUT -> AboutScreen(controller)
                 Screen.GAME -> GameScreen(controller)
                 Screen.EXPLOSION -> ExplosionScreen(controller)
                 Screen.SYSTEM_PAUSED -> SystemPausedScreen(controller)

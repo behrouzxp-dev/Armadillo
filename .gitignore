@@ -34,3 +34,7 @@ signing.properties
 *.pfx
 *.p8
 *.key
+
+# Python helper caches
+__pycache__/
+*.py[cod]

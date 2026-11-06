@@ -107,8 +107,8 @@ class GameAudio(context: Context, initialSettings: SoundSettings) {
     private fun systemAllowsSound(): Boolean {
         return try {
             val ringAllows = audioManager.ringerMode == AudioManager.RINGER_MODE_NORMAL
-            val streamAllows = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) > 0 &&
-                !audioManager.isStreamMute(AudioManager.STREAM_MUSIC)
+            // A muted music stream reports volume 0; isStreamMute() was deprecated in API 23.
+            val streamAllows = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) > 0
             ringAllows && streamAllows
         } catch (_: Exception) {
             false

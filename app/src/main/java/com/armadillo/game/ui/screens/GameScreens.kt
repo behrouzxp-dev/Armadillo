@@ -408,6 +408,7 @@ private fun ManualPauseOverlay(controller: GameController, description: String, 
 fun ExplosionScreen(controller: GameController) {
     val game = controller.game ?: return
     val description = stringResource(R.string.a11y_explosion)
+    val continueLabel = stringResource(R.string.a11y_explosion_continue)
     val transition = rememberInfiniteTransition(label = "blast")
     val blastScale by transition.animateFloat(
         initialValue = 0.75f,
@@ -419,7 +420,11 @@ fun ExplosionScreen(controller: GameController) {
         modifier = Modifier
             .fillMaxSize()
             .background(BrandPalette.Canvas)
-            .pointerInput(Unit) { detectTapGestures { controller.acknowledgeExplosion() } }
+            .clickable(
+                role = Role.Button,
+                onClickLabel = continueLabel,
+                onClick = { controller.acknowledgeExplosion() }
+            )
             .semantics { contentDescription = description }
             .padding(Dim.ExplosionPage),
         horizontalAlignment = Alignment.CenterHorizontally,

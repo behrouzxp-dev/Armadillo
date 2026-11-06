@@ -45,9 +45,11 @@ This document describes the current implementation and operational constraints. 
 - Use the bundled Mikhak typeface and preserve its [OFL license](../app/src/main/assets/fonts/Mikhak-OFL.txt). Keep the original icon artwork untouched; launcher assets are generated from it with adaptive-icon safe-zone margins, a monochrome layer and both normal and round resources.
 - Team identity must never rely on colour alone: a team number accompanies every colour marker.
 - Every interactive seat, control and toggle must be reachable with a screen reader, and text must follow the system font scale.
+- The explosion acknowledgement must be an explicit button-like accessibility action with a labelled click, not only a raw tap detector; toggles must expose one switch node rather than two nested clickable nodes.
+- On Android 16 (API 36), a portrait request is ignored on displays of at least 600dp smallest width; large-screen layouts must be verified on a real device or emulator before release. The temporary `PROPERTY_COMPAT_ALLOW_RESTRICTED_RESIZABILITY` opt-out is deliberately not used: it does not restore portrait lock and is removed when targeting API 37.
 
 ## Verification and release constraints
 
 - Use the commands and signing precautions in [README.md](../README.md#build-and-test). Validate bundled words with `python3 tools/validate_words.py`.
-- Run applicable unit tests, Debug and unsigned Release builds and lint for code or resource changes; validate real-device installation and flows when a device or emulator is available. The saved-game codec must keep unit-test coverage for schema, migration and invalid-value behaviour. Do not infer current results from a historical report.
+- Run applicable JVM and instrumented tests, Debug and unsigned Release builds and lint for code or resource changes; validate real-device installation and flows when a device or emulator is available. The saved-game codec must keep unit-test coverage for schema, migration and invalid-value behaviour. Do not infer current results from a historical report.
 - The owner must approve an official release; keep signing material outside the repository. A Debug APK signed by a different key cannot normally update a Release installation, and uninstalling can remove local app data.

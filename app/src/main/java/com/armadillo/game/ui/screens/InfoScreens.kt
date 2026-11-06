@@ -1,19 +1,13 @@
 package com.armadillo.game.ui.screens
 
-import android.content.pm.PackageManager
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.armadillo.game.GameController
 import com.armadillo.game.R
 import com.armadillo.game.ui.components.PageScaffold
@@ -52,47 +46,6 @@ fun RulesScreen(controller: GameController) {
                 modifier = Modifier.padding(bottom = 7.dp)
             )
         }
-    }
-}
-
-@Composable
-fun AboutScreen(controller: GameController) {
-    val context = LocalContext.current
-    val version = runCatching {
-        @Suppress("DEPRECATION")
-        context.packageManager.getPackageInfo(context.packageName, 0).versionName?.takeIf { it.isNotBlank() }
-    }.getOrNull()
-    PageScaffold(
-        title = stringResource(R.string.home_about),
-        onBack = { controller.showHome() }
-    ) {
-        Spacer(Modifier.height(14.dp))
-        Text(
-            text = stringResource(R.string.about_product_name),
-            style = MaterialTheme.typography.headlineLarge,
-            color = BrandPalette.Navy,
-            modifier = Modifier.padding(bottom = Dim.SM)
-        )
-        if (version != null) {
-            Text(
-                text = stringResource(R.string.about_version, version),
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Bold,
-                color = BrandPalette.Navy,
-                modifier = Modifier.padding(bottom = 14.dp)
-            )
-        }
-        Text(
-            text = stringResource(R.string.about_body),
-            style = MaterialTheme.typography.bodyMedium,
-            color = BrandPalette.TextSecondary,
-            modifier = Modifier.padding(bottom = Dim.MD)
-        )
-        Text(
-            text = stringResource(R.string.about_tagline),
-            style = MaterialTheme.typography.bodySmall,
-            color = BrandPalette.TextSecondary
-        )
     }
 }
 

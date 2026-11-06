@@ -56,7 +56,7 @@ Android backup is disabled in the manifest; no in-app backup/export is documente
 
 ## Build and verification
 
-The Gradle wrapper, Android SDK and JDK requirements and commands are in [README.md](../README.md#build-and-test). CI calls a shared validation workflow for word validation, JVM tests, Debug and unsigned Release builds and both lint variants. A separate dependency audit runs for PRs and protected-branch pushes; the manually dispatched signed release also invokes it before the signing job. See [GITHUB_ACTIONS.md](GITHUB_ACTIONS.md) for the workflow audit, runtime requirements and limitations. No device/emulator testing is implied by a successful workflow. The wrapper is pinned to Gradle 9.8.2 and verified against `distributionSha256Sum`.
+The Gradle wrapper, Android SDK and JDK requirements and commands are in [README.md](../README.md#build-and-test). CI calls a shared validation workflow for word validation, JVM tests, Debug and unsigned Release builds and both lint variants. A separate dependency audit runs for PRs and protected-branch pushes; the manually dispatched signed release also invokes it before the signing job. See [GITHUB_ACTIONS.md](GITHUB_ACTIONS.md) for the workflow audit, runtime requirements and limitations. Pull requests and manual CI runs also execute Compose instrumented tests on an API 35 emulator; this is a smoke test, not full physical-device or upgrade verification. The wrapper is pinned to Gradle 9.8.2 and verified against `distributionSha256Sum`.
 
 ## Platform behaviour
 
