@@ -36,6 +36,8 @@ The repository contains two Gradle modules. `app` is the Android application mod
 
 The Compose root provides right-to-left layout direction for screens and dialogs regardless of the device locale. Scoped left-to-right overrides preserve the physical ordering of the home corner controls and selected in-game controls.
 
+Setup selection cards and duration/round buttons show the page background when unselected and navy with white text when selected. Their selection state is exposed to accessibility services. Other outlined actions retain their existing fills. The home corner controls use white settings/help icons on navy circles, and the shared page-header back arrow points left.
+
 ## State and timing
 
 `GameState` has `PREPARATION`, `PLAYING`, `MANUAL_PAUSED`, `SYSTEM_PAUSED`, `EXPLODING` and `RESULTS` phases. `GameController.syncToPhase()` maps the engine phase to a Compose screen (`GAME`, `EXPLOSION`, `SYSTEM_PAUSED`, `RESULTS`). `GameEngine` measures elapsed time in nanoseconds from its supplied monotonic clock; the activity passes Android's `SystemClock.elapsedRealtimeNanos()`. Its handler calls `tick()` during play, updates the UI and requests periodic checkpoints. UI refresh intervals do not define elapsed game time.

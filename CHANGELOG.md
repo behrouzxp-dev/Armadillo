@@ -4,6 +4,7 @@ This project follows semantic versioning (SemVer). The `1.0.0` entry below is th
 
 ## [Unreleased]
 
+- Show unselected setup choices transparently on the yellow canvas and selected choices in navy with white text; update home settings/help icons and point page-header back arrows left.
 - Fix release APK identity parsing so Android SDK codename fields cannot replace the application ID; reject duplicate identity fields.
 - Report the failing APK/AAB verification command and its diagnostic output instead of suppressing errors.
 - Replace tag-triggered release and mandatory environment/tag protection with owner-dispatched releases from `main`, retaining version, history, signing-certificate and draft-publication checks.
