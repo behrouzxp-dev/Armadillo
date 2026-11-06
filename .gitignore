@@ -24,3 +24,13 @@ Thumbs.db
 *.keystore
 keystore.properties
 signing.properties
+
+# Local credentials and private key material
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+*.pfx
+*.p8
+*.key
