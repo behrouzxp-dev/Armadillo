@@ -46,7 +46,7 @@ This document describes the current implementation and operational constraints. 
 - Team identity must never rely on colour alone: a team number accompanies every colour marker.
 - Every interactive seat, control and toggle must be reachable with a screen reader, and text must follow the system font scale.
 - The explosion acknowledgement must be an explicit button-like accessibility action with a labelled click, not only a raw tap detector; toggles must expose one switch node rather than two nested clickable nodes.
-- On Android 16 (API 36), a portrait request is ignored on displays of at least 600dp smallest width; large-screen layouts must be verified on a real device or emulator before release.
+- On Android 16 (API 36), a portrait request is ignored on displays of at least 600dp smallest width; large-screen layouts must be verified on a real device or emulator before release. The temporary `PROPERTY_COMPAT_ALLOW_RESTRICTED_RESIZABILITY` opt-out is deliberately not used: it does not restore portrait lock and is removed when targeting API 37.
 
 ## Verification and release constraints
 

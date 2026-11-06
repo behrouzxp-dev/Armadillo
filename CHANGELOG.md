@@ -15,6 +15,7 @@ Security, robustness and maintainability changes; no user-visible gameplay redes
 - Shorten the signed transfer artifact cleanup window to one hour, skip expired artifacts and tolerate already-deleted artifacts.
 - Replace deprecated `getPackageInfo`/`isStreamMute` calls, localise word-history timestamps to `fa` and give history rows stable keys; debounce volume writes until the slider is released.
 - Remove dead `editOwnNames`, `AboutScreen`, `checkpoint()`, `WordSource.count()` and unused strings/colours/hero bitmap; derive the system-bar colour from `BrandPalette.Canvas`.
+Document the API 36 large-screen decision: no temporary `PROPERTY_COMPAT_ALLOW_RESTRICTED_RESIZABILITY` opt-out is added because it does not restore portrait lock and disappears at target SDK 37; portrait is phone-only and large-screen layouts require device verification.
 - Convert large bitmap assets to visually identical lossless WebP (about 45% smaller) and remove the unreferenced hero bitmap; add `SECURITY.md` and correct documentation mismatches about tests, repository visibility, artifacts and workflow triggers.
 
 Not included: `gradle/verification-metadata.xml` (requires a trusted machine with JVM, Android SDK and network) and branch protection/rulesets (HTTP 403 with the available integration token).
