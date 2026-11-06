@@ -4,19 +4,23 @@ This project follows semantic versioning (SemVer). The `1.0.0` entry below is th
 
 ## [Unreleased]
 
+## [1.2.0] — 2026-11-06 (com.armadillo.game)
+
+Prepared with `versionCode` 3. Confirm version codes in external distribution channels before distributing this build there.
+
 - Redesign the game HUD with round indicators, team-coloured time bars and a current-player glow; move the pause control beside swap, place the scrollable word history in pause, and start prepared rounds by tapping the screen.
 - Replace the home play control artwork with the supplied image, cleaned of its checkerboard background, and move the version and offline/free/ad-free tagline beneath the subtitle instead of showing a separate About section.
 - Show unselected setup choices transparently on the yellow canvas and selected choices in navy with white text; update home settings/help icons and point page-header back arrows left.
+
+## [1.1.0] — 2026-11-06 (com.armadillo.game)
+
+Released with `versionCode` 2.
+
 - Fix release APK identity parsing so Android SDK codename fields cannot replace the application ID; reject duplicate identity fields.
 - Report the failing APK/AAB verification command and its diagnostic output instead of suppressing errors.
 - Replace tag-triggered release and mandatory environment/tag protection with owner-dispatched releases from `main`, retaining version, history, signing-certificate and draft-publication checks.
 - Reduce unnecessary disclosure in historical notes and image metadata; ignore common local secret and private-key files. Existing Git history is unchanged.
-
-## [1.1.0]
-
-Prepared with `versionCode` 2. Confirm version codes in all external distribution channels before publication.
-
-- Consolidate Android CI into a reusable validation build, add OSV/POM dependency auditing and one-day temporary artifact retention with six-hour cleanup, and guard tag-triggered signed releases with protected tags, owner approval, version history and certificate verification.
+- Consolidate Android CI into a reusable validation build and add OSV/POM dependency auditing and one-day temporary artifact retention with six-hour cleanup.
 - Centre the unboxed word and record a correct guess by tapping the play area; retain separate pause and full-width swap controls with a clear disabled state. Shorten the active-time swap lock to five seconds and migrate schema 3 saved cooldowns.
 - Change the fifth team colour from gold to dark navy and replace the setup circle’s name labels with a top-down table and numbered, team-coloured armchairs; keep seat tapping and the accessible name-editing list.
 - Replace the shared page-header back button with an accessible right-pointing arrow icon for RTL navigation.
@@ -82,7 +86,7 @@ Prepared with `versionCode` 2. Confirm version codes in all external distributio
 - Built a Release APK and verified its RSA 2048 signature. The established key and recovery file were historically kept in an owner-only private signing folder at the owner's request.
 - Recorded 17 passing unit tests and release lint with 0 errors and 29 warnings; no device/emulator installation test was performed.
 
-## [1.2.0] — 2026-10-29
+## [1.2.0] — 2026-10-29 (historical com.dour.game)
 
 - Renamed the application Armadillo, retaining `applicationId=com.dour.game` and the existing Kotlin/Android codebase.
 - Used the user's supplied icon artwork; retained the original unchanged and created only the required scaling and padding for the adaptive icon layer.
@@ -96,7 +100,7 @@ Prepared with `versionCode` 2. Confirm version codes in all external distributio
 - Recorded displayed words with player name, display time, round and outcome.
 - Increased `versionCode` to 3 and `versionName` to 1.2.0.
 
-## [1.1.0] — 2026-10-26
+## [1.1.0] — 2026-10-26 (historical com.dour.game)
 
 - Increased the player limit to 10; even counts of 4, 6, 8 and 10 form 2 to 5 two-player teams respectively.
 - Added multi-category word selection, fixed for the duration of each game.
