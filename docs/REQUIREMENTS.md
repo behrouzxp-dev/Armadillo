@@ -15,8 +15,8 @@ This document describes the current implementation and operational constraints. 
 ## Home screen
 
 - Show the game name and subtitle without a surrounding card and without a logo image. Under the subtitle, show the version when available and the offline/free/ad-free tagline. Do not show a separate About section on the home screen.
-- Place the supplied play artwork on the central start control, with its embedded checkerboard background removed, and show the saved-game continuation action only when a saved game is available. Preserve the start action, sound effect and accessibility label.
-- Provide accessible sound settings and rules icon controls stacked vertically downward from the physical top-right corner. Use navy circular backgrounds with white Material design-system icons (settings and info). Keep the main content scrollable on smaller screens and at larger font scales.
+- Anchor the supplied play artwork to the exact centre of the home screen on both axes, with its embedded checkerboard background removed. Place a slowly pulsing electric neon-blue glow beneath the control; the glow must become static when the system animation scale is zero. Show the saved-game continuation action only when a saved game is available. Preserve the start action, sound effect and accessibility label.
+- Provide accessible sound settings and rules icon controls stacked vertically downward from the physical top-right corner. Use navy circular backgrounds with white Material design-system icons (settings and info). Keep the title text readable on smaller screens and at larger font scales without moving the centred start control.
 
 ## Game setup
 
