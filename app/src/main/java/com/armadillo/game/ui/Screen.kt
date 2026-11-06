@@ -14,7 +14,6 @@ enum class Screen {
     OPTIONS,
     SOUND_SETTINGS,
     RULES,
-    ABOUT,
     GAME,
     EXPLOSION,
     SYSTEM_PAUSED,

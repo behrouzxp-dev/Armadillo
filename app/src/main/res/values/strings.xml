@@ -8,7 +8,6 @@
     <string name="home_continue_saved">ادامه بازی قبلی</string>
     <string name="sound_settings_title">تنظیمات صدا</string>
     <string name="home_rules">قوانین بازی</string>
-    <string name="home_about">درباره بازی</string>
     <string name="home_tagline">آفلاین · رایگان · بدون تبلیغ</string>
     <string name="action_back">بازگشت</string>
     <string name="action_ok">باشه</string>
@@ -57,16 +56,12 @@
     <string name="game_pause">توقف موقت</string>
     <string name="a11y_game_pause">توقف موقت بازی</string>
     <string name="game_resume">ادامه بازی</string>
-    <string name="a11y_next_player">حرکت پادساعت‌گرد به بازیکن بعدی</string>
-    <string name="game_word_hidden">کلمه پس از شروع نمایش داده می‌شود</string>
-    <string name="game_start_round">شروع</string>
     <string name="game_start_by_touch">برای شروع دست، صفحه را لمس کنید</string>
     <string name="game_team_progress">تیم %1$d، زمان ثبت‌شده %2$d ثانیه</string>
     <string name="game_team_number">تیم %1$d</string>
     <string name="game_round_completed">دست %1$d، تمام‌شده</string>
     <string name="game_round_active">دست %1$d، در حال اجرا</string>
     <string name="game_round_upcoming">دست %1$d، شروع‌نشده</string>
-    <string name="game_edit_names">ویرایش نام بازیکنان</string>
     <string name="game_swap">تعویض کلمه</string>
     <string name="game_correct_hint">برای ثبت حدس درست، صفحه را لمس کنید</string>
     <string name="game_swap_locked">تعویض کلمه · غیرفعال</string>
@@ -75,6 +70,7 @@
     <string name="game_end">پایان بازی</string>
     <string name="system_pause_hint">وضعیت بازی ذخیره شده است. برای ادامه، دکمه را بزنید.</string>
     <string name="a11y_explosion">انفجار؛ برای ادامه صفحه را لمس کنید</string>
+    <string name="a11y_explosion_continue">ادامه بازی پس از انفجار</string>
     <string name="explosion_boom">بوم!</string>
     <string name="explosion_tap_hint">برای ادامه، صفحه را لمس کنید</string>
     <string name="results_title">نتایج بازی</string>
@@ -111,9 +107,6 @@
     <string name="rules_explosion_body">زمان دست در پس‌زمینهٔ بازی محاسبه می‌شود و نمایش داده نمی‌شود. با پایان زمان، تیمی که گوشی دستش است ۱۰ ثانیه جریمه می‌گیرد. انیمیشن انفجار تا لمس صفحه باقی می‌ماند؛ لمس، صفحهٔ آماده‌سازی دست بعد را باز می‌کند یا در آخرین دست نتایج را نشان می‌دهد.</string>
     <string name="rules_pause_body">با رفتن برنامه به پس‌زمینه، قفل صفحه یا وقفهٔ سیستمی، شمارش معکوس، زمان تیم‌ها و صدا متوقف می‌شوند. صفحهٔ ادامهٔ بازی، وضعیت ذخیره‌شده را از همان زمان باقی‌مانده بازمی‌گرداند؛ زمان بیرون از برنامه حساب نمی‌شود. تنظیمات صدا از صفحهٔ اصلی در دسترس است.</string>
     <string name="rules_ranking_body">زمان نهایی هر تیم برابر است با زمان واقعی گوشی‌داشتن به‌علاوهٔ جریمه‌ها. ابتدا زمان کمتر، سپس انفجار کمتر، پاسخ صحیح بیشتر و تعویض کمتر ملاک است. نتایج نام همهٔ اعضای تیم، رنگ تیم و امتیازهای همان بازی را نشان می‌دهد؛ تساوی کامل، رتبهٔ مشترک دارد. پایان زودهنگام نیز نتایج ثبت‌شده تا همان لحظه را محاسبه می‌کند.</string>
-    <string name="about_product_name">آرمادیلو (Armadillo)</string>
-    <string name="about_body">یک بازی گروهی، آفلاین و فارسی برای توضیح و حدس‌زدن واژه‌ها. نام بازیکنان، زمان‌سنج و وضعیت بازی روی همین دستگاه نگهداری می‌شوند.</string>
-    <string name="about_tagline">رایگان · بدون تبلیغ</string>
     <string name="sound_hint">تغییرها بلافاصله ذخیره و اعمال می‌شوند. هنگام رفتن بازی به پس‌زمینه، شمارش معکوس و صدا متوقف می‌شوند.</string>
     <string name="sound_beep">بوق بمب</string>
     <string name="sound_explosion">صدای انفجار</string>
@@ -140,13 +133,10 @@
     <string name="count_option_teams">%1$d تیم · دو نفر در هر تیم</string>
     <string name="options_duration_option">%1$d ثانیه</string>
     <string name="options_rounds_option">%1$d دست</string>
-    <string name="game_round_of">دست %1$d از %2$d</string>
     <string name="explosion_penalty">تیم %1$d جریمهٔ ۱۰ ثانیه‌ای گرفت</string>
     <string name="explosion_round_finished">دست %1$d پایان یافت</string>
     <string name="about_version">نسخهٔ %1$s</string>
     <string name="sound_volume">بلندی صدا: %1$d٪</string>
-    <string name="sound_volume_live">بلندی صدا: %1$d٪</string>
-    <string name="game_team_chip">ت%1$d %2$ds</string>
     <string name="time_unknown">زمان نامشخص</string>
     <string name="outcome_pending">در جریان</string>
     <string name="outcome_correct">حدس درست</string>
@@ -159,7 +149,5 @@
     <string name="category_card_description">%1$s، %2$s</string>
     <string name="category_selected_label">✓ %1$s</string>
     <string name="a11y_seating_circle">چیدمان دایره‌ای صندلی‌ها. برای ویرایش نام، از دکمه‌های زیر دایره استفاده کنید.</string>
-    <string name="seating_table">میز بازی</string>
     <string name="seating_seat_number">%1$d</string>
-    <string name="seating_team_seat">تیم %1$d · %2$d</string>
 </resources>

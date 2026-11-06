@@ -6,10 +6,12 @@ import androidx.activity.addCallback
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.ui.graphics.toArgb
 import com.armadillo.game.audio.GameAudio
 import com.armadillo.game.data.LocalStore
 import com.armadillo.game.ui.ArmadilloApp
 import com.armadillo.game.ui.theme.ArmadilloTheme
+import com.armadillo.game.ui.theme.BrandPalette
 
 /**
  * Thin host: the activity only wires the platform lifecycle to [GameController] and
@@ -71,7 +73,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private companion object {
-        /** The canvas colour sampled from the launcher icon (design_brand_yellow). */
-        const val CANVAS_COLOR = 0xFFF9CB03.toInt()
+        /** System bars use [BrandPalette.Canvas], the single source of truth for the UI palette. */
+        val CANVAS_COLOR: Int get() = BrandPalette.Canvas.toArgb()
     }
 }

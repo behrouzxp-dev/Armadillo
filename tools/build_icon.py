@@ -2,7 +2,8 @@
 """Build launcher assets from the owner's original icon artwork.
 
 The source artwork is never edited. This script only rescales it and adds the
-margins that adaptive icons need, then regenerates the legacy mipmap PNGs.
+margins that adaptive icons need, then writes lossless WebP drawables and regenerates
+    the legacy mipmap PNGs.
 
 Usage:
     python3 tools/build_icon.py
@@ -17,10 +18,9 @@ from PIL import Image, ImageDraw
 ROOT = Path(__file__).resolve().parent.parent
 RES = ROOT / "app" / "src" / "main" / "res"
 SOURCE = RES / "drawable-nodpi" / "armadillo_icon_art.jpg"
-FOREGROUND = RES / "drawable-nodpi" / "armadillo_icon_foreground.png"
-MONOCHROME = RES / "drawable-nodpi" / "armadillo_icon_monochrome.png"
-HERO = RES / "drawable-nodpi" / "armadillo_icon_hero.png"
-HOME_LOGO = RES / "drawable-nodpi" / "armadillo_home_logo.png"
+FOREGROUND = RES / "drawable-nodpi" / "armadillo_icon_foreground.webp"
+MONOCHROME = RES / "drawable-nodpi" / "armadillo_icon_monochrome.webp"
+HOME_LOGO = RES / "drawable-nodpi" / "armadillo_home_logo.webp"
 
 CANVAS = 1024
 # Adaptive icons are 108dp with a 72dp visible mask, so the artwork must sit
@@ -86,7 +86,7 @@ def monochrome_art(padded: Image.Image) -> Image.Image:
 
 
 def transparent_home_logo(padded: Image.Image) -> Image.Image:
-    """Extract the navy ink as a transparent, antialiased home-screen PNG.
+    """Extract the navy ink as a transparent, antialiased home-screen WebP.
 
     The original artwork and the opaque launcher assets remain unchanged. The
     red channel distinguishes the dark ink from the yellow source background;
@@ -117,11 +117,10 @@ def legacy_icon(padded: Image.Image, size: int, round_icon: bool) -> Image.Image
 def main() -> None:
     source = Image.open(SOURCE)
     padded = scaled_art(source, ART_FRACTION)
-    padded.save(FOREGROUND, optimize=True)
-    monochrome_art(padded).save(MONOCHROME, optimize=True)
-    # Keep the previous hero bitmap for compatibility with existing assets.
-    padded.resize((320, 320), Image.LANCZOS).save(HERO, optimize=True)
-    transparent_home_logo(padded).save(HOME_LOGO, optimize=True)
+    # WebP lossless keeps the artwork visually identical at roughly half the size.
+    padded.save(FOREGROUND, format="WEBP", lossless=True, method=6)
+    monochrome_art(padded).save(MONOCHROME, format="WEBP", lossless=True, method=6)
+    transparent_home_logo(padded).save(HOME_LOGO, format="WEBP", lossless=True, method=6)
     for folder, size in MIPMAP_SIZES.items():
         target = RES / folder
         target.mkdir(parents=True, exist_ok=True)

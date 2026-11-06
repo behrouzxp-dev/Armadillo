@@ -11,7 +11,7 @@ Construct `GameEngine(state, words, clockNanos, wallClockMillis)` with a `GameSt
 | Operation | Current behavior |
 | --- | --- |
 | `startRound(): Boolean` | Starts only in `PREPARATION`; selects a word, sets the round clock and enters `PLAYING`. |
-| `tick(): EngineEvent` / `checkpoint(): EngineEvent` | Accrues elapsed active time; expiration returns `EXPLOSION_STARTED`. `checkpoint()` delegates to `tick()` and does not itself persist. |
+| `tick(): EngineEvent` | Accrues elapsed active time; expiration returns `EXPLOSION_STARTED`. Callers own persistence; the engine has no checkpoint helper. |
 | `markCorrect(): ActionResult` | During play, accrues time, records the correct word and advances to the next player. |
 | `swapWord(): ActionResult` / `canSwap(): Boolean` | Swap only during play after the five-second active-time lock; record the old word as swapped. |
 | `pauseManually()` / `resumeManually()` | Pause or resume active play; return whether the action was accepted. |
@@ -23,13 +23,13 @@ Construct `GameEngine(state, words, clockNanos, wallClockMillis)` with a `GameSt
 
 ## Word source and models
 
-`WordSource.nextWord(categories, difficulty, used, legacyGeneralDifficulty)` supplies a word; `count(...)` reports the selected pool size. The bundled `LocalWordBank` accepts non-empty supported categories and difficulty tiers 1–3. It draws unused normalized words and clears the used set when the pool is exhausted. The legacy difficulty parameter remains for compatibility but the current playable source does not use the general bank.
+`WordSource.nextWord(categories, difficulty, used, legacyGeneralDifficulty)` supplies one unused word; it is the interface's only operation. The bundled `LocalWordBank` accepts non-empty supported categories and difficulty tiers 1–3. It draws unused normalized words and clears the used set when the pool is exhausted. The legacy difficulty parameter remains for compatibility but the current playable source does not use the general bank.
 
 `GameState` contains players, selected categories, difficulty, phase, countdown, word history and team statistics. `GameConstants` defines supported setup options, swap lock and penalty. `SeatPlan.createPlayers(count, rawNames, defaultName)` creates players and maps seats to teams. The module holds no user-visible text, so `defaultName: (Int) -> String` labels the seats whose names are blank; the app passes `getString(R.string.players_generated_name, it)` and the default is the locale-neutral `#1`, `#2`, … `rankTeams` orders by final time, explosions, correct answers and swaps. See `Models.kt` and [ARCHITECTURE.md](ARCHITECTURE.md#state-and-timing) for context.
 
 ## Checkpoint codec
 
-`GameCodec.encode(state): JSONObject` and `GameCodec.decode(json, defaultName): GameState` own the durable format (`GameCodec.SCHEMA = 4`); `defaultName` fills a stored player that has no name and defaults to the locale-neutral `#N`. `decode` adjusts schema 3 swap cooldowns for the five-second lock, migrates unknown categories to `jobs`, retires a current word that no longer matches the selection (recording it with `WordOutcome.ENDED`), and clamps out-of-range values instead of failing. The object has no Android dependency, so `GameCodecTest` covers round-trip fidelity, legacy saves, unknown categories, clamping and corrupt payloads on the JVM.
+`GameCodec.encode(state): JSONObject` and `GameCodec.decode(json, defaultName): GameState` own the durable format (`GameCodec.SCHEMA = 4`); `defaultName` fills a stored player that has no name and defaults to the locale-neutral `#N`. `decode` adjusts schema 3 swap cooldowns for the five-second lock, migrates unknown categories to `jobs`, retires a current word that no longer matches the selection (recording it with `WordOutcome.ENDED`), and clamps out-of-range values (including stored seat and team indices) instead of failing. `GameState.init` also asserts that every player's team and seat index is in range, so a corrupt save cannot index `teamStats` out of bounds. The object has no Android dependency, so `GameCodecTest` covers round-trip fidelity, legacy saves, unknown categories, clamping and corrupt payloads on the JVM.
 
 ## Local storage and sound
 

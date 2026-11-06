@@ -1,5 +1,8 @@
 package com.armadillo.game.ui.screens
 
+import android.content.pm.PackageManager
+import android.os.Build
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -59,8 +62,13 @@ import com.armadillo.game.ui.theme.Dim
 fun HomeScreen(controller: GameController) {
     val context = LocalContext.current
     val version = runCatching {
-        @Suppress("DEPRECATION")
-        context.packageManager.getPackageInfo(context.packageName, 0).versionName?.takeIf { it.isNotBlank() }
+        val info = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            context.packageManager.getPackageInfo(context.packageName, PackageManager.PackageInfoFlags.of(0))
+        } else {
+            @Suppress("DEPRECATION")
+            context.packageManager.getPackageInfo(context.packageName, 0)
+        }
+        info.versionName?.takeIf { it.isNotBlank() }
     }.getOrNull()
     val sound = LocalSoundEffect.current
 

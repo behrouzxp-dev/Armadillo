@@ -9,6 +9,7 @@ import com.armadillo.game.game.TeamStats
 import com.armadillo.game.game.WordCategories
 import com.armadillo.game.game.WordHistoryEntry
 import com.armadillo.game.game.WordOutcome
+import com.armadillo.game.game.WordSource
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -95,6 +96,7 @@ class GameCodecTest {
     @Test
     fun unknownCategoryIsDroppedAndWordIsRefreshedInsteadOfCrashing() {
         val saved = JSONObject()
+            .put("schema", GameCodec.SCHEMA)
             .put("difficulty", 1)
             .put("durationSeconds", 120)
             .put("totalRounds", 3)
@@ -180,6 +182,42 @@ class GameCodecTest {
     fun finishedGameFlagsAreResetByExplicitPhaseOnly() {
         val results = state().copy(phase = GamePhase.RESULTS)
         assertFalse(GameCodec.decode(GameCodec.encode(results)).phase == GamePhase.PLAYING)
+    }
+
+    @Test
+    fun malformedSeatAndTeamIndicesAreClampedInsteadOfCrashingTheEngine() {
+        val saved = JSONObject()
+            .put("difficulty", 1)
+            .put("durationSeconds", 120)
+            .put("totalRounds", 3)
+            .put("currentRound", 1)
+            .put("phase", GamePhase.PLAYING.name)
+            .put("currentWord", "چراغ")
+            .put("selectedCategories", org.json.JSONArray().put(WordCategories.JOBS))
+            .put("players", playersJson(4).apply {
+                getJSONObject(0).put("seat", 99).put("team", 99)
+            })
+            .put("teamStats", teamStatsJson(2))
+
+        val decoded = GameCodec.decode(saved)
+
+        assertTrue(decoded.players.all { it.seat in decoded.players.indices })
+        assertTrue(decoded.players.all { it.teamIndex in 0 until decoded.teamStats.size })
+        assertEquals(1, decoded.players[0].teamIndex)
+        assertEquals(3, decoded.players[0].seat)
+        assertTrue(decoded.currentTeamIndex in 0 until decoded.teamStats.size)
+
+        var now = 0L
+        val words = object : WordSource {
+            override fun nextWord(
+                categories: Set<String>, difficulty: Int,
+                used: MutableSet<String>, legacyGeneralDifficulty: Int?
+            ): String = "واژه"
+        }
+        val engine = GameEngine(decoded, words, clockNanos = { now })
+        now = 1_000_000_000L
+        engine.tick()
+        assertEquals(1_000_000_000L, decoded.teamStats[decoded.currentTeamIndex].realTimeNanos)
     }
 
     private fun playersJson(count: Int) = org.json.JSONArray().apply {

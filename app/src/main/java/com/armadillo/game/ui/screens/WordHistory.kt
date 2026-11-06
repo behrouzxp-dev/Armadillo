@@ -35,7 +35,7 @@ fun WordHistoryList(game: GameSnapshot, modifier: Modifier = Modifier) {
                 )
             }
         } else {
-            itemsIndexed(game.wordHistory) { index, entry ->
+            itemsIndexed(game.wordHistory, key = { index, _ -> index }) { index, entry ->
                 val player = game.players.getOrNull(entry.playerSeat)
                 val playerName = player?.name ?: stringResource(R.string.results_unknown_player)
                 val teamText = player?.let {
@@ -67,12 +67,10 @@ fun WordHistoryList(game: GameSnapshot, modifier: Modifier = Modifier) {
     }
 }
 
-private val wordTimestampFormat = SimpleDateFormat("HH:mm:ss", Locale.US)
-
 @Composable
 private fun formatWordTimestamp(epochMillis: Long): String =
     if (epochMillis <= 0L) stringResource(R.string.time_unknown)
-    else wordTimestampFormat.format(Date(epochMillis))
+    else SimpleDateFormat("HH:mm:ss", Locale.forLanguageTag("fa")).format(Date(epochMillis))
 
 @Composable
 private fun wordOutcomeLabel(outcome: WordOutcome): String = stringResource(

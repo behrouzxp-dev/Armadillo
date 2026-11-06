@@ -11,8 +11,6 @@ interface WordSource {
         used: MutableSet<String>,
         legacyGeneralDifficulty: Int? = null
     ): String
-
-    fun count(categories: Set<String>, difficulty: Int, legacyGeneralDifficulty: Int? = null): Int
 }
 
 enum class EngineEvent { NONE, EXPLOSION_STARTED, GAME_FINISHED }
@@ -190,9 +188,6 @@ class GameEngine(
         lastSyncNanos = null
         return EngineEvent.GAME_FINISHED
     }
-
-    /** Save a precise active checkpoint (typically once per second). */
-    fun checkpoint(): EngineEvent = tick()
 
     private fun accrue(now: Long): EngineEvent {
         val previous = lastSyncNanos ?: now.also { lastSyncNanos = it }

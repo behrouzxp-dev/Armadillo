@@ -17,9 +17,9 @@ kotlin {
 dependencies {
     // The Android platform provides org.json at runtime; the JVM tests need the real
     // implementation because the mockable android.jar throws on every call.
-    compileOnly("org.json:json:20240303")
+    compileOnly("org.json:json:20260814")
     testImplementation("junit:junit:4.13.2")
-    testImplementation("org.json:json:20240303")
+    testImplementation("org.json:json:20260814")
 }
 
 tasks.withType<Test>().configureEach {

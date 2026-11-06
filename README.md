@@ -2,7 +2,7 @@
 
 **Android / Kotlin · [Latest release](https://github.com/behrouzxp-dev/Armadillo/releases/latest)**
 
-Armadillo is an offline, right-to-left Persian group game. Its `applicationId` is `com.armadillo.game`. The app is free, ad-free and requires no internet permission; its sounds, font and words are bundled locally. It uses portrait orientation and has no background music. The manifest requests vibration permission and disables Android backup.
+Armadillo is an offline, right-to-left Persian group game. Its `applicationId` is `com.armadillo.game`. The app is free, ad-free and requires no internet permission; its sounds, font and words are bundled locally. It uses portrait orientation and has no background music. The manifest requests vibration permission and disables Android backup. Portrait is requested for phones; on Android 16 (API 36) the system ignores orientation restrictions on displays of at least 600dp smallest width, so tablet and foldable layouts need separate device verification.
 
 The first official release is [v1.0.0](https://github.com/behrouzxp-dev/Armadillo/releases/tag/v1.0.0) (`versionCode` 1, `versionName` 1.0.0) for the `com.armadillo.game` application ID; [v1.1.0](https://github.com/behrouzxp-dev/Armadillo/releases/tag/v1.1.0) uses code 2. The source is configured for `1.2.0` (`versionCode` 3); verify version codes in external distribution channels before distributing there. The repository on GitHub is the source of truth. See [AGENTS.md](AGENTS.md) for project rules and [CHANGELOG.md](CHANGELOG.md) for changes. Historical test reports and changelogs describe earlier builds, not an official release of the current repository.
 
@@ -13,6 +13,7 @@ The first official release is [v1.0.0](https://github.com/behrouzxp-dev/Armadill
 - [Internal interfaces](docs/API.md) — Kotlin contracts; the app has no network API.
 - [Project plan](docs/PROJECT_PLAN.md) — maintenance and verification backlog, not an approved release schedule.
 - [GitHub Actions](docs/GITHUB_ACTIONS.md), [release guide](docs/RELEASE_GUIDE.md) and [secrets setup](docs/SECRETS_SETUP.md) — workflow audit, operations and signing prerequisites.
+- [Security policy](SECURITY.md) — how to report a vulnerability.
 
 ## Features
 
@@ -53,8 +54,10 @@ The first official release is [v1.0.0](https://github.com/behrouzxp-dev/Armadill
 - `app/src/main/assets/categories.json` — five playable categories and 1,500 topic words
 - `app/src/main/assets/words.json` — retained legacy general bank, inactive in gameplay
 - `app/src/main/res/font/` — Mikhak Regular/Bold as Android font resources; `app/src/main/assets/fonts/` — their OFL license
-- `app/src/main/res/drawable-nodpi/` — original icon artwork, generated adaptive foreground, monochrome layer, hero bitmap, transparent home logo and prepared play-button artwork
-- `game-core/src/test/` — Kotlin/JVM unit tests for the engine, codec and roster
+- `app/src/main/res/drawable-nodpi/` — original icon artwork, generated adaptive foreground, monochrome layer, transparent home logo and prepared play-button artwork
+- `game-core/src/test/` — Kotlin/JVM unit tests for the engine, codec, progress and roster
+- `app/src/main/java/com/armadillo/game/util/` — pure JVM-testable setup arithmetic
+- `app/src/test/`, `app/src/androidTest/` — app-layer JVM tests and Compose instrumented tests
 - `docs/` — requirements, architecture, internal interfaces and maintenance plan
 - `tools/build_categories.py` — builds earlier categories while preserving newer categories
 - `tools/add_armadillo_categories.py` — place and technology vocabulary
@@ -86,6 +89,8 @@ Linux/macOS:
 python3 tools/validate_words.py
 # An unsigned release build verifies R8, resource shrinking and release lint.
 ./gradlew :app:lintRelease :app:assembleRelease
+# Instrumented Compose tests require a connected device or emulator.
+./gradlew :app:connectedDebugAndroidTest
 # Release signing inputs must be loaded into the current shell from private storage first.
 ```
 
@@ -109,14 +114,15 @@ app/build/outputs/apk/release/app-release.apk
 
 ## GitHub Actions builds
 
-CI runs the shared Android validation build on pushes to `main`/`develop` and pull requests into those branches. It runs unit tests, lint and Debug/unsigned Release builds and retains the optional Debug APK for one day. A separate read-only security workflow scans resolved dependencies against OSV and reports POM license metadata. The signed release is manually dispatched from `main` by the owner after explicit approval, and runs validation before signing. It does not require a protected environment or protected tag. A cleanup workflow sweeps known temporary Actions artifacts every six hours; official release assets are preserved.
+CI runs the shared Android validation build on pushes to `main` and pull requests into `main`. It runs JVM and app-layer unit tests, lint and Debug/unsigned Release builds. Pull requests additionally run Compose instrumented tests on an Android emulator, and the temporary Debug APK is uploaded only for pull requests and retained for one day. A separate read-only security workflow scans resolved dependencies against OSV and reports POM license metadata. The signed release is manually dispatched from `main` by the owner after explicit approval, and runs validation before signing. It does not require a protected environment or protected tag. A cleanup workflow sweeps known temporary Actions artifacts every six hours; official release assets are preserved.
 
-See [GitHub Actions](docs/GITHUB_ACTIONS.md) for the audit, required branch settings and limitations, [release guide](docs/RELEASE_GUIDE.md) for release steps, and [secrets setup](docs/SECRETS_SETUP.md) for credentials. No signed release is published merely by merging the workflow. No device/emulator testing is implied by CI.
+See [GitHub Actions](docs/GITHUB_ACTIONS.md) for the audit, required branch settings and limitations, [release guide](docs/RELEASE_GUIDE.md) for release steps, and [secrets setup](docs/SECRETS_SETUP.md) for credentials. No signed release is published merely by merging the workflow. Emulator tests cover the home screen on pull requests; physical-device installation, upgrade and large-screen/accessibility flows still require manual verification.
 
 ## Theme and accessibility
 
 - One static light theme: there is no `values-night` variant and `android:forceDarkAllowed` is `false`, so changing the system theme cannot change the app's colours.
 - Buttons are platform `Button`s, so TalkBack announces them as buttons. Each seat on the players screen is also exposed as an individual button, because a canvas drawing cannot provide per-seat accessibility nodes.
+- The full-screen explosion acknowledgement is an explicit `Role.Button` clickable with a labelled accessibility action, so it works with TalkBack and switch access rather than only raw tap detection.
 - Team identity is never colour-only: team numbers accompany every team chip, label and result row.
 - Body text on the canvas (`#38434F` on `#F9CB03`) and white text on navy buttons exceed the WCAG AA contrast ratio. Team numbers accompany team colours, so team identity does not depend on colour alone.
 - The seating canvas now follows the system font scale, and pages preserve their scroll position when a selection re-renders them.

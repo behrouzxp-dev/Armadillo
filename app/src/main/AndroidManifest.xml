@@ -10,6 +10,11 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+        <!--
+          API 36 ignores screenOrientation on displays with smallest width >= 600dp.
+          configChanges keeps the activity alive on rotation; large-screen layouts
+          still require device verification (see docs/REQUIREMENTS.md).
+        -->
         <activity
             android:name=".MainActivity"
             android:configChanges="orientation|screenSize|keyboardHidden"

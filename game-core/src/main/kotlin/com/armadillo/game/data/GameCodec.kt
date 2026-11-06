@@ -69,13 +69,15 @@ object GameCodec {
     /** [defaultName] supplies a label for players stored without one; it keeps the module free of UI text. */
     fun decode(json: JSONObject, defaultName: (Int) -> String = { "#$it" }): GameState {
         val playersArray = json.getJSONArray("players")
-        require(playersArray.length() in GameConstants.allowedPlayerCounts.toSet())
-        val players = MutableList(playersArray.length()) { index ->
+        val playerCount = playersArray.length()
+        require(playerCount in GameConstants.allowedPlayerCounts.toSet())
+        val teamCount = playerCount / 2
+        val players = MutableList(playerCount) { index ->
             val item = playersArray.getJSONObject(index)
             Player(
-                seat = item.optInt("seat", index),
+                seat = item.optInt("seat", index).coerceIn(0, playerCount - 1),
                 name = item.optString("name", defaultName(index + 1)),
-                teamIndex = item.optInt("team", index % (playersArray.length() / 2))
+                teamIndex = item.optInt("team", index % teamCount).coerceIn(0, teamCount - 1)
             )
         }
         val statsArray = json.getJSONArray("teamStats")

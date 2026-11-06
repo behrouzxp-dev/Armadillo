@@ -25,7 +25,6 @@ class GameEngineTest {
             }
             return available.first()
         }
-        override fun count(categories: Set<String>, difficulty: Int, legacyGeneralDifficulty: Int?): Int = entries.size
     }
 
     private fun newGame(clock: FakeClock, count: Int = 6, duration: Int = 90, rounds: Int = 3): GameEngine {
@@ -87,7 +86,6 @@ class GameEngineTest {
                 received = categories.toSet()
                 return "واژه"
             }
-            override fun count(categories: Set<String>, difficulty: Int, legacyGeneralDifficulty: Int?): Int = 100
         }
         assertTrue(GameEngine(state, source, clock::nanos).startRound())
         assertEquals(setOf(WordCategories.JOBS, WordCategories.FOODS), received)
