@@ -6,7 +6,7 @@ This document describes the current implementation and operational constraints. 
 
 - Armadillo is a Persian, right-to-left, portrait-oriented offline word-guessing game for groups. It is free and has no ads or background music.
 - The application has no internet permission. Audio, font, icon assets and playable vocabulary are packaged locally. The manifest requests vibration permission and sets `allowBackup` to `false`.
-- The owner-approved `applicationId` is `com.armadillo.game`, with minimum Android API 23, target SDK 36 and compile SDK 37 (Google Play has required API 36 for new uploads since 31 August 2026). The first GitHub release `v1.0.0` uses `versionCode` 1 and `versionName` `1.0.0`. GitHub release `v1.1.0` uses code 2; the source is prepared for `1.2.0` with code 3. Verify external distribution version codes before distributing there.
+- The owner-approved `applicationId` is `com.armadillo.game`, with minimum Android API 23, target SDK 36 and compile SDK 37 (Google Play has required API 36 for new uploads since 31 August 2026). The first GitHub release `v1.0.0` uses `versionCode` 1 and `versionName` `1.0.0`. GitHub releases `v1.1.0` and `v1.2.0` use codes 2 and 3; the source is prepared for `1.3.0` with code 4. Verify external distribution version codes before distributing there.
 - Use a right-to-left layout throughout the Persian UI regardless of the device language, while preserving explicitly positioned game controls and the home control stack.
 - The app uses one static light theme. The appearance must not change with the system dark-theme setting, and no `values-night` resources are added.
 - The shared page-header back arrow points left without moving the control from its existing position.

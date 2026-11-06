@@ -4,7 +4,9 @@ This project follows semantic versioning (SemVer). The `1.0.0` entry below is th
 
 ## [Unreleased]
 
-Security, robustness, maintainability and home/game HUD presentation changes; the gameplay rules are unchanged and there is no new release version.
+## [1.3.0] — 2026-11-06 (com.armadillo.game)
+
+Security, robustness, maintainability and home/game HUD presentation changes; the gameplay rules are unchanged.
 
 - Centre the home start control exactly and add a slow, heartbeat-like electric neon-blue glow beneath it; keep the title band scrollable at large font scales, respect the system animation-scale setting, and add an instrumented centering test.
 - Reduce the launcher artwork to half of the 1024px canvas (`ART_FRACTION = 0.50`, a 25% margin on each side) and regenerate the adaptive foreground, monochrome layer and all mipmaps.
