@@ -109,7 +109,7 @@ app/build/outputs/apk/release/app-release.apk
 
 ## GitHub Actions builds
 
-CI runs the shared Android validation build on pushes to `main`/`develop` and pull requests into those branches. It runs unit tests, lint and Debug/unsigned Release builds and retains the optional Debug APK for one day. A separate read-only security workflow scans resolved dependencies against OSV and reports POM license metadata. The tag-triggered signed release requires a protected tag, prior validation and explicit owner approval in the protected `production` environment. A cleanup workflow sweeps known temporary Actions artifacts every six hours; official release assets are preserved.
+CI runs the shared Android validation build on pushes to `main`/`develop` and pull requests into those branches. It runs unit tests, lint and Debug/unsigned Release builds and retains the optional Debug APK for one day. A separate read-only security workflow scans resolved dependencies against OSV and reports POM license metadata. The signed release is manually dispatched from `main` by the owner after explicit approval, and runs validation before signing. It does not require a protected environment or protected tag. A cleanup workflow sweeps known temporary Actions artifacts every six hours; official release assets are preserved.
 
 See [GitHub Actions](docs/GITHUB_ACTIONS.md) for the audit, required branch settings and limitations, [release guide](docs/RELEASE_GUIDE.md) for release steps, and [secrets setup](docs/SECRETS_SETUP.md) for credentials. No signed release is published merely by merging the workflow. No device/emulator testing is implied by CI.
 

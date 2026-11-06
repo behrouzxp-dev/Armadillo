@@ -50,26 +50,23 @@ def parse_published_metadata(metadata: dict) -> tuple[str, int]:
     return name, code
 
 
-def validate_approval(environment: dict, owner: str) -> None:
-    rules = [r for r in environment.get('protection_rules', []) if r.get('type') == 'required_reviewers']
-    if len(rules) != 1:
-        raise ValueError('The production environment must require the owner as its reviewer')
-    reviewers = rules[0].get('reviewers') or []
-    if len(reviewers) != 1 or reviewers[0].get('type') != 'User' or reviewers[0].get('reviewer', {}).get('login', '').lower() != owner.lower():
-        raise ValueError('Only the repository owner may be configured as the required release reviewer')
+def validate_dispatch(event: str, ref: str, actor: str, triggering_actor: str, owner: str) -> None:
+    if event != 'workflow_dispatch' or ref != 'refs/heads/main':
+        raise ValueError('Release must be manually dispatched from main')
+    if not owner or actor.lower() != owner.lower() or triggering_actor.lower() != owner.lower():
+        raise ValueError('Only the repository owner may start or rerun a release')
 
 
 def main() -> None:
     tag, repo, owner = (os.environ[k] for k in ('RELEASE_TAG', 'GITHUB_REPOSITORY', 'GITHUB_REPOSITORY_OWNER'))
     version = parse_tag(tag)
-    if os.environ.get('REF_PROTECTED') != 'true':
-        raise ValueError('Release tags must be protected by an active tag ruleset')
-    env = json.loads(command('gh', 'api', f'repos/{repo}/environments/production'))
-    validate_approval(env, owner)
-    tag_commit = command('git', 'rev-parse', '--verify', f'refs/tags/{tag}^{{commit}}')
-    if tag_commit != command('git', 'rev-parse', 'HEAD'):
-        raise ValueError('Checked-out commit does not match the release tag')
-    subprocess.run(['git', 'merge-base', '--is-ancestor', tag_commit, 'origin/main'], check=True)
+    validate_dispatch(os.environ.get('GITHUB_EVENT_NAME', ''), os.environ.get('GITHUB_REF', ''),
+                      os.environ.get('RELEASE_ACTOR', ''), os.environ.get('RELEASE_TRIGGERING_ACTOR', ''), owner)
+    commit = command('git', 'rev-parse', 'HEAD')
+    if commit != os.environ.get('GITHUB_SHA') or commit != command('git', 'rev-parse', 'origin/main'):
+        raise ValueError('Release must use the latest checked-out main commit')
+    if command('git', 'tag', '--list', tag):
+        raise ValueError(f'Tag {tag} already exists; nothing will be overwritten')
     name, code = parse_gradle(Path('app/build.gradle.kts').read_text(encoding='utf-8'))
     if tag != f'v{name}':
         raise ValueError('The tag must match the configured Android versionName')
@@ -89,9 +86,9 @@ def main() -> None:
             raise ValueError(f'Existing release {old_tag} does not match its source and APK metadata')
         if version <= old_version or code <= old_code:
             raise ValueError(f'Tag and versionCode must exceed previous release {old_tag} (code {old_code})')
-    print(f'Validated {tag}, versionCode {code}, protected tag and owner review.')
+    print(f'Validated {tag}, versionCode {code}, owner dispatch and main commit.')
     with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as output:
-        output.write(f'version={name}\ncode={code}\n')
+        output.write(f'version={name}\ncode={code}\ncommit={commit}\n')
 
 
 if __name__ == '__main__':
